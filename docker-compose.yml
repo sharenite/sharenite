@@ -1,31 +1,72 @@
-version: "3.5"
-
+version: '3'
+networks:
+  development:
+  test:
+volumes:
+  db_data:
+  gem_cache:
+  shared_data:
 services:
-
-  database:
+  sharenite_redis:
+    image: redis:7-alpine
+    container_name: sharenite-redis
+    command: redis-server
+    networks:
+      - development
+      - test
+    volumes:
+      - shared_data:/var/shared/redis
+  sharenite_db:
+    image: postgres:14-alpine
     container_name: sharenite-database
-    image: postgres:14
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - shared_data:/var/shared
+    networks:
+      - development
+      - test
+    environment:
+      POSTGRES_USER: sharenite
+      POSTGRES_PASSWORD: sharenite
     ports:
       - 5432:5432
-    volumes:
-      - ./.docker/data/postgres:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=sharenite
-      - POSTGRES_PASSWORD=sharenite
-      - POSTGRES_DB=sharenite_development
-    networks:
-      - data
-  web:
-    build: .
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+  sharenite_app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     container_name: sharenite-webapp
     volumes:
-      - .:/sharenite
-    ports:
-      - "3000:3000"
-    depends_on:
-      - database
+      - .:/var/app
+      - shared_data:/var/shared
+      - gem_cache:/usr/local/bundle/gems
     networks:
-      - data
-networks:
-  data:
+      - development
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    entrypoint: dev-entrypoint.sh
+    command: ['rails', 'server', '-p', '3000', '-b', '0.0.0.0']
+    environment:
+      RAILS_ENV: development
+    depends_on:
+      - sharenite_db
+  sharenite_test:
+    image: sharenite_sharenite_app
+    container_name: sharenite-test
+    volumes:
+      - .:/var/app
+      - shared_data:/var/shared
+      - gem_cache:/usr/local/bundle/gems
+    networks:
+      - test
+    ports:
+      - 3001:3000
+    stdin_open: true
+    tty: true
+    entrypoint: test-entrypoint.sh
+    command: ["rails", "-v"]
+    environment:
+      RAILS_ENV: test
+    depends_on:
+      - sharenite_db
