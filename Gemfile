@@ -45,6 +45,10 @@ gem "bootsnap", require: false
 # Custom
 gem 'activeadmin'
 gem 'sass-rails'
+gem 'grape'
+gem 'grape-active_model_serializers'
+gem 'grape_devise', github: "XenorPLxx/grape_devise", branch: "master"
+gem 'rack-cors'
 
 # Use Sass to process CSS
 # gem "sassc-rails"
