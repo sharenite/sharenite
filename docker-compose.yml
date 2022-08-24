@@ -1,0 +1,31 @@
+version: "3.5"
+
+services:
+
+  database:
+    container_name: sharenite-database
+    image: postgres:14
+    ports:
+      - 5432:5432
+    volumes:
+      - ./.docker/data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=sharenite
+      - POSTGRES_PASSWORD=sharenite
+      - POSTGRES_DB=sharenite_development
+    networks:
+      - data
+  web:
+    build: .
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    container_name: sharenite-webapp
+    volumes:
+      - .:/sharenite
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+    networks:
+      - data
+networks:
+  data:
