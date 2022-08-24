@@ -1,24 +1,18 @@
-# README
+# Sharenite
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## First run
+```ruby
+docker compose build
+docker compose up
+docker compose run web  rake db:create
+```
 
-Things you may want to cover:
+## Subsequent runs
+```ruby
+docker compose up
+```
 
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+## DB migrations
+```ruby
+docker compose run web  rake db:migrate
+```
