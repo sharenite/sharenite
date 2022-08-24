@@ -16,6 +16,7 @@ module API
         end
         post "" do
           games = []
+          logger.debug params.inspect
           params[:games].each do |game|
             current_user.games.destroy_all
             games << Game.create!(game.merge user: current_user)

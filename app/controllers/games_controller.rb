@@ -1,5 +1,9 @@
 class GamesController < InheritedResources::Base
 
+  def index
+    @games = current_user.games
+  end
+
   private
 
     def game_params
