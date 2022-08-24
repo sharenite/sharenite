@@ -17,6 +17,7 @@ module API
         post "" do
           games = []
           params[:games].each do |game|
+            current_user.games.destroy_all
             games << Game.create!(game.merge user: current_user)
           end
           games
