@@ -1,3 +1,5 @@
+![License](https://img.shields.io/github/license/sharenite/sharenite?style=for-the-badge)
+
 # Sharenite
 
 ## First run
