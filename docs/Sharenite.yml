@@ -1,21 +1,21 @@
 _type: export
 __export_format: 4
-__export_date: 2022-08-25T11:55:05.662Z
+__export_date: 2022-08-25T11:58:23.547Z
 __export_source: insomnia.desktop.app:v2022.5.1
 resources:
   - _id: req_e5c5acf519be44e88c85ae245f442aa6
-    parentId: wrk_a27206fd4c62473296e07323a3a0ec4a
-    modified: 1661428107473
+    parentId: fld_4587b966d9774d42b79d5fceb42776ac
+    modified: 1661428684810
     created: 1661359706489
     url: "{{url}}/api/v1/games"
-    name: Get games
+    name: Get games list
     description: ""
     method: GET
     body: {}
     parameters: []
     headers: []
     authentication: {}
-    metaSortKey: -1661359706489
+    metaSortKey: -1660677571613.5
     isPrivate: false
     settingStoreCookies: true
     settingSendCookies: true
@@ -24,6 +24,16 @@ resources:
     settingRebuildPath: true
     settingFollowRedirects: global
     _type: request
+  - _id: fld_4587b966d9774d42b79d5fceb42776ac
+    parentId: wrk_a27206fd4c62473296e07323a3a0ec4a
+    modified: 1661428663741
+    created: 1661428663741
+    name: Games
+    description: ""
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: -1661428663741
+    _type: request_group
   - _id: wrk_a27206fd4c62473296e07323a3a0ec4a
     parentId: null
     modified: 1661359693315
@@ -33,11 +43,11 @@ resources:
     scope: collection
     _type: workspace
   - _id: req_1b4f92afcba64afa905907bfadeee33c
-    parentId: wrk_a27206fd4c62473296e07323a3a0ec4a
-    modified: 1661428503246
+    parentId: fld_4587b966d9774d42b79d5fceb42776ac
+    modified: 1661428693068
     created: 1661359798795
     url: "{{url}}/api/v1/games"
-    name: Create games
+    name: Send games
     description: ""
     method: POST
     body:
@@ -59,7 +69,7 @@ resources:
         value: application/json
         id: pair_562a6359258c4ee9b6c060725c33084c
     authentication: {}
-    metaSortKey: -1659926479486
+    metaSortKey: -1660677571563.5
     isPrivate: false
     settingStoreCookies: true
     settingSendCookies: true
