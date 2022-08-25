@@ -14,6 +14,11 @@ docker compose run web  rake db:create
 docker compose up
 ```
 
+## Restart only webapp
+```ruby
+docker-compose restart sharenite_app
+```
+
 ## DB migrations
 ```ruby
 docker compose run web  rake db:migrate
