@@ -1,0 +1,1 @@
+`Sharenite.yml` can be import in [Insomnia](https://insomnia.rest/products/insomnia).
