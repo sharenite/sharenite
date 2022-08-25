@@ -1,0 +1,14 @@
+
+
+.test-server-message {
+    color: white;
+    text-align: center;
+    background-color: $alert-red;
+    margin: 0px;
+}
+
+.production-server-message {
+    @extend .test-server-message;
+    background-color: $notice-blue;
+    margin: 0px;
+}

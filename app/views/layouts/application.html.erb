@@ -11,6 +11,15 @@
   </head>
 
   <body>
+    <% if Rails.env.production? %>
+      <p class="production-server-message">
+        APPLICATION IN BETA - EVERYTHING MIGHT BREAK
+      </p>
+    <% else %>
+      <p class="test-server-message">
+        <%= Rails.env.upcase %> SERVER
+      </p>
+    <% end %>
     <p class="notice"><%= notice %></p>
     <p class="alert"><%= alert %></p>
     <% if user_signed_in? %>
