@@ -3,8 +3,12 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "app/**/*.{js,es6,jsx,scss,css,haml,rb}": [
+    "app/**/*.{js,es6,jsx,scss,css,haml}": [
       "./node_modules/prettier/bin-prettier.js --write",
+      "git add"
+    ],
+    "{app,test}/**/*.rb": [
+      "bundle exec rubocop -a",
       "git add"
     ]
   },
