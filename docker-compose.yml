@@ -7,7 +7,6 @@ volumes:
   gem_cache:
   shared_data:
 services:
-
   sharenite_redis:
     image: redis:7-alpine
     container_name: sharenite-redis
@@ -17,7 +16,6 @@ services:
       - test
     volumes:
       - shared_data:/var/shared/redis
-
   sharenite_db:
     image: postgres:14-alpine
     container_name: sharenite-database
@@ -32,7 +30,6 @@ services:
       POSTGRES_PASSWORD: sharenite
     ports:
       - 5432:5432
-
   sharenite_app:
     build:
       context: .
@@ -54,27 +51,6 @@ services:
       RAILS_ENV: development
     depends_on:
       - sharenite_db
-
-  sharenite_tailwind:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    container_name: sharenite-tailwind
-    volumes:
-      - .:/var/app
-      - shared_data:/var/shared
-      - gem_cache:/usr/local/bundle/gems
-    networks:
-      - development
-    stdin_open: true
-    tty: true
-    entrypoint: dev-entrypoint.sh
-    command: ['rails', 'tailwindcss:watch']
-    environment:
-      RAILS_ENV: development
-    depends_on:
-      - sharenite_db
-
   sharenite_test:
     image: sharenite_sharenite_app
     container_name: sharenite-test
