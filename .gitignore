@@ -42,3 +42,6 @@
 # Coverage
 /coverage/*
 !/coverage/.keep
+
+# Node modules
+node_modules

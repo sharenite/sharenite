@@ -1,3 +1,6 @@
+inherit_from:
+  - node_modules/@prettier/plugin-ruby/rubocop.yml
+
 # Plugins
 
 require:
@@ -12,6 +15,7 @@ AllCops:
   Exclude:
     - 'db/**/*'
     - 'bin/**/*'
+    - 'node_modules/**/*'
   TargetRubyVersion: 3.1
   TargetRailsVersion: 7.0
 
@@ -66,3 +70,6 @@ Layout/LineLength:
 
 RSpec/MultipleExpectations:
   Max: 10
+
+RSpec/ExampleLength:
+  Max: 20

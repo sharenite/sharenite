@@ -1,9 +1,9 @@
 !!!
 %html
   %head
-    %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
+    %meta{content: "text/html; charset=UTF-8", "http-equiv": "Content-Type"}/
     %title Sharenite
-    %meta{:content => "width=device-width,initial-scale=1", :name => "viewport"}/
+    %meta{content: "width=device-width,initial-scale=1", name: "viewport"}/
     = csrf_meta_tags
     = csp_meta_tag
     = stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload"
@@ -27,9 +27,9 @@
           %strong= current_user.email
         = link_to 'Edit profile', edit_user_registration_path
         |
-        \#{link_to "Logout", destroy_user_session_path, data: { turbo_method: :delete }}
+        = "#{link_to "Logout", destroy_user_session_path, data: { turbo_method: :delete }}"
       - else
         = link_to "Sign up", new_user_registration_path
         |
-        \#{link_to "Login", new_user_session_path}
+        = "#{link_to "Login", new_user_session_path}"
       = yield

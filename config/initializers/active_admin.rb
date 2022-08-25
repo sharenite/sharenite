@@ -6,7 +6,7 @@ ActiveAdmin.setup do |config|
   # Set the title that is displayed on the main layout
   # for each of the active admin pages.
   #
-  config.site_title = 'Sharenite'
+  config.site_title = "Sharenite"
 
   # Set the link url for the title. For example, to take
   # users to your main site. Defaults to no link.
@@ -140,7 +140,7 @@ ActiveAdmin.setup do |config|
   # config.comments_menu = false
   #
   # You can customize the comment menu:
-  config.comments_menu = { parent: 'Admin', priority: 101 }
+  config.comments_menu = { parent: "Admin", priority: 101 }
 
   # == Batch Actions
   #
@@ -160,7 +160,11 @@ ActiveAdmin.setup do |config|
   # You can exclude possibly sensitive model attributes from being displayed,
   # added to forms, or exported by default by ActiveAdmin
   #
-  config.filter_attributes = %i[encrypted_password password password_confirmation]
+  config.filter_attributes = %i[
+    encrypted_password
+    password
+    password_confirmation
+  ]
 
   # == Localize Date/Time Format
   #

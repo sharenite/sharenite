@@ -70,11 +70,15 @@ group :development, :test do
   gem 'faker'
   gem 'letter_opener'
   gem 'letter_opener_web'
+  gem 'prettier_print', '~> 0.1.0'
   gem 'rspec-rails'
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rails', require: false
   gem 'rubocop-rspec', require: false
+  gem 'syntax_tree', '~> 3.4'
+  gem 'syntax_tree-haml', '~> 1.3'
+  gem 'syntax_tree-rbs', '~> 0.5.0'
 end
 
 group :development do

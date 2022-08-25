@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "app/**/*.{js,es6,jsx,scss,css,haml,rb}": [
+      "./node_modules/prettier/bin-prettier.js --write",
+      "git add"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^0.13.4",
+    "lint-staged": "^3.6.0",
+    "@prettier/plugin-ruby": "^3.2.0",
+    "prettier": "^2.7.1"
+  }
+}

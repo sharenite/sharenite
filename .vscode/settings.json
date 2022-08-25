@@ -3,5 +3,10 @@
         "activityBar.background": "#492032",
         "titleBar.activeBackground": "#672C46",
         "titleBar.activeForeground": "#FCF9FA"
-    }
+    },
+  "[ruby]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "ruby.rubocop.onSave": true
 }

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register AdminUser do
-  menu parent: 'Admin', priority: 100
+  menu parent: "Admin", priority: 100
 
   permit_params :email, :password, :password_confirmation
 
