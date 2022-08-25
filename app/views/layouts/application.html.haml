@@ -1,0 +1,35 @@
+!!!
+%html
+  %head
+    %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
+    %title Sharenite
+    %meta{:content => "width=device-width,initial-scale=1", :name => "viewport"}/
+    = csrf_meta_tags
+    = csp_meta_tag
+    = stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload"
+    = stylesheet_link_tag "application", "data-turbo-track": "reload"
+    = javascript_importmap_tags
+  %body
+    - if Rails.env.production?
+      %p.production-server-message
+        APPLICATION IN BETA - EVERYTHING MIGHT BREAK
+    - else
+      %p.test-server-message
+        = Rails.env.upcase
+        SERVER
+    %nav
+    %main.container
+      %p.notice= notice
+      %p.alert= alert
+      - if user_signed_in?
+        Logged in as
+        = succeed "." do
+          %strong= current_user.email
+        = link_to 'Edit profile', edit_user_registration_path
+        |
+        \#{link_to "Logout", destroy_user_session_path, data: { turbo_method: :delete }}
+      - else
+        = link_to "Sign up", new_user_registration_path
+        |
+        \#{link_to "Login", new_user_session_path}
+      = yield

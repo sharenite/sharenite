@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ActiveAdmin.register Game do
   menu priority: 3
 
@@ -15,5 +17,4 @@ ActiveAdmin.register Game do
   #   permitted << :other if params[:action] == 'create' && current_user.admin?
   #   permitted
   # end
-  
 end

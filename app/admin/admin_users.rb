@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ActiveAdmin.register AdminUser do
   menu parent: 'Admin', priority: 100
 
@@ -26,5 +28,4 @@ ActiveAdmin.register AdminUser do
     end
     f.actions
   end
-
 end
