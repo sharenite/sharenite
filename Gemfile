@@ -55,6 +55,7 @@ gem 'grape_devise', github: 'XenorPLxx/grape_devise', branch: 'master'
 gem 'haml'
 gem 'haml-rails'
 gem 'rack-cors'
+gem 'rollbar'
 gem 'sass-rails'
 
 # Use Sass to process CSS
