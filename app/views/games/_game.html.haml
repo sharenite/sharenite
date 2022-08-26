@@ -1,4 +1,7 @@
-%div{id: "#{dom_id game}"}
-  %p
-    %strong Name:
-    = game.name
+%li.list-group-item{id: "#{dom_id game}"}
+  .row
+    .col-10
+      %strong Name:
+      = game.name
+    .col-2
+      = link_to "Show this game", game

@@ -10,25 +10,18 @@
     = javascript_include_tag "application", "data-turbo-track": "reload", defer: true
   %body
     - if Rails.env.production?
-      %p.production-server-message
+      %p.bg-info.text-light.text-center.m-0
         APPLICATION IN BETA - EVERYTHING MIGHT BREAK
     - else
-      %p.test-server-message
+      %p.bg-danger.text-white.text-center.m-0
         = Rails.env.upcase
         SERVER
-    %nav
-    %main.container
-      %p.notice= notice
-      %p.alert= alert
-      - if user_signed_in?
-        Logged in as
-        = succeed "." do
-          %strong= current_user.email
-        = link_to 'Edit profile', edit_user_registration_path
-        |
-        = "#{link_to "Logout", destroy_user_session_path, data: { turbo_method: :delete }}"
-      - else
-        = link_to "Sign up", new_user_registration_path
-        |
-        = link_to "Login", new_user_session_path
+    = render 'layouts/navbar'
+    %main.container.pt-4
+      - if notice
+        .alert.alert-notice
+          = notice
+      - if alert
+        .alert.alert-danger
+          = alert
       = yield

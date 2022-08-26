@@ -47,4 +47,4 @@
 !/app/assets/builds/.keep
 
 # Node modules
-node_modules
+/node_modules
