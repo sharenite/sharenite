@@ -1,7 +1,9 @@
 %li.list-group-item{id: "#{dom_id game}"}
   .row
-    .col-10
-      %strong Name:
-      = game.name
+    .col-6
+      %strong
+        = game.name
+    .col-4
+      = game.last_activity
     .col-2
       = link_to "Show this game", game

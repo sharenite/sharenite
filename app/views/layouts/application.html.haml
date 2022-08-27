@@ -18,10 +18,7 @@
         SERVER
     = render 'layouts/navbar'
     %main.container.pt-4
-      - if notice
-        .alert.alert-notice
-          = notice
-      - if alert
-        .alert.alert-danger
-          = alert
+      - flash.each do |type, msg|
+        .alert{class: flash_class(type)}
+          = msg
       = yield

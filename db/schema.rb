@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_08_27_130828) do
+ActiveRecord::Schema[7.0].define(version: 2022_08_27_131440) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -46,6 +46,38 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_27_130828) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "added"
+    t.integer "community_score"
+    t.integer "critic_score"
+    t.text "description"
+    t.boolean "favorite"
+    t.string "game_id"
+    t.text "game_started_script"
+    t.boolean "hidden"
+    t.boolean "include_library_plugin_action"
+    t.string "install_directory"
+    t.boolean "is_custom_game"
+    t.boolean "is_installed"
+    t.boolean "is_installing"
+    t.boolean "is_launching"
+    t.boolean "is_running"
+    t.boolean "is_uninstalling"
+    t.datetime "last_activity"
+    t.string "manual"
+    t.datetime "modified"
+    t.text "notes"
+    t.bigint "play_count"
+    t.bigint "playtime"
+    t.uuid "plugin_id"
+    t.text "post_script"
+    t.text "pre_script"
+    t.date "release_date"
+    t.string "sorting_name"
+    t.boolean "use_global_game_started_script"
+    t.boolean "use_global_post_script"
+    t.boolean "use_global_pre_script"
+    t.integer "user_score"
+    t.string "version"
     t.index ["user_id"], name: "index_games_on_user_id"
   end
 
