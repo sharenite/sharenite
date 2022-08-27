@@ -25,6 +25,7 @@ RUN apk -U add --no-cache \
     imagemagick \
     tzdata \
     less \
+    gcompat \
     && rm -rf /var/cache/apk/* \
     && mkdir -p $APP_PATH 
 
