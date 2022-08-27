@@ -3,7 +3,7 @@
 # Games controller
 class GamesController < InheritedResources::Base
   def index
-    @games = current_user.games.order(last_activity: :desc)
+    @games = current_user.games.order("last_activity DESC NULLS LAST")
   end
 
   private
