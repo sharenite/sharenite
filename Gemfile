@@ -56,6 +56,7 @@ gem 'haml-rails'
 gem 'rack-cors'
 gem 'rollbar'
 gem 'sass-rails'
+gem 'securerandom'
 
 # Use Sass to process CSS
 # gem "sassc-rails"

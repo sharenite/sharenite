@@ -381,6 +381,7 @@ GEM
       sprockets (> 3.0)
       sprockets-rails
       tilt
+    securerandom (0.1.1)
     selenium-webdriver (4.4.0)
       childprocess (>= 0.5, < 5.0)
       rexml (~> 3.2, >= 3.2.5)
@@ -479,6 +480,7 @@ DEPENDENCIES
   rubocop-rails
   rubocop-rspec
   sass-rails
+  securerandom
   selenium-webdriver
   simplecov
   sprockets-rails
