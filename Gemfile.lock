@@ -114,6 +114,9 @@ GEM
     bindex (0.8.1)
     bootsnap (1.13.0)
       msgpack (~> 1.2)
+    bootstrap5-kaminari-views (0.0.1)
+      kaminari (>= 0.13)
+      rails (>= 3.1)
     builder (3.2.4)
     capybara (3.37.1)
       addressable
@@ -460,6 +463,7 @@ DEPENDENCIES
   activeadmin
   appsignal
   bootsnap
+  bootstrap5-kaminari-views
   capybara
   cssbundling-rails
   debug
@@ -473,6 +477,7 @@ DEPENDENCIES
   haml-rails
   jbuilder
   jsbundling-rails
+  kaminari
   letter_opener
   letter_opener_web
   pg (~> 1.1)

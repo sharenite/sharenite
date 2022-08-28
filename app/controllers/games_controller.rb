@@ -20,10 +20,10 @@ class GamesController < InheritedResources::Base
 
   def set_games
     @games = if params[:query].present?
-      current_user.games.filter_by_name(params[:query]).order_by_last_activity
+      current_user.games.filter_by_name(params[:query])
     else
-      current_user.games.order_by_last_activity
-             end
+      current_user.games
+             end.order_by_last_activity.page params[:page]
   end
 
   def game_params

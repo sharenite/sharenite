@@ -1,4 +1,8 @@
 = turbo_frame_tag "games" do
   %p Total games listed: #{@games.count}
+  .d-flex.align-items-center.justify-content-end.mb-2
+    = paginate @games, theme: 'bootstrap-5'
   %ul.list-group.list-group-flush
     = render games
+  .d-flex.align-items-center.justify-content-end.mt-4
+    = paginate @games, theme: 'bootstrap-5'

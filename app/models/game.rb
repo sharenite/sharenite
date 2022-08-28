@@ -6,6 +6,8 @@ class Game < ApplicationRecord
 
   belongs_to :user
 
+  paginates_per 100
+
   scope :filter_by_name, -> (name) { where('name ILIKE ?', "%#{name}%") }
   scope :order_by_last_activity, -> { order('last_activity DESC NULLS LAST') }
 end
