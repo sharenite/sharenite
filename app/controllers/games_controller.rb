@@ -5,9 +5,6 @@ class GamesController < InheritedResources::Base
   def index
     set_games
 
-    logger.debug 'turbo_frame_request?'
-    logger.debug turbo_frame_request?
-
     if turbo_frame_request?
       render partial: "games", locals: { games: @games }
     else
@@ -23,7 +20,9 @@ class GamesController < InheritedResources::Base
       current_user.games.filter_by_name(params[:query])
     else
       current_user.games
-             end.order_by_last_activity.page params[:page]
+             end.order_by_last_activity
+    @games_count = @games.count
+    @games = @games.page params[:page]
   end
 
   def game_params
