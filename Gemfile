@@ -48,6 +48,7 @@ gem "bootsnap", require: false
 
 # Custom
 gem 'activeadmin'
+gem 'appsignal'
 gem 'grape'
 gem 'grape-active_model_serializers'
 gem 'grape_devise', github: 'XenorPLxx/grape_devise', branch: 'master'
