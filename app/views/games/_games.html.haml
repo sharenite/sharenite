@@ -1,8 +1,4 @@
-#games
+= turbo_frame_tag "games" do
   %p Total games listed: #{@games.count}
   %ul.list-group.list-group-flush
-    - games.each do |game|
-      = render game
-  -# %br
-  -# = link_to game do
-  -# = highlight(game.name, params.dig(:name_search))
+    = render games

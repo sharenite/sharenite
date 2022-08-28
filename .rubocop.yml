@@ -37,9 +37,9 @@ Metrics/ParameterLists:
   Enabled: true
 
 Metrics/MethodLength:
-  Description: 'Avoid methods longer than 5 lines of code.'
+  Description: 'Avoid methods longer than 8 lines of code.'
   StyleGuide: '<https://github.com/bbatsov/ruby-style-guide#short-methods>'
-  Max: 5
+  Max: 8
   Enabled: true
 
 Metrics/BlockLength:

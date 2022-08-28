@@ -3,31 +3,24 @@
 # Games controller
 class GamesController < InheritedResources::Base
   def index
-    @games = current_user.games.order_by_last_activity
-  end
-
-  # rubocop:disable Metrics/MethodLength
-  def search
     set_games
-    
-    # rubocop:disable Metrics/BlockLength
-    respond_to do |format|
-      format.turbo_stream do
-          render turbo_stream: [
-            turbo_stream.update("games",
-            partial: "games/games",
-            locals: { games: @games })
-          ]
-      end
+
+    logger.debug 'turbo_frame_request?'
+    logger.debug turbo_frame_request?
+
+    if turbo_frame_request?
+      render partial: "games", locals: { games: @games }
+    else
+      render :index
     end
+  
   end
-  # rubocop:enable all
 
   private
 
   def set_games
-    @games = if params[:name_search].present?
-      current_user.games.filter_by_name(params[:name_search]).order_by_last_activity
+    @games = if params[:query].present?
+      current_user.games.filter_by_name(params[:query]).order_by_last_activity
     else
       current_user.games.order_by_last_activity
              end

@@ -1,3 +1,3 @@
-= form_with url: search_games_path, data: { controller: 'debounce', debounce_target: 'form' }, method: :post do |form|
-  = form.label :name_search, "Search:"
-  = form.search_field :name_search, value: params[:name_search], data: { action: "input->debounce#search" }
+= form_with(url: games_path, method: :get, data: {controller: "search-form", turbo_frame: "games", turbo_action: "advance"}) do |form|
+  = form.label :query, "Search:"
+  = form.text_field :query, value: params[:query], data: { action: "input->search-form#search", }

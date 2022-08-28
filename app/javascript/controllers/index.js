@@ -7,5 +7,5 @@ import { application } from "./application"
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
 
-import DebounceController from "./debounce_controller"
-application.register("debounce", DebounceController)
+import SearchFormController from "./search_form_controller"
+application.register("search-form", SearchFormController)
