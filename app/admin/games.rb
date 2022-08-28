@@ -3,6 +3,8 @@
 ActiveAdmin.register Game do
   menu priority: 3
 
+  belongs_to :user, optional: true
+
   # See permitted parameters documentation:
   # https://github.com/activeadmin/activeadmin/blob/master/docs/2-resource-customization.md#setting-up-strong-parameters
   #
@@ -17,4 +19,13 @@ ActiveAdmin.register Game do
   #   permitted << :other if params[:action] == 'create' && current_user.admin?
   #   permitted
   # end
+
+  index do
+    id_column
+    column :user
+    column :name
+    actions
+  end
+
+  filter :user_email, as: :string
 end

@@ -23,6 +23,9 @@ ActiveAdmin.register User do
   index do
     id_column
     column :email
+    column :games_count do |user|
+      link_to user.games.count, admin_user_games_path(user) 
+    end
     column :current_sign_in_at
     column :current_sign_in_ip
     column :last_sign_in_at
@@ -30,5 +33,13 @@ ActiveAdmin.register User do
     column :created_at
     column :updated_at
     actions
+  end
+
+  filter :email
+
+  sidebar "User Details", only: [:show, :edit] do
+    ul do
+      li link_to "Games", admin_user_games_path(resource)
+    end
   end
 end

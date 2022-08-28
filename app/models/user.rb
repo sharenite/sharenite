@@ -15,4 +15,8 @@ class User < ApplicationRecord
          :trackable
 
   has_many :games, dependent: :destroy
+
+  def display_name
+    email
+  end
 end
