@@ -2,7 +2,7 @@
   .row
     .col-6
       %strong
-        = game.name
+        = highlight(game.name, params.dig(:name_search))
     .col-4
       = game.last_activity
     .col-2

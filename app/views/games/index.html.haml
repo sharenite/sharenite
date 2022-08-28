@@ -1,6 +1,7 @@
-%h1 Games
+.row
+  .col-6
+    %h1 Games
+  .col-6.d-flex.align-items-center.justify-content-end
+    = render "search_form"
 #games
-  %ul.list-group.list-group-flush
-    - @games.order(:name).each do |game|
-      = render game
--# = link_to "New game", new_game_path
+  = render 'games', games: @games

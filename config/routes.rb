@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  resources :games
+  resources :games do
+    collection do
+      post :search
+    end
+  end
   root "static_pages#landing_page"
 
   devise_for :users
