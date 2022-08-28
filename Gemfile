@@ -57,8 +57,8 @@ gem 'rack-cors'
 gem 'rollbar'
 gem 'sass-rails'
 gem 'securerandom'
-gem "sentry-ruby"
 gem "sentry-rails"
+gem "sentry-ruby"
 
 # Use Sass to process CSS
 # gem "sassc-rails"
