@@ -387,6 +387,11 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
+    sentry-rails (5.4.2)
+      railties (>= 5.0)
+      sentry-ruby (~> 5.4.2)
+    sentry-ruby (5.4.2)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
     sexp_processor (4.16.1)
     simplecov (0.21.2)
       docile (~> 1.1)
@@ -482,6 +487,8 @@ DEPENDENCIES
   sass-rails
   securerandom
   selenium-webdriver
+  sentry-rails
+  sentry-ruby
   simplecov
   sprockets-rails
   stimulus-rails
