@@ -50,12 +50,11 @@ module API
           end
         end
         post "" do
-          games = []
-          params[:games].each do |game|
-            current_user.games.destroy_all
-            games << Game.create!(game.merge(user: current_user))
-          end
-          games
+          current_user.games.delete_all
+          # rubocop:disable Rails/SkipsModelValidations
+          Game.insert_all(params[:games].each {|h| h[:user_id]=current_user.id})
+          # rubocop:enable all
+          current_user.games.reload
         end
       end
     end
