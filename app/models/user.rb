@@ -14,5 +14,5 @@ class User < ApplicationRecord
          :confirmable,
          :trackable
 
-  has_many :games, dependent: :restrict_with_exception
+  has_many :games, dependent: :destroy
 end
