@@ -16,7 +16,9 @@ Rails.application.routes.draw do
 
   mount API::Base, at: "/"
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
-  mount Sidekiq::Web => "/sidekiq" if Rails.env.development?
+  authenticate :admin_user, ->(admin_user) { admin_user.present? } do
+    mount Sidekiq::Web => '/sidekiq'
+  end
 
   get "static_pages/dashboard"
 end
