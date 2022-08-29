@@ -73,3 +73,12 @@ RSpec/MultipleExpectations:
 
 RSpec/ExampleLength:
   Max: 20
+
+# Envs
+
+Rails/UnknownEnv:
+  Environments:
+    - production
+    - development
+    - test
+    - staging

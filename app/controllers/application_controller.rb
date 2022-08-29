@@ -2,6 +2,10 @@
 
 # Main application controller
 class ApplicationController < ActionController::Base
+  http_basic_authenticate_with name: Rails.application.credentials.http_basic.user,
+                              password: Rails.application.credentials.http_basic.password,
+                              if: -> { Rails.env.staging? }
+
   before_action :authenticate_user!
   before_action :set_sentry_context
   
