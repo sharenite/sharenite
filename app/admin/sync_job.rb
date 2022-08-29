@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-ActiveAdmin.register Game do
+ActiveAdmin.register SyncJob do
   config.sort_order = 'created_at_desc'
-  menu priority: 3
+
+  menu priority: 4
 
   belongs_to :user, optional: true
 
@@ -25,6 +26,7 @@ ActiveAdmin.register Game do
     id_column
     column :user
     column :name
+    column :status
     column :created_at
     column :updated_at
     actions

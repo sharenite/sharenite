@@ -131,6 +131,7 @@ GEM
       activesupport
     childprocess (4.1.0)
     concurrent-ruby (1.1.10)
+    connection_pool (2.2.5)
     crass (1.0.6)
     cssbundling-rails (1.1.1)
       railties (>= 6.0.0)
@@ -398,6 +399,10 @@ GEM
     sentry-ruby (5.4.2)
       concurrent-ruby (~> 1.0, >= 1.0.2)
     sexp_processor (4.16.1)
+    sidekiq (6.5.6)
+      connection_pool (>= 2.2.5)
+      rack (~> 2.0)
+      redis (>= 4.5.0, < 5)
     simplecov (0.21.2)
       docile (~> 1.1)
       simplecov-html (~> 0.11)
@@ -497,6 +502,7 @@ DEPENDENCIES
   selenium-webdriver
   sentry-rails
   sentry-ruby
+  sidekiq
   simplecov
   sprockets-rails
   stimulus-rails

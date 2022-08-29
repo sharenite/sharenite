@@ -62,6 +62,7 @@ gem 'sass-rails'
 gem 'securerandom'
 gem "sentry-rails"
 gem "sentry-ruby"
+gem 'sidekiq'
 
 # Use Sass to process CSS
 # gem "sassc-rails"

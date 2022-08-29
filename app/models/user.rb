@@ -15,6 +15,7 @@ class User < ApplicationRecord
          :trackable
 
   has_many :games, dependent: :destroy
+  has_many :sync_jobs, dependent: :destroy
 
   def display_name
     email

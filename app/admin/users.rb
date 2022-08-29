@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register User do
+  config.sort_order = 'created_at_desc'
   menu priority: 2
 
   # See permitted parameters documentation:

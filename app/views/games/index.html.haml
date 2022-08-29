@@ -1,3 +1,6 @@
+- unless @sync_job.nil?
+  .alert.alert-primary
+    There's a synchronisation in progress, status: #{@sync_job.status}.
 .row
   .col-6
     %h1 Games

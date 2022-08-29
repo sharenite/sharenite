@@ -15,47 +15,43 @@ module API
         params do
           requires :games, type: Array do
             requires :name, type: String
-            optional :added, type: DateTime, default: nil
-            optional :community_score, type: Integer, default: nil
-            optional :critic_score, type: Integer, default: nil
-            optional :description, type: String, default: nil
-            optional :favorite, type: Boolean, default: nil
-            optional :game_id, type: String, default: nil
-            optional :game_started_script, type: String, default: nil
-            optional :hidden, type: Boolean, default: nil
-            optional :include_library_plugin_action, type: Boolean, default: nil
-            optional :install_directory, type: String, default: nil
-            optional :is_custom_game, type: Boolean, default: nil
-            optional :is_installed, type: Boolean, default: nil
-            optional :is_installing, type: Boolean, default: nil
-            optional :is_launching, type: Boolean, default: nil
-            optional :is_running, type: Boolean, default: nil
-            optional :is_uninstalling, type: Boolean, default: nil
-            optional :last_activity, type: DateTime, default: nil
-            optional :manual, type: String, default: nil
-            optional :modified, type: DateTime, default: nil
-            optional :notes, type: String, default: nil
-            optional :play_count, type: Integer, default: nil
-            optional :playtime, type: Integer, default: nil
-            optional :plugin_id, type: String, default: nil
-            optional :post_script, type: String, default: nil
-            optional :pre_script, type: String, default: nil
-            optional :release_date, type: Date, default: nil
-            optional :sorting_name, type: String, default: nil
-            optional :use_global_game_started_script, type: Boolean, default: nil
-            optional :use_global_post_script, type: Boolean, default: nil
-            optional :use_global_pre_script, type: Boolean, default: nil
-            optional :user_score, type: Integer, default: nil
-            optional :version, type: String, default: nil
+            optional :added, type: DateTime
+            optional :community_score, type: Integer
+            optional :critic_score, type: Integer
+            optional :description, type: String
+            optional :favorite, type: Boolean
+            optional :game_id, type: String
+            optional :game_started_script, type: String
+            optional :hidden, type: Boolean
+            optional :include_library_plugin_action, type: Boolean
+            optional :install_directory, type: String
+            optional :is_custom_game, type: Boolean
+            optional :is_installed, type: Boolean
+            optional :is_installing, type: Boolean
+            optional :is_launching, type: Boolean
+            optional :is_running, type: Boolean
+            optional :is_uninstalling, type: Boolean
+            optional :last_activity, type: DateTime
+            optional :manual, type: String
+            optional :modified, type: DateTime
+            optional :notes, type: String
+            optional :play_count, type: Integer
+            optional :playtime, type: Integer
+            optional :plugin_id, type: String
+            optional :post_script, type: String
+            optional :pre_script, type: String
+            optional :release_date, type: Date
+            optional :sorting_name, type: String
+            optional :use_global_game_started_script, type: Boolean
+            optional :use_global_post_script, type: Boolean
+            optional :use_global_pre_script, type: Boolean
+            optional :user_score, type: Integer
+            optional :version, type: String
           end
         end
         post "" do
-          current_user.games.delete_all
-          
-          # rubocop:disable Rails/SkipsModelValidations
-          current_user.games.insert_all(params[:games])
-          # rubocop:enable all
-          
+          job = current_user.sync_jobs.create(name: 'FullLibrarySyncJob')
+          FullLibrarySyncJob.perform_async(params[:games], current_user.id, job.id)
           status 201
         end
       end

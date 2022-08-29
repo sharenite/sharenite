@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
   resources :games do
     collection do
@@ -14,6 +16,7 @@ Rails.application.routes.draw do
 
   mount API::Base, at: "/"
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
+  mount Sidekiq::Web => "/sidekiq" if Rails.env.development?
 
   get "static_pages/dashboard"
 end

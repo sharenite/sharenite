@@ -4,6 +4,7 @@
 class GamesController < InheritedResources::Base
   def index
     set_games
+    set_sync_job
 
     if turbo_frame_request?
       render partial: "games", locals: { games: @games }
@@ -14,6 +15,10 @@ class GamesController < InheritedResources::Base
   end
 
   private
+
+  def set_sync_job
+    @sync_job = current_user.sync_jobs.active&.first
+  end
 
   def set_games
     @games = if params[:query].present?
