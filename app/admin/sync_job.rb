@@ -33,4 +33,5 @@ ActiveAdmin.register SyncJob do
   end
 
   filter :user_email, as: :string
+  filter :status, as: :select, collection: SyncJob.statuses
 end

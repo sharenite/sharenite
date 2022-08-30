@@ -27,8 +27,16 @@ module API
           status 202
         end
 
+        desc "Delete games"
+        put "delete" do
+          job = current_user.sync_jobs.create(name: 'DeleteGamesSyncJob')
+          DeleteGamesSyncJob.perform_async(params[:games], current_user.id, job.id)
+          GC.start
+          status 202
+        end
+
         desc "Update game"
-        post ":id" do
+        put ":id" do
           job = current_user.sync_jobs.create(name: 'GameSyncJob')
           GameSyncJob.perform_async(params[:id], params[:game], current_user.id, job.id)
           GC.start

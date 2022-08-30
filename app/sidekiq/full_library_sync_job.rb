@@ -28,11 +28,11 @@ class FullLibrarySyncJob
   end
 
   def synchronise_games
-    @user.games.delete_all
     fill_in_the_blanks
-          
+
+    @user.games.where.not(playnite_id: @games.map { |h| h['playnite_id'] }).delete_all  
     # rubocop:disable Rails/SkipsModelValidations
-    @user.games.insert_all(@games)
+    @user.games.upsert_all(@games, unique_by: [:user_id, :playnite_id])
     # rubocop:enable all
   end
 
