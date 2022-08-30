@@ -60,6 +60,7 @@ class FullLibrarySyncJob
       game['modified'] = nil unless game.key?('modified')
       game['notes'] = nil unless game.key?('notes')
       game['play_count'] = nil unless game.key?('play_count')
+      game['playnite_id'] = nil unless game.key?('playnite_id')
       game['playtime'] = nil unless game.key?('playtime')
       game['plugin_id'] = nil unless game.key?('plugin_id')
       game['post_script'] = nil unless game.key?('post_script')
