@@ -15,6 +15,7 @@ module API
         post "" do
           job = current_user.sync_jobs.create(name: 'FullLibrarySyncJob')
           FullLibrarySyncJob.perform_async(params[:games], current_user.id, job.id)
+          GC.start
           status 201
         end
       end
