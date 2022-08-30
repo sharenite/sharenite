@@ -19,6 +19,14 @@ module API
           status 202
         end
 
+        desc "Update games"
+        put "" do
+          job = current_user.sync_jobs.create(name: 'PartialLibrarySyncJob')
+          PartialLibrarySyncJob.perform_async(params[:games], current_user.id, job.id)
+          GC.start
+          status 202
+        end
+
         desc "Update game"
         post ":id" do
           job = current_user.sync_jobs.create(name: 'GameSyncJob')
