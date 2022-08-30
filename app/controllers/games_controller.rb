@@ -2,6 +2,8 @@
 
 # Games controller
 class GamesController < InheritedResources::Base
+  before_action :game, only: [:show, :edit, :update, :destroy]
+
   def index
     set_games
     set_sync_job
@@ -11,13 +13,29 @@ class GamesController < InheritedResources::Base
     else
       render :index
     end
-  
+  end
+
+  def show
+  end
+
+  def edit
+  end
+
+  def update
+  end
+
+  def destroy
   end
 
   private
 
   def set_sync_job
     @sync_job = current_user.sync_jobs.active&.first
+  end
+
+  def game
+    @game = current_user.games.find_by(id: params[:id])
+    @game ||= invalid_url! # defined in app controller 
   end
 
   def set_games
