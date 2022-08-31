@@ -1,0 +1,25 @@
+version: "3"
+networks:
+  nginx:
+services:
+  nginx:
+    image: linuxserver/swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - URL=new.sharenite.link
+      - SUBDOMAINS=wildcard
+      - VALIDATION=dns
+      - DNSPLUGIN=ovh
+      - EMAIL=admin@sharenite.link
+    volumes:
+      - ./nginx:/config
+    ports:
+      - 443:443
+      - 80:80
+    restart: unless-stopped
+    networks:
+      - nginx
