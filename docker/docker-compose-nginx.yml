@@ -9,7 +9,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Warsaw
-      - URL=new.sharenite.link
+      - URL=sharenite.link
       - SUBDOMAINS=wildcard
       - VALIDATION=dns
       - DNSPLUGIN=ovh
