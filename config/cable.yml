@@ -1,6 +1,6 @@
 development:
   adapter: redis
-  url: redis://sharenite_redis:6379/1
+  url: redis://sharenite-redis:6379/1
 
 test:
   adapter: test

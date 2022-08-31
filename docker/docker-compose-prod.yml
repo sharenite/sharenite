@@ -1,0 +1,90 @@
+version: '3'
+networks:
+  production:
+volumes:
+  db_data:
+  gem_cache:
+  shared_data:
+services:
+
+  sharenite-redis:
+    image: redis:7-alpine
+    command: redis-server
+    networks:
+      - production
+    volumes:
+      - shared_data:/var/shared/redis
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 8G
+
+  sharenite-database:
+    image: postgres:14-alpine
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - shared_data:/var/shared
+    networks:
+      - production
+    environment:
+      POSTGRES_USER: sharenite
+      POSTGRES_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 8G
+
+  sharenite-webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile-app.prod
+    volumes:
+      - ../:/var/app
+      - shared_data:/var/shared
+      - gem_cache:/usr/local/bundle/gems
+    networks:
+      - production
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    entrypoint: prod-entrypoint.sh
+    command: ['rails', 'server', '-p', '3000', '-b', '0.0.0.0']
+    environment:
+      RAILS_ENV: production
+      SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
+    depends_on:
+      - sharenite-database
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 16G
+
+  sharenite-sidekiq:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    volumes:
+      - ../:/var/app
+      - shared_data:/var/shared
+      - gem_cache:/usr/local/bundle/gems
+    networks:
+      - production
+    stdin_open: true
+    tty: true
+    entrypoint: prod-entrypoint.sh
+    command: ['sidekiq']
+    environment:
+      RAILS_ENV: production
+      SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
+    depends_on:
+      - sharenite-database
+      - sharenite-redis
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 16G

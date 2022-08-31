@@ -48,3 +48,6 @@
 
 # Node modules
 /node_modules
+
+# Docker env
+docker/.env

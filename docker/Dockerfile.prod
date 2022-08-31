@@ -5,12 +5,10 @@ ENV BUNDLE_VERSION 2.2.32
 ENV BUNDLE_PATH /usr/local/bundle/gems
 ENV TMP_PATH /tmp/
 ENV RAILS_LOG_TO_STDOUT true
-ENV RAILS_PORT 3000
 
 # copy entrypoint scripts and grant execution permissions
-COPY ./dev-docker-entrypoint.sh /usr/local/bin/dev-entrypoint.sh
-COPY ./test-docker-entrypoint.sh /usr/local/bin/test-entrypoint.sh
-RUN chmod +x /usr/local/bin/dev-entrypoint.sh && chmod +x /usr/local/bin/test-entrypoint.sh
+COPY ./entrypoint-docker-prod.sh /usr/local/bin/prod-entrypoint.sh
+RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
 # install dependencies for application
 RUN apk -U add --no-cache \
@@ -35,7 +33,5 @@ RUN gem install bundler --version "$BUNDLE_VERSION" \
 
 # navigate to app directory
 WORKDIR $APP_PATH
-
-EXPOSE $RAILS_PORT
 
 ENTRYPOINT [ "bundle", "exec" ]

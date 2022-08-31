@@ -8,9 +8,8 @@ volumes:
   shared_data:
 services:
 
-  sharenite_redis:
+  sharenite-redis:
     image: redis:7-alpine
-    container_name: sharenite-redis
     command: redis-server
     networks:
       - development
@@ -18,9 +17,8 @@ services:
     volumes:
       - shared_data:/var/shared/redis
 
-  sharenite_db:
+  sharenite-database:
     image: postgres:14-alpine
-    container_name: sharenite-database
     volumes:
       - db_data:/var/lib/postgresql/data
       - shared_data:/var/shared
@@ -33,13 +31,12 @@ services:
     ports:
       - 5432:5432
 
-  sharenite_app:
+  sharenite-webapp:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: sharenite-webapp
     volumes:
-      - .:/var/app
+      - ../:/var/app
       - shared_data:/var/shared
       - gem_cache:/usr/local/bundle/gems
     networks:
@@ -53,15 +50,14 @@ services:
     environment:
       RAILS_ENV: development
     depends_on:
-      - sharenite_db
+      - sharenite-database
 
-  sharenite_js:
+  sharenite-js:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: sharenite-js
     volumes:
-      - .:/var/app
+      - ../:/var/app
       - shared_data:/var/shared
       - gem_cache:/usr/local/bundle/gems
     networks:
@@ -73,15 +69,14 @@ services:
     environment:
       RAILS_ENV: development
     depends_on:
-      - sharenite_db
+      - sharenite-database
 
-  sharenite_css:
+  sharenite-css:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: sharenite-css
     volumes:
-      - .:/var/app
+      - ../:/var/app
       - shared_data:/var/shared
       - gem_cache:/usr/local/bundle/gems
     networks:
@@ -93,15 +88,14 @@ services:
     environment:
       RAILS_ENV: development
     depends_on:
-      - sharenite_db
+      - sharenite-database
 
-  sharenite_sidekiq:
+  sharenite-sidekiq:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: sharenite-sidekiq
     volumes:
-      - .:/var/app
+      - ../:/var/app
       - shared_data:/var/shared
       - gem_cache:/usr/local/bundle/gems
     networks:
@@ -109,18 +103,17 @@ services:
     stdin_open: true
     tty: true
     entrypoint: dev-entrypoint.sh
-    command: ['bundle', 'exec', 'sidekiq']
+    command: ['sidekiq']
     environment:
       RAILS_ENV: development
     depends_on:
-      - sharenite_db
-      - sharenite_redis
+      - sharenite-database
+      - sharenite-redis
 
-  sharenite_test:
+  sharenite-test:
     image: sharenite_sharenite_app
-    container_name: sharenite-test
     volumes:
-      - .:/var/app
+      - ../:/var/app
       - shared_data:/var/shared
       - gem_cache:/usr/local/bundle/gems
     networks:
@@ -134,4 +127,4 @@ services:
     environment:
       RAILS_ENV: test
     depends_on:
-      - sharenite_db
+      - sharenite-database

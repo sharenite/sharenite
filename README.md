@@ -16,7 +16,7 @@ docker compose up
 
 ## Restart only webapp
 ```ruby
-docker-compose restart sharenite_app
+docker compose restart sharenite_app
 ```
 
 ## DB migrations
