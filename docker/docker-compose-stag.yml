@@ -14,6 +14,7 @@ services:
       - staging
     volumes:
       - shared_data:/var/shared/redis
+    restart: always
     deploy:
       resources:
         limits:
@@ -30,6 +31,7 @@ services:
     environment:
       POSTGRES_USER: sharenite
       POSTGRES_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
+    restart: always
     deploy:
       resources:
         limits:
@@ -57,6 +59,7 @@ services:
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
     depends_on:
       - sharenite-database
+    restart: always
     deploy:
       resources:
         limits:
@@ -83,6 +86,7 @@ services:
     depends_on:
       - sharenite-database
       - sharenite-redis
+    restart: always
     deploy:
       resources:
         limits:

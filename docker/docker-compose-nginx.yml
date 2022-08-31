@@ -23,6 +23,7 @@ services:
       - 80:80
     restart: unless-stopped
     network_mode: host
+    restart: always
     deploy:
       resources:
         limits:
