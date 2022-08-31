@@ -1,6 +1,5 @@
 version: "3"
-networks:
-  nginx:
+
 services:
   nginx:
     image: linuxserver/swag
@@ -17,12 +16,13 @@ services:
       - EMAIL=admin@sharenite.link
     volumes:
       - ./nginx:/config
+      - ~/production:/production      
+      - ~/staging:/staging
     ports:
       - 443:443
       - 80:80
     restart: unless-stopped
-    networks:
-      - nginx
+    network_mode: host
     deploy:
       resources:
         limits:
