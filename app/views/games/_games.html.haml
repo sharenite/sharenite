@@ -3,6 +3,14 @@
   .d-flex.align-items-center.justify-content-end.mb-2
     = paginate @games, theme: 'bootstrap-5'
   %ul.list-group.list-group-flush
+    %li.list-group-item{id: "header"}
+      .row
+        .col-6
+          %strong
+            TITLE
+        .col-4
+          %strong
+            LAST ACTIVITY
     = render games
   .d-flex.align-items-center.justify-content-end.mt-4
     = paginate @games, theme: 'bootstrap-5'

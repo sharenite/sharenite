@@ -1,9 +1,12 @@
 %li.list-group-item{id: "#{dom_id game}"}
   .row
     .col-6
+      - if game.favorite
+        %i.bi.bi-star-fill.yellow.text-warning
       %strong
         = highlight(game.name, params.dig(:query))
     .col-4
-      = game.last_activity
+      %abbr{title: "#{game.last_activity}"}
+        #{time_ago_in_words(game.last_activity, { include_seconds: true })} ago
     .col-2
       = link_to "Show this game", game, data: { 'turbo-frame': "_top" }
