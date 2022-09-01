@@ -38,6 +38,19 @@
   = game.name
   - if game.favorite
     %i.bi.bi-star-fill.yellow.text-warning
+.row
+  .col.text-center
+    %p
+      %small.text-muted{alt: "test"} platforms platforms
+  .col.text-center
+    %p
+      %small.text-muted{alt: "test"} completion_status
+  .col.text-center
+    %p
+      %small.text-muted{alt: "test"} categories categories categories
+  .col.text-center
+    %p
+      %small.text-muted{alt: "test"} tags tags tags tags tags
 .card.mb-3
   .row.g-0
     .col-md-4
@@ -54,7 +67,10 @@
               %small.text-muted
                 Last activity:
                 %abbr{title: "#{game.last_activity}"}
-                  #{time_ago_in_words(game.last_activity, { include_seconds: true })} ago
+                  - if game.last_activity
+                    = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
+                  - else
+                    Never.
           .col-auto
             %p.card-text
               %small.text-muted
@@ -69,20 +85,7 @@
           %small.text-muted
             Last updated
             %abbr{title: "#{game.updated_at}"}
-              #{time_ago_in_words(game.updated_at, { include_seconds: true })} ago
-.row
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} platforms platforms
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} completion_status
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} categories categories categories
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} tags tags tags tags tags
+              = "#{time_ago_in_words(game.updated_at, { include_seconds: true })} ago"
 .card.mb-2
   .card-body
     %p

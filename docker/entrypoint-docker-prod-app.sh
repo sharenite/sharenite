@@ -10,6 +10,7 @@ yarn check || yarn install
 rake assets:precompile
 rake assets:clean
 rake db:migrate
+rake appsignal:update_version
 
 # Remove pre-existing puma/passenger server.pid
 rm -f $APP_PATH/tmp/pids/server.pid
