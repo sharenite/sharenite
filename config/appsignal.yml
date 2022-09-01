@@ -14,7 +14,7 @@ production:
   push_api_key: "<%= Rails.application.credentials.appsignal %>"
   name: Sharenite
   active: true
-  revision: 8c52816
+  revision: 4df53aa
 staging:
   push_api_key: "<%= Rails.application.credentials.appsignal %>"
   name: Sharenite
