@@ -6,10 +6,10 @@
       %strong
         = highlight(game.name, params.dig(:query))
     .col-4
-      %abbr{title: "#{game.last_activity}"}
-        - if game.last_activity
+      - if game.last_activity
+        %abbr{title: "#{game.last_activity}"}
           = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
-        - else
-          Never.
+      - else
+        Never.
     .col-2
       = link_to "Show this game", game, data: { 'turbo-frame': "_top" }
