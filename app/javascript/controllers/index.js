@@ -5,6 +5,3 @@
 import { application } from "./application"
 import SearchFormController from "./search_form_controller"
 application.register("search-form", SearchFormController)
-
-import GameDetailsController from "./game_details_controller"
-application.register("game-details", GameDetailsController)

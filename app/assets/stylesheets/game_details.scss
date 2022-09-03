@@ -1,9 +1,16 @@
-.game_details__cover {
+.game-details__cover {
   text-align: center;
 }
 
 @include media-breakpoint-up(md) {
-  .game_details__cover {
+  .game-details__cover {
     text-align: start;
+  }
+}
+
+.game-details__description {
+  img {
+    max-width: 100%;
+    height: auto;
   }
 }
