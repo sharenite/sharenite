@@ -34,7 +34,7 @@
 -# is_launching
 -# is_running
 -# is_uninstalling
-#game-details{data: { controller: "game-details" }}
+.game-details{data: { controller: "game-details" }}
   %h1.text-center.mb-4
     = game.name
     - if game.favorite
@@ -54,7 +54,7 @@
         %small.text-muted{alt: "test"} tags tags tags tags tags
   .card.mb-3
     .row.g-0
-      .col-md-4
+      .col-md-4.game_details__cover
         %img.img-fluid.rounded-start{
           alt: "cover_image",
           src: "https://picsum.photos/300/400"
@@ -81,7 +81,7 @@
                 %small.text-muted
                   = "Play count: #{game.play_count}"
         .row.mb-4
-          .col-auto#game-details__description
+          .col-auto.game-details__description
             %p.card-text
               = sanitize(game.description)
             %p.card-text

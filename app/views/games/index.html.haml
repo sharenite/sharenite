@@ -1,9 +1,9 @@
 - unless @sync_job.nil?
   .alert.alert-primary
-    There's a synchronisation in progress, status: #{@sync_job.status}.
+    = "There's a synchronisation in progress, status: #{@sync_job.status}."
 .row
-  .col-6
+  .col-6.me-auto
     %h1 Games
-  .col-6.d-flex.align-items-center.justify-content-end
+  .col-auto.d-flex.align-items-center.justify-content-end.text-end
     = render "search_form"
 = render 'games', games: @games

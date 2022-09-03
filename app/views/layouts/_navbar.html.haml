@@ -2,38 +2,39 @@
   %header.p-3.text-bg-dark
     .container
       .d-flex.flex-wrap.align-items-center.justify-content-center.justify-content-lg-start
-        %ul.nav.col-12.col-lg-auto.me-lg-auto.mb-2.justify-content-center.mb-md-0
+        %ul.nav.col-10.col-sm-auto.me-sm-auto.mb-2.justify-content-center.mb-md-0
           %li
             = link_to 'Home', root_path, class: "nav-link px-2 text-secondary"
           %li
             = link_to 'Dashboard', static_pages_dashboard_path, class: 'nav-link px-2 text-white'
           %li
             = link_to 'Games', games_path, class: 'nav-link px-2 text-white'
-        -#
-          %form.col-12.col-lg-auto.mb-3.mb-lg-0.me-lg-3{role: "search"}
-          -# %input.form-control.form-control-dark.text-bg-dark{"aria-label" => "Search", placeholder: "Search...", type: "search"}
-        - if user_signed_in?
-          .dropdown.text-end
-          %a.d-block.link-dark.text-decoration-none.dropdown-toggle{
-            "aria-expanded": "false",
-            "data-bs-toggle": "dropdown",
-            href: "#",
-            style: ""
-          }
-            %img.rounded-circle{
-              alt: "mdo",
-              height: "32",
-              src: "/person.png",
-              width: "32"
-            }/
-          %ul.dropdown-menu.text-small{style: ""}
-            %li
-              = link_to 'Edit profile', edit_user_registration_path,  class: 'dropdown-item'
-            %li
-              %hr.dropdown-divider/
-            %li
-              = button_to "Logout", destroy_user_session_path, class: 'dropdown-item', method: :delete
-        - else
-          .text-end
-            = link_to 'Login', new_user_session_path, class: 'btn btn-outline-light me-2', type: "button"
-            = link_to 'Sign-up', new_user_registration_path, class: 'btn btn-warning', type: "button"
+          -#
+            -# %form.col-12.col-lg-auto.mb-3.mb-lg-0.me-lg-3{role: "search"}
+            -# %input.form-control.form-control-dark.text-bg-dark{"aria-label" => "Search", placeholder: "Search...", type: "search"}
+        .col-auto.text-end
+          - if user_signed_in?
+            .dropdown.text-end
+            %a.d-block.link-dark.text-decoration-none.dropdown-toggle{
+              "aria-expanded": "false",
+              "data-bs-toggle": "dropdown",
+              href: "#",
+              style: ""
+            }
+              %img.rounded-circle{
+                alt: "mdo",
+                height: "32",
+                src: "/person.png",
+                width: "32"
+              }/
+            %ul.dropdown-menu.text-small{style: ""}
+              %li
+                = link_to 'Edit profile', edit_user_registration_path,  class: 'dropdown-item'
+              %li
+                %hr.dropdown-divider/
+              %li
+                = button_to "Logout", destroy_user_session_path, class: 'dropdown-item', method: :delete
+          - else
+            .text-end
+              = link_to 'Login', new_user_session_path, class: 'btn btn-outline-light me-2', type: "button"
+              = link_to 'Sign-up', new_user_registration_path, class: 'btn btn-warning', type: "button"
