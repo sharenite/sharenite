@@ -5,7 +5,7 @@ default:
 development:
   push_api_key: "<%= Rails.application.credentials.appsignal %>"
   name: Sharenite
-  active: true
+  active: false
 test:
   push_api_key: "<%= Rails.application.credentials.appsignal %>"
   name: Sharenite

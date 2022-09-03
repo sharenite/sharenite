@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
-require 'sidekiq/web'
+require "sidekiq/web"
 
 Rails.application.routes.draw do
   resources :games do
-    collection do
-      post :search
-    end
+    collection { post :search }
   end
   root "static_pages#landing_page"
 
@@ -17,7 +15,7 @@ Rails.application.routes.draw do
   mount API::Base, at: "/"
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
   authenticate :admin_user, ->(admin_user) { admin_user.present? } do
-    mount Sidekiq::Web => '/sidekiq'
+    mount Sidekiq::Web => "/sidekiq"
   end
 
   get "static_pages/dashboard"

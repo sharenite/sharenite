@@ -34,190 +34,193 @@
 -# is_launching
 -# is_running
 -# is_uninstalling
-%h1.text-center.mb-4
-  = game.name
-  - if game.favorite
-    %i.bi.bi-star-fill.yellow.text-warning
-.row
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} platforms platforms
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} completion_status
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} categories categories categories
-  .col.text-center
-    %p
-      %small.text-muted{alt: "test"} tags tags tags tags tags
-.card.mb-3
-  .row.g-0
-    .col-md-4
-      %img.img-fluid.rounded-start{
-        alt: "cover_image",
-        src: "https://picsum.photos/300/400"
-      }/
-    .col-md-8
-      .card-body
-        %h5.card-title.mb-0 source
+#game-details{data: { controller: "game-details" }}
+  %h1.text-center.mb-4
+    = game.name
+    - if game.favorite
+      %i.bi.bi-star-fill.yellow.text-warning
+  .row
+    .col-sm-12.col-md-6.col-lg-3.text-center
+      %p
+        %small.text-muted{alt: "test"} platforms platformsss
+    .col-sm-12.col-md-6.col-lg-3.text-center
+      %p
+        %small.text-muted{alt: "test"} completion_status
+    .col-sm-12.col-md-6.col-lg-3.text-center
+      %p
+        %small.text-muted{alt: "test"} categories categories categories
+    .col-sm-12.col-md-6.col-lg-3.text-center
+      %p
+        %small.text-muted{alt: "test"} tags tags tags tags tags
+  .card.mb-3
+    .row.g-0
+      .col-md-4
+        %img.img-fluid.rounded-start{
+          alt: "cover_image",
+          src: "https://picsum.photos/300/400"
+        }/
+      .col-md-8
+        .card-body
+          %h5.card-title.mb-0 source
+          .row.mb-4
+            .col-auto
+              %p.card-text
+                %small.text-muted
+                  Last activity:
+                  %abbr{title: "#{game.last_activity}"}
+                    - if game.last_activity
+                      = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
+                    - else
+                      Never.
+            .col-auto
+              %p.card-text
+                %small.text-muted
+                  = "Playtime: #{"%02d:%02d:%02d" % [game.playtime / 3600, game.playtime / 60 % 60, game.playtime % 60]}"
+            .col-auto
+              %p.card-text
+                %small.text-muted
+                  = "Play count: #{game.play_count}"
         .row.mb-4
-          .col-auto
+          .col-auto#game-details__description
+            %p.card-text
+              = sanitize(game.description)
             %p.card-text
               %small.text-muted
-                Last activity:
-                %abbr{title: "#{game.last_activity}"}
-                  - if game.last_activity
-                    = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
-                  - else
-                    Never.
-          .col-auto
-            %p.card-text
-              %small.text-muted
-                = "Playtime: #{"%02d:%02d:%02d" % [game.playtime / 3600, game.playtime / 60 % 60, game.playtime % 60]}"
-          .col-auto
-            %p.card-text
-              %small.text-muted
-                = "Play count: #{game.play_count}"
-        %p.card-text
-          = sanitize(game.description)
-        %p.card-text
-          %small.text-muted
-            Last updated
-            %abbr{title: "#{game.updated_at}"}
-              = "#{time_ago_in_words(game.updated_at, { include_seconds: true })} ago"
-.card.mb-2
-  .card-body
-    %p
-      %strong Added:
-      = game.added
-    %p.mb-0
-      %strong Modified:
-      = game.modified
-.card.mb-2
-  .card-body
-    %p
-      %strong User Score:
-      = game.user_score
-    %p
-      %strong Community Score:
-      = game.community_score
-    %p.mb-0
-      %strong Critic Score:
-      = game.critic_score
-.card.mb-2
-  .card-body
-    %p
-      %strong Version:
-      = game.version
-    %p.mb-0
-      %strong Notes:
-      = game.notes
-    -# %p
-    -# %strong Release Date:
-    -# = game.release_date
-.card.mb-2
-  .card-body
-    %p
-      %strong Is Custom Game:
-      = game.is_custom_game
-    %p
-      %strong Is Installed:
-      = game.is_installed
-    %p
-      %strong Is Installing:
-      = game.is_installing
-    %p
-      %strong Is Launching:
-      = game.is_launching
-    %p
-      %strong Is Running:
-      = game.is_running
-    %p.mb-0
-      %strong Is Uninstalling:
-      = game.is_uninstalling
-.card.mb-2
-  .card-body
-    %p
-      %strong Game Id:
-      = game.game_id
-    %p
-      %strong Game Started Script:
-      = game.game_started_script
-    %p
-      %strong Hidden:
-      = game.hidden
-    %p
-      %strong Include Library Plugin Action:
-      = game.include_library_plugin_action
-    %p
-      %strong Install Directory:
-      = game.install_directory
-    %p
-      %strong Manual:
-      = game.manual
-    %p
-      %strong Playnite ID:
-      = game.playnite_id
-    %p
-      %strong Plugin Id:
-      = game.plugin_id
-    %p
-      %strong Post Script:
-      = game.post_script
-    %p
-      %strong Pre Script:
-      = game.pre_script
-    %p
-      %strong Sorting Name:
-      = game.sorting_name
-    %p
-      %strong Use Global Game Started Script:
-      = game.use_global_game_started_script
-    %p
-      %strong Use Global Post Script:
-      = game.use_global_post_script
-    %p.mb-0
-      %strong Use Global Pre Script:
-      = game.use_global_pre_script
--# added_segment
--# age_rating_ids
--# category_ids
--# community_score_group
--# community_score_rating
--# completion_status_id
--# critic_score_group
--# critic_score_rating
--# developer_ids
--# feature_ids
--# game_actions
--# game_id
--# game_started_script
--# genre_ids
--# hidden
--# icon
--# id
--# include_library_plugin_action
--# install_directory
--# is_custom_game
--# last_activity_segment
--# manual
--# modified_segment
--# platform_ids
--# playtime_category
--# post_script
--# pre_script
--# publisher_ids
--# region_ids
--# release_year
--# roms
--# series_ids
--# sorting_name
--# source_id
--# tag_ids
--# use_global_game_started_script
--# use_global_post_script
--# use_global_pre_script
--# user_score_group
--# user_score_rating
--# plugin_id
+                Last updated
+                %abbr{title: "#{game.updated_at}"}
+                  = "#{time_ago_in_words(game.updated_at, { include_seconds: true })} ago"
+  .card.mb-2
+    .card-body
+      %p
+        %strong Added:
+        = game.added
+      %p.mb-0
+        %strong Modified:
+        = game.modified
+  .card.mb-2
+    .card-body
+      %p
+        %strong User Score:
+        = game.user_score
+      %p
+        %strong Community Score:
+        = game.community_score
+      %p.mb-0
+        %strong Critic Score:
+        = game.critic_score
+  .card.mb-2
+    .card-body
+      %p
+        %strong Version:
+        = game.version
+      %p.mb-0
+        %strong Notes:
+        = game.notes
+      -# %p
+      -# %strong Release Date:
+      -# = game.release_date
+  .card.mb-2
+    .card-body
+      %p
+        %strong Is Custom Game:
+        = game.is_custom_game
+      %p
+        %strong Is Installed:
+        = game.is_installed
+      %p
+        %strong Is Installing:
+        = game.is_installing
+      %p
+        %strong Is Launching:
+        = game.is_launching
+      %p
+        %strong Is Running:
+        = game.is_running
+      %p.mb-0
+        %strong Is Uninstalling:
+        = game.is_uninstalling
+  .card.mb-2
+    .card-body
+      %p
+        %strong Game Id:
+        = game.game_id
+      %p
+        %strong Game Started Script:
+        = game.game_started_script
+      %p
+        %strong Hidden:
+        = game.hidden
+      %p
+        %strong Include Library Plugin Action:
+        = game.include_library_plugin_action
+      %p
+        %strong Install Directory:
+        = game.install_directory
+      %p
+        %strong Manual:
+        = game.manual
+      %p
+        %strong Playnite ID:
+        = game.playnite_id
+      %p
+        %strong Plugin Id:
+        = game.plugin_id
+      %p
+        %strong Post Script:
+        = game.post_script
+      %p
+        %strong Pre Script:
+        = game.pre_script
+      %p
+        %strong Sorting Name:
+        = game.sorting_name
+      %p
+        %strong Use Global Game Started Script:
+        = game.use_global_game_started_script
+      %p
+        %strong Use Global Post Script:
+        = game.use_global_post_script
+      %p.mb-0
+        %strong Use Global Pre Script:
+        = game.use_global_pre_script
+  -# added_segment
+  -# age_rating_ids
+  -# category_ids
+  -# community_score_group
+  -# community_score_rating
+  -# completion_status_id
+  -# critic_score_group
+  -# critic_score_rating
+  -# developer_ids
+  -# feature_ids
+  -# game_actions
+  -# game_id
+  -# game_started_script
+  -# genre_ids
+  -# hidden
+  -# icon
+  -# id
+  -# include_library_plugin_action
+  -# install_directory
+  -# is_custom_game
+  -# last_activity_segment
+  -# manual
+  -# modified_segment
+  -# platform_ids
+  -# playtime_category
+  -# post_script
+  -# pre_script
+  -# publisher_ids
+  -# region_ids
+  -# release_year
+  -# roms
+  -# series_ids
+  -# sorting_name
+  -# source_id
+  -# tag_ids
+  -# use_global_game_started_script
+  -# use_global_post_script
+  -# use_global_pre_script
+  -# user_score_group
+  -# user_score_rating
+  -# plugin_id

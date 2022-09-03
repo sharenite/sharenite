@@ -16,6 +16,8 @@ services:
       - test
     volumes:
       - shared_data:/var/shared/redis
+    ports:
+      - 6379:6379
 
   sharenite-database:
     image: postgres:14-alpine

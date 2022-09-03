@@ -76,6 +76,7 @@ group :development, :test do
   gem "debug", platforms: %i[ mri mingw x64_mingw ]
   gem 'factory_bot_rails'
   gem 'faker'
+  gem 'foreman'
   gem 'letter_opener'
   gem 'letter_opener_web'
   gem 'prettier_print', '~> 0.1.0'
@@ -90,6 +91,7 @@ group :development, :test do
 end
 
 group :development do
+  gem "rails_live_reload"
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 
