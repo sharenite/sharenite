@@ -38,7 +38,7 @@
   %h1.text-center.mb-4
     - if game.is_installed
       %span
-        = link_to "playnite://playnite/start/" + game.playnite_id, {class: 'link-dark text-decoration-none'} do
+        = link_to "playnite://playnite/start/" + game.playnite_id, {class: 'link-dark text-decoration-none', title: 'Play'} do
           %i.bi.bi-play
     = game.name
     - if game.favorite
