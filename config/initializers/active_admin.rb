@@ -58,8 +58,6 @@ ActiveAdmin.setup do |config|
   # within the application controller.
   config.authentication_method = :authenticate_admin_user!
   config.skip_before_action :authenticate_user!
-  config.skip_before_action :set_sentry_context
-  config.before_action :set_sentry_context_admin
 
   # == User Authorization
   #
