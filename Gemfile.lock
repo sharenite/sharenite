@@ -345,7 +345,6 @@ GEM
       actionpack (>= 5.0)
       railties (>= 5.0)
     rexml (3.2.5)
-    rollbar (3.3.1)
     rspec-core (3.11.0)
       rspec-support (~> 3.11.0)
     rspec-expectations (3.11.0)
@@ -500,7 +499,6 @@ DEPENDENCIES
   rails (~> 7.0.3, >= 7.0.3.1)
   rails_live_reload
   redis (~> 4.0)
-  rollbar
   rspec-rails
   rubocop
   rubocop-performance
