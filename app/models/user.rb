@@ -18,6 +18,7 @@ class User < ApplicationRecord
   has_many :sync_jobs, dependent: :destroy
   has_many :tags, dependent: :destroy
   has_many :categories, dependent: :destroy
+  has_many :platforms, dependent: :destroy
 
   def display_name
     email

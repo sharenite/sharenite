@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_05_175437) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_05_181428) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -104,11 +104,29 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_175437) do
     t.index ["user_id"], name: "index_games_on_user_id"
   end
 
+  create_table "games_platforms", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "platform_id", null: false
+    t.index ["game_id", "platform_id"], name: "index_games_platforms_on_game_id_and_platform_id"
+    t.index ["platform_id", "game_id"], name: "index_games_platforms_on_platform_id_and_game_id"
+  end
+
   create_table "games_tags", id: false, force: :cascade do |t|
     t.uuid "game_id", null: false
     t.uuid "tag_id", null: false
     t.index ["game_id", "tag_id"], name: "index_games_tags_on_game_id_and_tag_id"
     t.index ["tag_id", "game_id"], name: "index_games_tags_on_tag_id_and_game_id"
+  end
+
+  create_table "platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.string "specification_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "playnite_id"], name: "index_platforms_on_user_id_and_playnite_id", unique: true
+    t.index ["user_id"], name: "index_platforms_on_user_id"
   end
 
   create_table "sync_jobs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -156,8 +174,11 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_175437) do
   add_foreign_key "categories_games", "categories"
   add_foreign_key "categories_games", "games"
   add_foreign_key "games", "users"
+  add_foreign_key "games_platforms", "games"
+  add_foreign_key "games_platforms", "platforms"
   add_foreign_key "games_tags", "games"
   add_foreign_key "games_tags", "tags"
+  add_foreign_key "platforms", "users"
   add_foreign_key "sync_jobs", "users"
   add_foreign_key "tags", "users"
 end

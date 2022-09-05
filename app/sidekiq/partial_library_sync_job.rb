@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # Job that performs a full library sync asynchornously
+# rubocop:disable Metrics:ClassLength
 class PartialLibrarySyncJob
   include Sidekiq::Job
 
@@ -27,9 +28,7 @@ class PartialLibrarySyncJob
     @sync_job.status_finished!
   end
 
-  # rubocop: disable Metrics/MethodLength
   def synchronise_games
-    # rubocop: disable Metrics/BlockLength
     @games.each do |playnite_game|
       sharenite_game =
         @user.games.create_or_find_by!(playnite_id: playnite_game["id"])
@@ -72,12 +71,12 @@ class PartialLibrarySyncJob
           "version"
         ).merge(
           "tags" => tags(playnite_game),
-          :categories => categories(playnite_game)
+          "categories" => categories(playnite_game),
+          "platforms" => platforms(playnite_game)
         )
       )
     end
   end
-  # rubocop:enable all
 
   def tags(playnite_game)
     tags = []
@@ -90,10 +89,8 @@ class PartialLibrarySyncJob
     tags
   end
 
-  # rubocop: disable Metrics/MethodLength
   def categories(playnite_game)
     categories = []
-    # rubocop: disable Metrics/BlockLength
     playnite_game["categories"]&.each do |playnite_category|
       sharenite_category =
         @user.categories.create_or_find_by!(
@@ -104,5 +101,19 @@ class PartialLibrarySyncJob
     end
     categories
   end
-  # rubocop:enable all
+
+  def platforms(playnite_game)
+    platforms = []
+    playnite_game["platforms"]&.each do |playnite_platform|
+      sharenite_platform =
+        @user.platforms.create_or_find_by!(playnite_id: playnite_platform["id"])
+      sharenite_platform.update!(
+        name: playnite_platform["name"],
+        specification_id: playnite_platform["specification_id"]
+      )
+      platforms << sharenite_platform
+    end
+    platforms
+  end
 end
+# rubocop:enable Metrics:ClassLength
