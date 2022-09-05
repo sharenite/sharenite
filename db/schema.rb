@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_05_181428) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_05_184325) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -62,6 +62,16 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_181428) do
     t.index ["game_id", "category_id"], name: "index_categories_games_on_game_id_and_category_id"
   end
 
+  create_table "completion_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "playnite_id"], name: "index_completion_statuses_on_user_id_and_playnite_id", unique: true
+    t.index ["user_id"], name: "index_completion_statuses_on_user_id"
+  end
+
   create_table "games", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.uuid "user_id", null: false
@@ -100,6 +110,10 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_181428) do
     t.integer "user_score"
     t.string "version"
     t.uuid "playnite_id"
+    t.uuid "completion_status_id"
+    t.uuid "source_id"
+    t.index ["completion_status_id"], name: "index_games_on_completion_status_id"
+    t.index ["source_id"], name: "index_games_on_source_id"
     t.index ["user_id", "playnite_id"], name: "index_games_on_user_id_and_playnite_id", unique: true
     t.index ["user_id"], name: "index_games_on_user_id"
   end
@@ -127,6 +141,16 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_181428) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "playnite_id"], name: "index_platforms_on_user_id_and_playnite_id", unique: true
     t.index ["user_id"], name: "index_platforms_on_user_id"
+  end
+
+  create_table "sources", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "playnite_id"], name: "index_sources_on_user_id_and_playnite_id", unique: true
+    t.index ["user_id"], name: "index_sources_on_user_id"
   end
 
   create_table "sync_jobs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -173,12 +197,16 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_181428) do
   add_foreign_key "categories", "users"
   add_foreign_key "categories_games", "categories"
   add_foreign_key "categories_games", "games"
+  add_foreign_key "completion_statuses", "users"
+  add_foreign_key "games", "completion_statuses"
+  add_foreign_key "games", "sources"
   add_foreign_key "games", "users"
   add_foreign_key "games_platforms", "games"
   add_foreign_key "games_platforms", "platforms"
   add_foreign_key "games_tags", "games"
   add_foreign_key "games_tags", "tags"
   add_foreign_key "platforms", "users"
+  add_foreign_key "sources", "users"
   add_foreign_key "sync_jobs", "users"
   add_foreign_key "tags", "users"
 end

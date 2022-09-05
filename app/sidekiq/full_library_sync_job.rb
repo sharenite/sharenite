@@ -79,7 +79,9 @@ class FullLibrarySyncJob
         ).merge(
           "tags" => tags(playnite_game),
           "categories" => categories(playnite_game),
-          "platforms" => platforms(playnite_game)
+          "platforms" => platforms(playnite_game),
+          "completion_status" => completion_status(playnite_game),
+          "source" => source(playnite_game)
         )
       )
     end
@@ -121,6 +123,28 @@ class FullLibrarySyncJob
       platforms << sharenite_platform
     end
     platforms
+  end
+
+  def completion_status(playnite_game)
+    return nil if playnite_game["completion_status"].nil?
+    sharenite_completion_status =
+      @user.completion_statuses.create_or_find_by!(
+        playnite_id: playnite_game["completion_status"]["id"]
+      )
+    sharenite_completion_status.update!(
+      name: playnite_game["completion_status"]["name"]
+    )
+    sharenite_completion_status
+  end
+
+  def source(playnite_game)
+    return nil if playnite_game["source"].nil?
+    sharenite_source =
+      @user.sources.create_or_find_by!(
+        playnite_id: playnite_game["source"]["id"]
+      )
+    sharenite_source.update!(name: playnite_game["source"]["name"])
+    sharenite_source
   end
 end
 # rubocop:enable Metrics:ClassLength

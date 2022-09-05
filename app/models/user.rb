@@ -19,6 +19,8 @@ class User < ApplicationRecord
   has_many :tags, dependent: :destroy
   has_many :categories, dependent: :destroy
   has_many :platforms, dependent: :destroy
+  has_many :completion_statuses, dependent: :destroy
+  has_many :sources, dependent: :destroy
 
   def display_name
     email

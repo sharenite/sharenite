@@ -5,6 +5,8 @@ class Game < ApplicationRecord
   self.implicit_order_column = "created_at"
 
   belongs_to :user
+  belongs_to :completion_status, optional: true
+  belongs_to :source, optional: true
   has_and_belongs_to_many :tags
   has_and_belongs_to_many :categories
   has_and_belongs_to_many :platforms
