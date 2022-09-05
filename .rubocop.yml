@@ -82,3 +82,6 @@ Rails/UnknownEnv:
     - development
     - test
     - staging
+
+Rails/HasAndBelongsToMany:
+  Enabled: false

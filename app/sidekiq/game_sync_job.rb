@@ -4,18 +4,19 @@
 class GameSyncJob
   include Sidekiq::Job
 
-  def variables(args)    
+  def variables(args)
     @new_game = args[1]
     @user = User.find(args[2])
     @game = @user.games.find_by(playnite_id: args[0])
     @sync_job = SyncJob.find(args[3])
-  end 
-  
-  def perform(*args)
-    variables(args)
-    start_job
-    synchronise_game
-    finish_job
+  end
+
+  def perform(*_args)
+    raise "Not implemented"
+    # variables(args)
+    # start_job
+    # synchronise_game
+    # finish_job
   end
 
   private

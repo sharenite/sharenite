@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_08_30_194504) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_05_162657) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -87,6 +87,15 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_30_194504) do
     t.index ["user_id"], name: "index_games_on_user_id"
   end
 
+  create_table "games_tags", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "tag_id", null: false
+    t.uuid "games_id"
+    t.uuid "tags_id"
+    t.index ["games_id"], name: "index_games_tags_on_games_id"
+    t.index ["tags_id"], name: "index_games_tags_on_tags_id"
+  end
+
   create_table "sync_jobs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.uuid "user_id", null: false
@@ -94,6 +103,16 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_30_194504) do
     t.datetime "updated_at", null: false
     t.enum "status", default: "queued", enum_type: "job_status"
     t.index ["user_id"], name: "index_sync_jobs_on_user_id"
+  end
+
+  create_table "tags", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "playnite_id"
+    t.index ["user_id", "playnite_id"], name: "index_tags_on_user_id_and_playnite_id", unique: true
+    t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -119,5 +138,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_30_194504) do
   end
 
   add_foreign_key "games", "users"
+  add_foreign_key "games_tags", "games", column: "games_id"
+  add_foreign_key "games_tags", "tags", column: "tags_id"
   add_foreign_key "sync_jobs", "users"
+  add_foreign_key "tags", "users"
 end

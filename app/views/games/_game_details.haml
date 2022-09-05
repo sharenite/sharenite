@@ -55,7 +55,7 @@
         %small.text-muted{alt: "test"} categories categories categories
     .col-sm-12.col-md-6.col-lg-3.text-center
       %p
-        %small.text-muted{alt: "test"} tags tags tags tags tags
+        %small.text-muted{alt: "test"} #{game.tags.map(&:name)&.join(' | ')}
   .card.mb-3
     .row.g-0
       .col-md-4.game-details__cover
@@ -219,7 +219,7 @@
   -# genre_ids
   -# hidden
   -# icon
-  -# id
+  -# playnite_id
   -# include_library_plugin_action
   -# install_directory
   -# is_custom_game

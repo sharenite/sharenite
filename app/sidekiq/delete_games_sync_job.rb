@@ -8,8 +8,8 @@ class DeleteGamesSyncJob
     @games = args[0]
     @user = User.find(args[1])
     @sync_job = SyncJob.find(args[2])
-  end 
-  
+  end
+
   def perform(*args)
     variables(args)
     start_job
@@ -28,6 +28,9 @@ class DeleteGamesSyncJob
   end
 
   def delete_games
-    @user.games.where(playnite_id: @games.map { |h| h['playnite_id'] }).delete_all
+    @user
+      .games
+      .where(playnite_id: @games.map { |playnite_game| playnite_game["id"] })
+      .destroy_all
   end
 end
