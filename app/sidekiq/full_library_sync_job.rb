@@ -32,7 +32,7 @@ class FullLibrarySyncJob
     @user.games.where.not(playnite_id: @games.map { |playnite_game| playnite_game["id"] }).destroy_all
 
     @games.each do |playnite_game|
-      sharenite_game = @user.games.create_or_find_by!(playnite_id: playnite_game["id"])
+      sharenite_game = @user.games.find_or_create_by!(playnite_id: playnite_game["id"])
 
       sharenite_game.update!(
         playnite_game.slice(
@@ -84,7 +84,7 @@ class FullLibrarySyncJob
   def tags(playnite_game)
     tags = []
     playnite_game["tags"]&.each do |playnite_tag|
-      sharenite_tag = @user.tags.create_or_find_by!(playnite_id: playnite_tag["id"])
+      sharenite_tag = @user.tags.find_or_create_by!(playnite_id: playnite_tag["id"])
       sharenite_tag.update!(name: playnite_tag["name"])
       tags << sharenite_tag
     end
@@ -94,7 +94,7 @@ class FullLibrarySyncJob
   def categories(playnite_game)
     categories = []
     playnite_game["categories"]&.each do |playnite_category|
-      sharenite_category = @user.categories.create_or_find_by!(playnite_id: playnite_category["id"])
+      sharenite_category = @user.categories.find_or_create_by!(playnite_id: playnite_category["id"])
       sharenite_category.update!(name: playnite_category["name"])
       categories << sharenite_category
     end
@@ -104,7 +104,7 @@ class FullLibrarySyncJob
   def platforms(playnite_game)
     platforms = []
     playnite_game["platforms"]&.each do |playnite_platform|
-      sharenite_platform = @user.platforms.create_or_find_by!(playnite_id: playnite_platform["id"])
+      sharenite_platform = @user.platforms.find_or_create_by!(playnite_id: playnite_platform["id"])
       sharenite_platform.update!(name: playnite_platform["name"], specification_id: playnite_platform["specification_id"])
       platforms << sharenite_platform
     end
@@ -113,14 +113,14 @@ class FullLibrarySyncJob
 
   def completion_status(playnite_game)
     return nil if playnite_game["completion_status"].nil?
-    sharenite_completion_status = @user.completion_statuses.create_or_find_by!(playnite_id: playnite_game["completion_status"]["id"])
+    sharenite_completion_status = @user.completion_statuses.find_or_create_by!(playnite_id: playnite_game["completion_status"]["id"])
     sharenite_completion_status.update!(name: playnite_game["completion_status"]["name"])
     sharenite_completion_status
   end
 
   def source(playnite_game)
     return nil if playnite_game["source"].nil?
-    sharenite_source = @user.sources.create_or_find_by!(playnite_id: playnite_game["source"]["id"])
+    sharenite_source = @user.sources.find_or_create_by!(playnite_id: playnite_game["source"]["id"])
     sharenite_source.update!(name: playnite_game["source"]["name"])
     sharenite_source
   end

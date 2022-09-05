@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register Game do
-  config.sort_order = 'created_at_desc'
+  config.sort_order = "created_at_desc"
   menu priority: 3
 
   belongs_to :user, optional: true
+  includes :user
 
   # See permitted parameters documentation:
   # https://github.com/activeadmin/activeadmin/blob/master/docs/2-resource-customization.md#setting-up-strong-parameters

@@ -57,6 +57,7 @@ services:
     environment:
       RAILS_ENV: production
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
+      RAILS_MAX_THREADS: 10
     depends_on:
       - sharenite-database
     restart: always
@@ -79,7 +80,7 @@ services:
     stdin_open: true
     tty: true
     entrypoint: prod-entrypoint.sh
-    command: ['sidekiq']
+    command: ['sidekiq', '-c', '25']
     environment:
       RAILS_ENV: production
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"

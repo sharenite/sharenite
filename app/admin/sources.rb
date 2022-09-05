@@ -5,6 +5,7 @@ ActiveAdmin.register Source do
   menu parent: "Games", priority: 4
 
   belongs_to :user, optional: true
+  includes :user
 
   # See permitted parameters documentation:
   # https://github.com/activeadmin/activeadmin/blob/master/docs/2-resource-customization.md#setting-up-strong-parameters
