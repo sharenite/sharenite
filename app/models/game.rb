@@ -6,6 +6,7 @@ class Game < ApplicationRecord
 
   belongs_to :user
   has_and_belongs_to_many :tags
+  has_and_belongs_to_many :categories
 
   paginates_per 100
 

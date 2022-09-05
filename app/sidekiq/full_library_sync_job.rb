@@ -77,7 +77,10 @@ class FullLibrarySyncJob
           "use_global_pre_script",
           "user_score",
           "version"
-        ).merge("tags" => tags(playnite_game))
+        ).merge(
+          "tags" => tags(playnite_game),
+          :categories => categories(playnite_game)
+        )
       )
     end
   end
@@ -93,4 +96,20 @@ class FullLibrarySyncJob
     end
     tags
   end
+
+  # rubocop: disable Metrics/MethodLength
+  def categories(playnite_game)
+    categories = []
+    # rubocop: disable Metrics/BlockLength
+    playnite_game["categories"]&.each do |playnite_category|
+      sharenite_category =
+        @user.categories.create_or_find_by!(
+          playnite_id: playnite_category["id"]
+        )
+      sharenite_category.update!(name: playnite_category["name"])
+      categories << sharenite_category
+    end
+    categories
+  end
+  # rubocop:enable all
 end

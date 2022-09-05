@@ -17,6 +17,7 @@ class User < ApplicationRecord
   has_many :games, dependent: :destroy
   has_many :sync_jobs, dependent: :destroy
   has_many :tags, dependent: :destroy
+  has_many :categories, dependent: :destroy
 
   def display_name
     email
