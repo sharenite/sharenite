@@ -43,21 +43,25 @@
     = game.name
     - if game.favorite
       %i.bi.bi-star-fill.yellow.text-warning
-  .row
-    .col-sm-12.col-md-6.col-lg-3.text-center
-      %p
-        %small.text-muted{alt: "test"}
-          = "#{game.platforms.map(&:name)&.join(' | ')}"
-    .col-sm-12.col-md-6.col-lg-3.text-center
-      %p
-        %small.text-muted{alt: "test"} #{game.completion_status&.name}
-    .col-sm-12.col-md-6.col-lg-3.text-center
-      %p
-        %small.text-muted{alt: "test"}
-          = "#{game.categories.map(&:name)&.join(' | ')}"
-    .col-sm-12.col-md-6.col-lg-3.text-center
-      %p
-        %small.text-muted{alt: "test"} #{game.tags.map(&:name)&.join(' | ')}
+  .row.justify-content-around
+    - unless game.platforms.empty?
+      .col-auto.text-center
+        %p
+          %small.text-muted{alt: "test"}
+            = "#{game.platforms.map(&:name)&.join(' | ')}"
+    - unless game.completion_status.nil?
+      .col-auto.text-center
+        %p
+          %small.text-muted{alt: "test"} #{game.completion_status&.name}
+    - unless game.categories.empty?
+      .col-auto.text-center
+        %p
+          %small.text-muted{alt: "test"}
+            = "#{game.categories.map(&:name)&.join(' | ')}"
+    - unless game.tags.empty?
+      .col-auto.text-center
+        %p
+          %small.text-muted{alt: "test"} #{game.tags.map(&:name)&.join(' | ')}
   .card.mb-3
     .row.g-0
       .col-md-4.game-details__cover
