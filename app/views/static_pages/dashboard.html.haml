@@ -1,3 +1,3 @@
 %h1 Dashboard
 %p
-  = "Some nice stats will be here in the future, but for now go to #{link_to 'Games', games_path} tab.".html_safe
+  = "Some nice stats will be here in the future, but for now go to #{link_to 'Games', profile_games_path(current_user.profile)} tab.".html_safe

@@ -50,6 +50,7 @@ gem "bootsnap", require: false
 gem 'activeadmin'
 gem 'appsignal'
 gem 'bootstrap5-kaminari-views'
+gem 'friendly_id'
 gem 'grape'
 gem 'grape-active_model_serializers'
 gem 'grape_devise', github: 'XenorPLxx/grape_devise', branch: 'master'

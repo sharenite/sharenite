@@ -1,0 +1,6 @@
+- if @profile.errors.any?
+  #error_explanation
+    %h2 #{pluralize(@profile.errors.count, "error")} prohibited this profile from being saved:
+    %ul
+      - @profile.errors.full_messages.each do |message|
+        %li= message

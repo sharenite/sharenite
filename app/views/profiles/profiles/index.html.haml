@@ -1,0 +1,23 @@
+%h1 Listing public profiles
+%p To make your profile public, edit it in the 'avatar' menu.
+%ul.list-group.list-group-flush
+  %li.list-group-item{id: "header"}
+    .row
+      .col-6
+        %strong
+          NAME
+      .col-4
+        %strong
+          GAMES
+  - @profiles.each do |profile|
+    %li.list-group-item
+      .row
+        .col-6
+          = profile.name
+        .col-4
+          = profile.user.games.count
+        .col-1
+          = link_to 'Games', profile_games_path(profile)
+        .col-1
+          = link_to 'Show', profile
+%br/

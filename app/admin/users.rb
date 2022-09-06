@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register User do
-  config.sort_order = 'created_at_desc'
+  config.sort_order = "created_at_desc"
   menu priority: 2
 
   # See permitted parameters documentation:
@@ -25,7 +25,7 @@ ActiveAdmin.register User do
     id_column
     column :email
     column :games_count do |user|
-      link_to user.games.count, admin_user_games_path(user) 
+      link_to user.games.count, admin_user_games_path(user)
     end
     column :current_sign_in_at
     column :current_sign_in_ip
@@ -38,9 +38,7 @@ ActiveAdmin.register User do
 
   filter :email
 
-  sidebar "User Details", only: [:show, :edit] do
-    ul do
-      li link_to "Games", admin_user_games_path(resource)
-    end
+  sidebar "User Details", only: %i[show edit] do
+    ul { li link_to "Games", admin_user_games_path(resource) }
   end
 end

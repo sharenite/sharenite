@@ -1,7 +1,7 @@
 %p{style: "color: green"}= notice
 = render 'game_details', game: @game
 %div
-  -# = link_to "Edit this game", edit_game_path(@game)
+  -# = link_to "Edit this game", edit_user_game_path(@game)
   -#
-  = link_to "Back to games", games_path
+  = link_to "Back to games", profile_games_path
   -# = button_to "Destroy this game", @game, method: :delete
