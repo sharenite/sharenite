@@ -1,0 +1,15 @@
+= form_for @profile do |f|
+  = turbo_frame_tag :profile_errors
+  .mb-3
+    = f.label :name, {class: 'form-label'}
+    = f.text_field :name, {class: 'form-control', "aria-describedby" => "name_help"}
+    .form-text#name_help Your name visible to others.
+  .mb-3
+    = f.label :vanity_url, {class: 'form-label'}
+    = f.text_field :vanity_url, {class: 'form-control', "aria-describedby" => "vanity_url_help"}
+    .form-text#vanity_url_help Custom URL to your profile
+  .mb-3
+    = f.label :privacy, {class: 'form-label'}
+    = f.select :privacy, Profile.privacies.keys.map { |w| [w.humanize, w] }, {}, { class: 'form-select', "aria-describedby" => "privacy_help" }
+    .form-text#privacy_help Private - invisible, public - profile and games visible, friendly - not implemented yet
+  = f.submit 'Save', { class: 'btn btn-primary' }

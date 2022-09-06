@@ -1,0 +1,7 @@
+.card{style: "width: 18rem;"}
+  .card-body
+    %h5.card-title #{@profile.name}
+    %h6.card-subtitle.mb-2.text-muted Games: #{@profile.user.games.count}
+    %p.card-text Some quick example text to build on the card title and make up the bulk of the card's content.
+    = link_to 'Back', profiles_path, class: 'card-link'
+    = link_to 'Games', profile_games_path(@profile), class: 'card-link'

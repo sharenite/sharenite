@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_05_184325) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_07_203341) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -18,6 +18,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_184325) do
   # Custom types defined in this database.
   # Note that some types may not work with other database engines. Be careful if changing database.
   create_enum "job_status", ["queued", "running", "finished"]
+  create_enum "profile_privacy", ["private", "public", "friendly"]
 
   create_table "active_admin_comments", force: :cascade do |t|
     t.string "namespace"
@@ -70,6 +71,17 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_184325) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "playnite_id"], name: "index_completion_statuses_on_user_id_and_playnite_id", unique: true
     t.index ["user_id"], name: "index_completion_statuses_on_user_id"
+  end
+
+  create_table "friendly_id_slugs", force: :cascade do |t|
+    t.string "slug", null: false
+    t.integer "sluggable_id", null: false
+    t.string "sluggable_type", limit: 50
+    t.string "scope"
+    t.datetime "created_at"
+    t.index ["slug", "sluggable_type", "scope"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type_and_scope", unique: true
+    t.index ["slug", "sluggable_type"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type"
+    t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
   end
 
   create_table "games", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -143,6 +155,19 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_184325) do
     t.index ["user_id"], name: "index_platforms_on_user_id"
   end
 
+  create_table "profiles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.enum "privacy", default: "private", enum_type: "profile_privacy"
+    t.string "vanity_url"
+    t.string "slug"
+    t.index ["slug"], name: "index_profiles_on_slug", unique: true
+    t.index ["user_id"], name: "index_profiles_on_user_id"
+    t.index ["vanity_url"], name: "index_profiles_on_vanity_url", unique: true
+  end
+
   create_table "sources", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.uuid "playnite_id"
@@ -206,6 +231,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_05_184325) do
   add_foreign_key "games_tags", "games"
   add_foreign_key "games_tags", "tags"
   add_foreign_key "platforms", "users"
+  add_foreign_key "profiles", "users"
   add_foreign_key "sources", "users"
   add_foreign_key "sync_jobs", "users"
   add_foreign_key "tags", "users"

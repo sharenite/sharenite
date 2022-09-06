@@ -1,0 +1,3 @@
+= form_with(url: profile_games_path(@profile), method: :get, data: {controller: "search-form", turbo_frame: "games", turbo_action: "advance"}) do |form|
+  = form.label :query, "Search:"
+  = form.text_field :query, value: params[:query], data: { action: "input->search-form#search", }

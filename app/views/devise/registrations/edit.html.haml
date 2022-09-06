@@ -2,36 +2,34 @@
   = "Edit #{resource_name.to_s.humanize}"
 = form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, data: { turbo: false } }) do |f|
   = render "devise/shared/error_messages", resource: resource
-  .field
-    = f.label :email
+  .mb-3
+    = f.label :email, {class: 'form-label'}
     %br/
-    = f.email_field :email, autofocus: true, autocomplete: "email"
+    = f.email_field :email, autofocus: true, autocomplete: "email", class: 'form-control'
   - if devise_mapping.confirmable? && resource.pending_reconfirmation?
     %div
       = "Currently waiting confirmation for: #{resource.unconfirmed_email}"
-  .field
-    = f.label :password
+  .mb-3
+    = f.label :password, {class: 'form-label'}
     %i (leave blank if you don't want to change it)
     %br/
-    = f.password_field :password, autocomplete: "new-password"
+    = f.password_field :password, autocomplete: "new-password", class: 'form-control', "aria-describedby" => "password_help"
     - if @minimum_password_length
-      %br/
-      %em
+      .form-text#password_help
         = @minimum_password_length
         characters minimum
-  .field
-    = f.label :password_confirmation
+  .mb-3
+    = f.label :password_confirmation, {class: 'form-label'}
     %br/
-    = f.password_field :password_confirmation, autocomplete: "new-password"
-  .field
-    = f.label :current_password
+    = f.password_field :password_confirmation, autocomplete: "new-password", class: 'form-control'
+  .mb-3
+    = f.label :current_password, {class: 'form-label'}
     %i (we need your current password to confirm your changes)
     %br/
-    = f.password_field :current_password, autocomplete: "current-password"
+    = f.password_field :current_password, autocomplete: "current-password", class: 'form-control'
   .actions
-    = f.submit "Update"
-%h3 Cancel my account
-%p
-  Unhappy?
-  = button_to "Cancel my account", registration_path(resource_name), form: { data: { turbo_confirm: "Are you sure?" } }, method: :delete
-= link_to "Back", :back
+    = f.submit "Update", { class: 'btn btn-primary' }
+.mt-4
+  %p.mt-2 If you want to completely delete your account, use the button below.
+  = button_to "Cancel my account", registration_path(resource_name), form: { data: { turbo_confirm: "Are you sure? This action will completely delete your data from the system and is irreversible." } }, class: 'btn btn-danger', method: :delete
+  -# = link_to "Back", :back

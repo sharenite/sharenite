@@ -3,8 +3,10 @@
 require "sidekiq/web"
 
 Rails.application.routes.draw do
-  resources :games do
-    collection { post :search }
+  resources :profiles, controller: "profiles/profiles" do
+    resources :games, controller: "profiles/games" do
+      collection { post :search }
+    end
   end
   root "static_pages#landing_page"
 
