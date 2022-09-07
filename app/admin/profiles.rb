@@ -2,7 +2,7 @@
 
 ActiveAdmin.register Profile do
     config.sort_order = "created_at_desc"
-    menu parent: "Games", priority: 6
+    menu parent: "Users", priority: 1
   
     belongs_to :user, optional: true
     includes :user
