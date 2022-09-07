@@ -4,7 +4,7 @@
 class Profile < ApplicationRecord
   extend FriendlyId
   friendly_id :vanity_url, use: :slugged
-  validates :vanity_url, uniqueness: { case_sensitive: false }
+  validates :vanity_url, uniqueness: { case_sensitive: false }, allow_nil: true
   belongs_to :user
 
   enum privacy: { private: "private", public: "public", friendly: "friendly" }, _prefix: :privacy
