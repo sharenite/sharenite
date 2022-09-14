@@ -3,21 +3,21 @@
 %ul.list-group.list-group-flush
   %li.list-group-item{id: "header"}
     .row
-      .col-6
+      .col-3.col-sm-4.col-md-6
         %strong
           NAME
-      .col-4
+      .col-3
         %strong
           GAMES
   - @profiles.each do |profile|
     %li.list-group-item
       .row
-        .col-6
+        .col-3.col-sm-4.col-md-6
           = profile.name
-        .col-4
+        .col-3.col-sm-4
           = profile.user.games.count
-        .col-1
+        .col-3.col-sm-2.col-md-1
           = link_to 'Games', profile_games_path(profile)
-        .col-1
+        .col-3.col-sm-2.col-md-1
           = link_to 'Show', profile
 %br/
