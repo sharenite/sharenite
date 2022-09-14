@@ -28,7 +28,7 @@ module Profiles
     end
 
     def set_profile
-      @profile = Profile.friendly.find_by(id: params[:id])
+      @profile = Profile.friendly.find(params[:id])
     end
   end
 end

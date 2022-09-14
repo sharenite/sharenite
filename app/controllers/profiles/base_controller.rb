@@ -26,17 +26,21 @@ module Profiles
     private
 
     def set_profile
-      @profile = Profile.friendly.find_by(id: params[:profile_id])
+      @profile = Profile.friendly.find(params[:profile_id])
     end
 
     def check_current_user_profile
       set_profile
       redirect_to_profiles_with_notice if @profile != current_user.profile
+    rescue ActiveRecord::RecordNotFound
+      redirect_to_profiles_with_notice
     end
 
     def check_general_access_profile
       set_profile
       check_profile
+    rescue ActiveRecord::RecordNotFound
+      redirect_to_profiles_with_notice
     end
 
     def check_profile
