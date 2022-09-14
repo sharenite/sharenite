@@ -26,6 +26,6 @@ class User < ApplicationRecord
   private
 
   def create_profile
-    Profile.create_or_find_by(user: self)
+    Profile.create_or_find_by!(user: self)
   end
 end
