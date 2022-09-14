@@ -26,12 +26,12 @@ module Profiles
     private
 
     def set_profile
-      @profile = Profile.friendly.find(params[:profile_id])
+      @profile = Profile.friendly.find_by(id: params[:profile_id])
     end
 
     def check_current_user_profile
       set_profile
-      return invalid_url! if @profile != current_user.profile
+      redirect_with_notice if @profile != current_user.profile
     end
 
     def check_general_access_profile
@@ -40,8 +40,15 @@ module Profiles
     end
 
     def check_profile
-      return invalid_url! if @profile != current_user&.profile && !@profile.privacy_public?
+      redirect_with_notice if @profile.nil? || (@profile != current_user&.profile && !@profile.privacy_public?)
       #   TODO: additional checks for public and friendly
+    end
+
+    def redirect_with_notice
+      # rubocop:disable Rails/I18nLocaleTexts
+      flash[:notice] = "Profile not found."
+      # rubocop:enable all
+      redirect_to profiles_path
     end
   end
 end

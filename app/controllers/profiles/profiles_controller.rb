@@ -14,13 +14,9 @@ module Profiles
     def update
       respond_to do |format|
         if @profile.update(profile_params)
-          format.turbo_stream do 
-            redirect_to profile_path(id: @profile.slug)
-          end
+          format.turbo_stream { redirect_to profile_path(id: @profile.slug) }
         else
-          format.turbo_stream do
-            render turbo_stream: turbo_stream.replace('profile_errors', partial: 'profile_errors')
-          end
+          format.turbo_stream { render turbo_stream: turbo_stream.replace("profile_errors", partial: "profile_errors") }
         end
       end
     end
@@ -32,7 +28,7 @@ module Profiles
     end
 
     def set_profile
-      @profile = Profile.friendly.find(params[:id])
+      @profile = Profile.friendly.find_by(id: params[:id])
     end
   end
 end
