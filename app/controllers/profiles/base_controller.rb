@@ -31,7 +31,7 @@ module Profiles
 
     def check_current_user_profile
       set_profile
-      redirect_with_notice if @profile != current_user.profile
+      redirect_to_profiles_with_notice if @profile != current_user.profile
     end
 
     def check_general_access_profile
@@ -40,11 +40,11 @@ module Profiles
     end
 
     def check_profile
-      redirect_with_notice if @profile.nil? || (@profile != current_user&.profile && !@profile.privacy_public?)
+      redirect_to_profiles_with_notice if @profile.nil? || (@profile != current_user&.profile && !@profile.privacy_public?)
       #   TODO: additional checks for public and friendly
     end
 
-    def redirect_with_notice
+    def redirect_to_profiles_with_notice
       # rubocop:disable Rails/I18nLocaleTexts
       flash[:notice] = "Profile not found."
       # rubocop:enable all

@@ -37,7 +37,7 @@ module Profiles
 
     def game
       @game = @profile.user.games.find_by(id: params[:id])
-      @game ||= redirect_with_notice # defined in app controller
+      @game ||= redirect_to_games_with_notice # defined in app controller
     end
 
     def set_games
@@ -50,7 +50,7 @@ module Profiles
       params.require(:game).permit(:name, :user_id)
     end
 
-    def redirect_with_notice
+    def redirect_to_games_with_notice
       # rubocop:disable Rails/I18nLocaleTexts
       flash[:notice] = "Game not found."
       # rubocop:enable all
