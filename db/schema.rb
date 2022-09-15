@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_30_120003) do
+ActiveRecord::Schema[7.0].define(version: 2022_10_02_195254) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -91,7 +91,9 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_30_120003) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.enum "status", default: "invited", enum_type: "invitation_status"
+    t.index ["invitee_id", "inviter_id"], name: "index_friends_on_invitee_id_and_inviter_id", unique: true
     t.index ["invitee_id"], name: "index_friends_on_invitee_id"
+    t.index ["inviter_id", "invitee_id"], name: "index_friends_on_inviter_id_and_invitee_id", unique: true
     t.index ["inviter_id"], name: "index_friends_on_inviter_id"
   end
 
@@ -136,6 +138,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_30_120003) do
     t.uuid "completion_status_id"
     t.uuid "source_id"
     t.index ["completion_status_id"], name: "index_games_on_completion_status_id"
+    t.index ["playnite_id", "user_id"], name: "index_games_on_playnite_id_and_user_id", unique: true
     t.index ["source_id"], name: "index_games_on_source_id"
     t.index ["user_id", "playnite_id"], name: "index_games_on_user_id_and_playnite_id", unique: true
     t.index ["user_id"], name: "index_games_on_user_id"

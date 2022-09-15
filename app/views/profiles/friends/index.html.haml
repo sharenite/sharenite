@@ -1,0 +1,62 @@
+%h1 Friends
+%p You can set your profile to friendly in the 'avatar' menu and send your profile URL for a friend to invite.
+%h2 Listing invitations received
+%ul.list-group.list-group-flush
+  %li.list-group-item{id: "header"}
+    .row
+      .col-3.col-sm-4.col-md-6
+        %strong
+          NAME
+  - @invitations_received.each do |invitation_received|
+    %li.list-group-item
+      .row
+        .col-3.col-sm-4.col-md-6
+          = invitation_received.inviter.profile.name
+        .col-0.col-sm-2.col-md-3
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Show', invitation_received.inviter.profile
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Accept', profile_accept_friend_path(id: invitation_received)
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Decline', profile_decline_friend_path(id: invitation_received)
+%br/
+%h2 Listing invitations sent
+%ul.list-group.list-group-flush
+  %li.list-group-item{id: "header"}
+    .row
+      .col-3.col-sm-4.col-md-6
+        %strong
+          NAME
+  - @invitations_sent.each do |invitation_sent|
+    %li.list-group-item
+      .row
+        .col-3.col-sm-4.col-md-6
+          = invitation_sent.invitee.profile.name
+        .col-3.col-sm-4
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Show', invitation_sent.inviter.profile
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Cancel', profile_cancel_friend_path(id: invitation_sent)
+%br/
+%h2 Listing friends
+%ul.list-group.list-group-flush
+  %li.list-group-item{id: "header"}
+    .row
+      .col-3.col-sm-4.col-md-6
+        %strong
+          NAME
+      .col-3
+        %strong
+          GAMES
+  - @friends.each do |friend|
+    %li.list-group-item
+      .row
+        .col-3.col-sm-4.col-md-6
+          = friend.name
+        .col-3.col-sm-4
+          = friend.user.games.count
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Games', profile_games_path(friend)
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Show', friend
+%br/

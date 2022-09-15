@@ -14,7 +14,7 @@ module Profiles
     def update
       respond_to do |format|
         if @profile.update(profile_params)
-          format.turbo_stream { redirect_to profile_path(id: @profile.slug) }
+          format.turbo_stream { redirect_to profile_path(@profile) }
         else
           format.turbo_stream { render turbo_stream: turbo_stream.replace("profile_errors", partial: "profile_errors") }
         end
@@ -22,6 +22,18 @@ module Profiles
     end
 
     private
+
+    def check_profile
+      redirect_to_profiles_with_notice if @profile.nil? || 
+        (!profile_own? && 
+        !profile_public? && 
+        !profile_friendly? && 
+        !profile_friend?)
+    end
+
+    def profile_friendly?
+      @profile.privacy_friendly?
+    end
 
     def profile_params
       params.require(:profile).permit(:name, :privacy, :vanity_url)

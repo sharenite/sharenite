@@ -5,3 +5,4 @@
     %p.card-text Some quick example text to build on the card title and make up the bulk of the card's content.
     = link_to 'Back', profiles_path, class: 'card-link'
     = link_to 'Games', profile_games_path(@profile), class: 'card-link'
+    = link_to 'Invite', profile_invite_friend_path(profile_id: @profile), class: 'card-link'
