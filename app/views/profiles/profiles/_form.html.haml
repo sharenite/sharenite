@@ -11,5 +11,5 @@
   .mb-3
     = f.label :privacy, {class: 'form-label'}
     = f.select :privacy, Profile.privacies.keys.map { |w| [w.humanize, w] }, {}, { class: 'form-select', "aria-describedby" => "privacy_help" }
-    .form-text#privacy_help Private - invisible, public - profile and games visible, friendly - not implemented yet
+    .form-text#privacy_help Private - invisible, public - profile and games visible, friendly - profile URL can be shared to invite
   = f.submit 'Save', { class: 'btn btn-primary' }

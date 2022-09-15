@@ -7,6 +7,11 @@ Rails.application.routes.draw do
     resources :games, controller: "profiles/games" do
       collection { post :search }
     end
+    resources :friends, controller: "profiles/friends", only: :index
+    get 'friends/invite', to: 'profiles/friends#invite', as: :invite_friend
+    get 'friends/:id/accept', to: 'profiles/friends#accept', as: :accept_friend
+    get 'friends/:id/decline', to: 'profiles/friends#decline', as: :decline_friend
+    get 'friends/:id/cancel', to: 'profiles/friends#cancel', as: :cancel_friend
   end
   root "static_pages#landing_page"
 

@@ -10,6 +10,8 @@
               = link_to 'Dashboard', static_pages_dashboard_path, class: 'nav-link px-2 text-white'
             %li
               = link_to 'Games', profile_games_path(current_user.profile), class: 'nav-link px-2 text-white'
+            %li
+              = link_to 'Friends', profile_friends_path(current_user.profile), class: 'nav-link px-2 text-white'
           %li
             = link_to 'Profiles', profiles_path, class: 'nav-link px-2 text-white'
           -#
