@@ -12,7 +12,7 @@
     = csp_meta_tag
     = stylesheet_link_tag "application", "data-turbo-track": "reload"
     = javascript_include_tag "application", "data-turbo-track": "reload", defer: true
-  %body
+  %body.min-vh-100.d-flex.flex-column
     - if Rails.env.production?
       %p.bg-info.text-dark.text-center.m-0
         APPLICATION IN BETA - EVERYTHING MIGHT BREAK
@@ -26,3 +26,4 @@
         .alert{class: flash_class(type)}
           = msg
       = yield
+    = render 'layouts/footer'

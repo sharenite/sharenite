@@ -1,0 +1,14 @@
+.container.mt-auto.text-muted
+  %footer.d-flex.flex-wrap.align-items-center.py-3.my-4.border-top
+    %ul.nav.col-12.col-md-6.list-unstyled.d-flex.mb-2.mb-md-0.justify-content-center.justify-content-md-start
+      %li.ms-3
+        = link_to "https://github.com/sharenite/sharenite", target: "_blank", class: 'link-secondary' do
+          %i.bi.bi-github
+      %li.ms-3
+        = link_to "https://discord.gg/Zz77qKTzk6", target: "_blank", class: 'link-secondary' do
+          %i.bi.bi-discord
+    .col-12.col-md-6.d-flex.justify-content-center.justify-content-md-end
+      %span.mb-3.mb-md-0.text-center
+        Application performance monitoring sponsored by
+        = link_to 'https://appsignal.com/', target: '_blank' do
+          %img.text-dark.align-top{src: "/appsignal.svg", height: "24px"}/
