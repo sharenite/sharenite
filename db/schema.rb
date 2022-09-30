@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_30_110941) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_30_120003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -101,8 +101,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_30_110941) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "added"
-    t.bigint "community_score"
-    t.bigint "critic_score"
+    t.integer "community_score"
+    t.integer "critic_score"
     t.text "description"
     t.boolean "favorite"
     t.string "game_id"
@@ -120,8 +120,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_30_110941) do
     t.string "manual"
     t.datetime "modified"
     t.text "notes"
-    t.bigint "play_count"
-    t.bigint "playtime"
+    t.decimal "play_count", precision: 20
+    t.decimal "playtime", precision: 20
     t.uuid "plugin_id"
     t.text "post_script"
     t.text "pre_script"
@@ -130,7 +130,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_30_110941) do
     t.boolean "use_global_game_started_script"
     t.boolean "use_global_post_script"
     t.boolean "use_global_pre_script"
-    t.bigint "user_score"
+    t.integer "user_score"
     t.string "version"
     t.uuid "playnite_id"
     t.uuid "completion_status_id"
