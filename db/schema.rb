@@ -10,13 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_07_203341) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_30_110941) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
 
   # Custom types defined in this database.
   # Note that some types may not work with other database engines. Be careful if changing database.
+  create_enum "invitation_status", ["invited", "accepted", "declined"]
   create_enum "job_status", ["queued", "running", "finished"]
   create_enum "profile_privacy", ["private", "public", "friendly"]
 
@@ -84,14 +85,24 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_07_203341) do
     t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
   end
 
+  create_table "friends", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "inviter_id", null: false
+    t.uuid "invitee_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.enum "status", default: "invited", enum_type: "invitation_status"
+    t.index ["invitee_id"], name: "index_friends_on_invitee_id"
+    t.index ["inviter_id"], name: "index_friends_on_inviter_id"
+  end
+
   create_table "games", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "added"
-    t.integer "community_score"
-    t.integer "critic_score"
+    t.bigint "community_score"
+    t.bigint "critic_score"
     t.text "description"
     t.boolean "favorite"
     t.string "game_id"
@@ -119,7 +130,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_07_203341) do
     t.boolean "use_global_game_started_script"
     t.boolean "use_global_post_script"
     t.boolean "use_global_pre_script"
-    t.integer "user_score"
+    t.bigint "user_score"
     t.string "version"
     t.uuid "playnite_id"
     t.uuid "completion_status_id"
@@ -223,6 +234,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_07_203341) do
   add_foreign_key "categories_games", "categories"
   add_foreign_key "categories_games", "games"
   add_foreign_key "completion_statuses", "users"
+  add_foreign_key "friends", "users", column: "invitee_id"
+  add_foreign_key "friends", "users", column: "inviter_id"
   add_foreign_key "games", "completion_statuses"
   add_foreign_key "games", "sources"
   add_foreign_key "games", "users"
