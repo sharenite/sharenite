@@ -27,10 +27,10 @@ module Profiles
 
     # rubocop:disable all
     def invite
-      if current_user.profile.id == params[:profile_id]
+      other_user_id = Profile.friendly.find(params[:profile_id]).user.id
+      if current_user.id == other_user_id
         flash[:error] = "Can't invite yourself."
       else
-        other_user_id = Profile.friendly.find(params[:profile_id]).user.id
         friend = Friend.find_by(inviter_id: other_user_id, invitee_id: current_user.id)
         friend ||= Friend.find_or_create_by!(inviter_id: current_user.id, invitee_id: other_user_id)
         friend ||= Friend.find_or_create_by!(inviter_id: other_user_id, invitee_id: current_user.id)
