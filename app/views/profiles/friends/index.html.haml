@@ -34,7 +34,7 @@
           = invitation_sent.invitee.profile.name
         .col-3.col-sm-4
         .col-3.col-sm-2.col-md-1
-          = link_to 'Show', invitation_sent.inviter.profile
+          = link_to 'Show', invitation_sent.invitee.profile
         .col-3.col-sm-2.col-md-1
           = link_to 'Cancel', profile_cancel_friend_path(id: invitation_sent)
 %br/
