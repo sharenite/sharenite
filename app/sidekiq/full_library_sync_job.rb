@@ -30,7 +30,7 @@ class FullLibrarySyncJob
   end
 
   def synchronise_games
-    @user.games.where.not(playnite_id: @games.map { |playnite_game| playnite_game["id"] }).destroy_all
+    @user.games.where.not(playnite_id: @games.map { |playnite_game| playnite_game["id"] }).or(@user.games.where(playnite_id: nil)).destroy_all
 
     @games.each do |playnite_game|
       sharenite_game = @user.games.find_or_create_by!(playnite_id: playnite_game["id"])
