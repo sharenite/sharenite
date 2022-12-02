@@ -3,6 +3,7 @@
 # Job that performs a full library sync asynchornously
 class GameSyncJob
   include Sidekiq::Job
+  sidekiq_options lock: :while_executing, unique_across_workers: true, lock_args_method: ->(args) { [args[2]] }, on_conflict: :reschedule
 
   def variables(args)
     @new_game = args[1]

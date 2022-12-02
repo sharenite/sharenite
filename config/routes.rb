@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "sidekiq/web"
+require "sidekiq_unique_jobs/web"
 
 Rails.application.routes.draw do
   resources :profiles, controller: "profiles/profiles" do
@@ -8,10 +9,10 @@ Rails.application.routes.draw do
       collection { post :search }
     end
     resources :friends, controller: "profiles/friends", only: :index
-    get 'friends/invite', to: 'profiles/friends#invite', as: :invite_friend
-    get 'friends/:id/accept', to: 'profiles/friends#accept', as: :accept_friend
-    get 'friends/:id/decline', to: 'profiles/friends#decline', as: :decline_friend
-    get 'friends/:id/cancel', to: 'profiles/friends#cancel', as: :cancel_friend
+    get "friends/invite", to: "profiles/friends#invite", as: :invite_friend
+    get "friends/:id/accept", to: "profiles/friends#accept", as: :accept_friend
+    get "friends/:id/decline", to: "profiles/friends#decline", as: :decline_friend
+    get "friends/:id/cancel", to: "profiles/friends#cancel", as: :cancel_friend
   end
   root "static_pages#landing_page"
 

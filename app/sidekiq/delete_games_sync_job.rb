@@ -3,6 +3,7 @@
 # Job that performs a full library sync asynchornously
 class DeleteGamesSyncJob
   include Sidekiq::Job
+  sidekiq_options lock: :while_executing, unique_across_workers: true, lock_args_method: ->(args) { [args[1]] }, on_conflict: :reschedule
 
   def variables(args)
     @games = args[0]

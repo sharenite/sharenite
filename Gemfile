@@ -61,6 +61,7 @@ gem 'rack-cors'
 gem 'sass-rails'
 gem 'securerandom'
 gem 'sidekiq'
+gem 'sidekiq-unique-jobs'
 
 # Use Sass to process CSS
 # gem "sassc-rails"
