@@ -174,9 +174,9 @@ ActiveRecord::Schema[7.0].define(version: 2022_10_02_195254) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "slug"
     t.enum "privacy", default: "private", enum_type: "profile_privacy"
     t.string "vanity_url"
-    t.string "slug"
     t.index ["slug"], name: "index_profiles_on_slug", unique: true
     t.index ["user_id"], name: "index_profiles_on_user_id"
     t.index ["vanity_url"], name: "index_profiles_on_vanity_url", unique: true

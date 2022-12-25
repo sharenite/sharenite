@@ -110,3 +110,4 @@ group :test do
 end
 
 gem 'devise', github: 'heartcombo/devise', ref: 'f8d1ea90bc3'
+gem "karafka", "~> 2.0"

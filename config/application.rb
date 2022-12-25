@@ -23,7 +23,7 @@ module Sharenite
     # config.eager_load_paths << Rails.root.join("extras")
 
     config.active_job.queue_adapter = :sidekiq
-    
-    config.autoload_paths += [Rails.root.join("app/api/*").to_s]
+
+    config.autoload_paths += [Rails.root.join("app/api/*").to_s, Rails.root.join("app/services/*").to_s]
   end
 end
