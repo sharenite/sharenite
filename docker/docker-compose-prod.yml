@@ -57,7 +57,7 @@ services:
     environment:
       RAILS_ENV: production
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
-      RAILS_MAX_THREADS: 10
+      RAILS_MAX_THREADS: 25
     depends_on:
       - sharenite-database
     restart: always
@@ -84,6 +84,7 @@ services:
     environment:
       RAILS_ENV: production
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
+      RAILS_MAX_THREADS: 25
     depends_on:
       - sharenite-database
       - sharenite-redis
