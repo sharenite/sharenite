@@ -3,6 +3,7 @@ networks:
   staging:
 volumes:
   db_data:
+  redis_data:
   gem_cache:
   shared_data:
 services:
@@ -14,6 +15,7 @@ services:
       - staging
     volumes:
       - shared_data:/var/shared/redis
+      - redis_data:/data
     restart: always
     deploy:
       resources:

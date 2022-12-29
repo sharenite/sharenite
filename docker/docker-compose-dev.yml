@@ -4,6 +4,7 @@ networks:
   test:
 volumes:
   db_data:
+  redis_data:
   gem_cache:
   shared_data:
 services:
@@ -16,6 +17,7 @@ services:
       - test
     volumes:
       - shared_data:/var/shared/redis
+      - redis_data:/data
     ports:
       - 6379:6379
 
