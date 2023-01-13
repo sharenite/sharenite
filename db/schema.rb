@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_10_02_195254) do
+ActiveRecord::Schema[7.0].define(version: 2023_01_13_172922) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -18,7 +18,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_10_02_195254) do
   # Custom types defined in this database.
   # Note that some types may not work with other database engines. Be careful if changing database.
   create_enum "invitation_status", ["invited", "accepted", "declined"]
-  create_enum "job_status", ["queued", "running", "finished"]
+  create_enum "job_status", ["queued", "running", "finished", "dead", "failed"]
   create_enum "profile_privacy", ["private", "public", "friendly"]
 
   create_table "active_admin_comments", force: :cascade do |t|
@@ -174,9 +174,9 @@ ActiveRecord::Schema[7.0].define(version: 2022_10_02_195254) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "slug"
     t.enum "privacy", default: "private", enum_type: "profile_privacy"
     t.string "vanity_url"
-    t.string "slug"
     t.index ["slug"], name: "index_profiles_on_slug", unique: true
     t.index ["user_id"], name: "index_profiles_on_user_id"
     t.index ["vanity_url"], name: "index_profiles_on_vanity_url", unique: true

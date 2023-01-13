@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "sidekiq/web"
-require "sidekiq_unique_jobs/web"
-
 Rails.application.routes.draw do
   resources :profiles, controller: "profiles/profiles" do
     resources :games, controller: "profiles/games" do
@@ -22,9 +19,6 @@ Rails.application.routes.draw do
 
   mount API::Base, at: "/"
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
-  authenticate :admin_user, ->(admin_user) { admin_user.present? } do
-    mount Sidekiq::Web => "/sidekiq"
-  end
 
   get "static_pages/dashboard"
 end

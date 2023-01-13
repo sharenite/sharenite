@@ -4,8 +4,12 @@ networks:
 volumes:
   db_data:
   redis_data:
+  kafka_data:
+  zookeeper_data:
   gem_cache:
   shared_data:
+  test_gem_cache:
+  test_shared_data:
 services:
 
   sharenite-redis:
@@ -69,7 +73,7 @@ services:
           cpus: '4'
           memory: 16G
 
-  sharenite-sidekiq:
+  sharenite-karafka:
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -82,17 +86,93 @@ services:
     stdin_open: true
     tty: true
     entrypoint: prod-entrypoint.sh
-    command: ['sidekiq', '-c', '25']
+    command: ['karafka', 'server']
     environment:
       RAILS_ENV: production
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
       RAILS_MAX_THREADS: 25
     depends_on:
       - sharenite-database
-      - sharenite-redis
+      - sharenite-kafka
     restart: always
     deploy:
       resources:
         limits:
           cpus: '4'
           memory: 16G
+
+  sharenite-zookeeper:
+    image: bitnami/zookeeper:3.8.0
+    environment:
+      ZOO_CLIENT_USER: "${ZOO_CLIENT_USER}"
+      ZOO_CLIENT_PASSWORD: "${ZOO_CLIENT_PASSWORD}"
+    volumes:
+      - zookeeper_data:/bitnami/zookeeper
+    networks:
+      - production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  sharenite-kafka:
+    image: bitnami/kafka:3.3.1
+    environment:
+      KAFKA_CFG_ADVERTISED_HOST_NAME: sharenite-kafka
+      KAFKA_CFG_ADVERTISED_PORT: 9092
+      KAFKA_CFG_ZOOKEEPER_CONNECT: sharenite-zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: 'yes'
+      KAFKA_ZOOKEEPER_USER: "${ZOO_CLIENT_USER}"
+      KAFKA_ZOOKEEPER_PASSWORD: "${ZOO_CLIENT_PASSWORD}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - kafka_data:/bitnami/kafka
+    networks:
+      - production
+    depends_on:
+      - sharenite-zookeeper
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 8G
+
+  sharenite-kafka-ui:
+    image: provectuslabs/kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "sharenite-kafka:9092"      
+      AUTH_TYPE: "LOGIN_FORM"
+      SPRING_SECURITY_USER_NAME: "${KAFKA_UI_USER}"
+      SPRING_SECURITY_USER_PASSWORD: "${KAFKA_UI_PASSWORD}"
+    networks:
+      - production
+    depends_on:
+      - sharenite-kafka
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  sharenite-kafka-init-topics:
+    image: bitnami/kafka:3.3.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./kafka-init-prod.sh:/opt/bitnami/kafka-init-prod.sh
+    depends_on:
+      - sharenite-kafka
+    networks:
+      - production
+    command: "/opt/bitnami/kafka-init-prod.sh"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
