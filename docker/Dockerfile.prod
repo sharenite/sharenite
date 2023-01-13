@@ -23,6 +23,7 @@ RUN apt-get update -qq \
     && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man \
     && npm install -g yarn
 
+RUN ln -s /usr/lib/x86_64-linux-musl/libc.so /lib/libc.musl-x86_64.so.1
 
 RUN gem install bundler --version "$BUNDLE_VERSION" \
     && rm -rf $GEM_HOME/cache/*

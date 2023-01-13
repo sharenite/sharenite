@@ -102,6 +102,7 @@ services:
   sharenite-zookeeper:
     image: bitnami/zookeeper:3.8.0
     environment:
+      ZOO_ENABLE_AUTH: 'yes'
       ZOO_CLIENT_USER: "${ZOO_CLIENT_USER}"
       ZOO_CLIENT_PASSWORD: "${ZOO_CLIENT_PASSWORD}"
     volumes:
