@@ -8,6 +8,12 @@ class KarafkaApp < Karafka::App
     # development mode. Otherwise Karafka process would not be aware of code changes
     config.consumer_persistence = !Rails.env.development?
     config.concurrency = 10
+
+    config.producer =
+      ::WaterDrop::Producer.new do |p_config|
+        p_config.kafka = { "bootstrap.servers": "sharenite-kafka:9092", "request.required.acks": 1, "message.max.bytes": "1000000000" }
+        p_config.max_payload_size = 1_000_000_000
+      end
   end
 
   # Comment out this part if you are not using instrumentation and/or you are not
