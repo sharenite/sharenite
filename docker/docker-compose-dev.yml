@@ -5,8 +5,12 @@ networks:
 volumes:
   db_data:
   redis_data:
+  kafka_data:
+  zookeeper_data:
   gem_cache:
   shared_data:
+  test_gem_cache:
+  test_shared_data:
 services:
 
   sharenite-redis:
@@ -94,7 +98,7 @@ services:
     depends_on:
       - sharenite-database
 
-  sharenite-sidekiq:
+  sharenite-karafka:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -107,28 +111,91 @@ services:
     stdin_open: true
     tty: true
     entrypoint: dev-entrypoint.sh
-    command: ['sidekiq']
+    command: ['karafka', 'server']
     environment:
       RAILS_ENV: development
     depends_on:
       - sharenite-database
-      - sharenite-redis
+      - sharenite-kafka
 
-  sharenite-test:
-    image: sharenite_sharenite_app
-    volumes:
-      - ../:/var/app
-      - shared_data:/var/shared
-      - gem_cache:/usr/local/bundle/gems
-    networks:
-      - test
+  sharenite-zookeeper:
+    image: bitnami/zookeeper:3.8.0
     ports:
-      - 3001:3000
-    stdin_open: true
-    tty: true
-    entrypoint: test-entrypoint.sh
-    command: ["rails", "-v"]
+      - '2181:2181'
     environment:
-      RAILS_ENV: test
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+    volumes:
+      - zookeeper_data:/bitnami/zookeeper
+    networks:
+      - development
+
+  sharenite-zoonavigator:
+    image: elkozmon/zoonavigator
+    ports:
+      - '9000:9000'
+    environment:
+      - HTTP_PORT=9000
+    networks:
+      - development
     depends_on:
-      - sharenite-database
+      - sharenite-zookeeper
+
+  sharenite-kafka:
+    image: bitnami/kafka:3.3.1
+    ports:
+      - '9092:9092'
+    environment:
+      KAFKA_CFG_ADVERTISED_HOST_NAME: sharenite-kafka
+      KAFKA_CFG_ADVERTISED_PORT: 9092
+      KAFKA_CFG_ZOOKEEPER_CONNECT: sharenite-zookeeper:2181
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      ALLOW_PLAINTEXT_LISTENER: 'yes'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - kafka_data:/bitnami/kafka
+    networks:
+      - development
+    depends_on:
+      - sharenite-zookeeper
+
+  sharenite-kafka-ui:
+    image: provectuslabs/kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=sharenite-kafka:9092
+    networks:
+      - development
+    depends_on:
+      - sharenite-kafka
+
+  sharenite-kafka-init-topics:
+    image: bitnami/kafka:3.3.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./kafka-init-dev.sh:/opt/bitnami/kafka-init-dev.sh
+    depends_on:
+      - sharenite-kafka
+    networks:
+      - development
+    command: "/opt/bitnami/kafka-init-dev.sh"
+
+  # sharenite-test:
+  #   image: sharenite_sharenite_app
+  #   volumes:
+  #     - ../:/var/app
+  #     - test_shared_data:/var/shared
+  #     - test_gem_cache:/usr/local/bundle/gems
+  #   networks:
+  #     - test
+  #   ports:
+  #     - 3001:3000
+  #   stdin_open: true
+  #   tty: true
+  #   entrypoint: test-entrypoint.sh
+  #   command: ["rails", "-v"]
+  #   environment:
+  #     RAILS_ENV: test
+  #   depends_on:
+  #     - sharenite-database

@@ -1,7 +1,7 @@
-FROM ruby:3.1-alpine
+FROM ruby:3.1.2
 
 ENV APP_PATH /var/app
-ENV BUNDLE_VERSION 2.2.32
+ENV BUNDLE_VERSION 2.4.1
 ENV BUNDLE_PATH /usr/local/bundle/gems
 ENV TMP_PATH /tmp/
 ENV RAILS_LOG_TO_STDOUT true
@@ -11,21 +11,17 @@ COPY ./entrypoint-docker-prod.sh /usr/local/bin/prod-entrypoint.sh
 RUN chmod +x /usr/local/bin/prod-entrypoint.sh
 
 # install dependencies for application
-RUN apk -U add --no-cache \
-    build-base \
-    git \
-    postgresql-dev \
-    postgresql-client \
-    libxml2-dev \
-    libxslt-dev \
+ARG NODE_MAJOR_VERSION=16
+RUN curl -sL https://deb.nodesource.com/setup_$NODE_MAJOR_VERSION.x | bash -
+RUN apt-get update -qq \
+    && apt-get install -y \ 
+    build-essential \
+    libvips \
     nodejs \
-    yarn \
-    imagemagick \
-    tzdata \
-    less \
-    gcompat \
-    && rm -rf /var/cache/apk/* \
-    && mkdir -p $APP_PATH 
+    musl-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man \
+    && npm install -g yarn
 
 
 RUN gem install bundler --version "$BUNDLE_VERSION" \

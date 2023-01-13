@@ -2,18 +2,14 @@
 
 # Job that performs a full library sync asynchornously
 # rubocop:disable Metrics:ClassLength
-class FullLibrarySyncJob
-  include Sidekiq::Job
-  sidekiq_options lock: :while_executing, unique_across_workers: true, lock_args_method: ->(args) { [args[1]] }, on_conflict: :reschedule
-
-  def variables(args)
-    @games = args[0]
-    @user = User.find(args[1])
-    @sync_job = SyncJob.find(args[2])
+class FullLibrarySyncService
+  def initialize(games, user, sync_job)
+    @games = games
+    @user = user
+    @sync_job = sync_job
   end
 
-  def perform(*args)
-    variables(args)
+  def call
     start_job
     synchronise_games
     finish_job

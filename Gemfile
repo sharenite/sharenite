@@ -60,8 +60,6 @@ gem 'kaminari'
 gem 'rack-cors'
 gem 'sass-rails'
 gem 'securerandom'
-gem 'sidekiq'
-gem 'sidekiq-unique-jobs'
 
 # Use Sass to process CSS
 # gem "sassc-rails"
@@ -110,3 +108,4 @@ group :test do
 end
 
 gem 'devise', github: 'heartcombo/devise', ref: 'f8d1ea90bc3'
+gem "karafka", "~> 2.0"
