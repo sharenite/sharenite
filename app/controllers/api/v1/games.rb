@@ -18,6 +18,7 @@ module API
           Karafka.producer.produce_async(
             topic: "library.sync",
             payload: { type: "full", games: params[:games], current_user_id: current_user.id, job_id: job.id }.to_json,
+            key: current_user.id,
             partition_key: current_user.id
           )
           GC.start
@@ -31,6 +32,7 @@ module API
           Karafka.producer.produce_async(
             topic: "library.sync",
             payload: { type: "partial", games: params[:games], current_user_id: current_user.id, job_id: job.id }.to_json,
+            key: current_user.id,
             partition_key: current_user.id
           )
           GC.start
@@ -44,6 +46,7 @@ module API
           Karafka.producer.produce_async(
             topic: "library.sync",
             payload: { type: "delete", games: params[:games], current_user_id: current_user.id, job_id: job.id }.to_json,
+            key: current_user.id,
             partition_key: current_user.id
           )
           GC.start
@@ -57,6 +60,7 @@ module API
           Karafka.producer.produce_async(
             topic: "library.sync",
             payload: { type: "single", id: params[:id], game: params[:game], current_user_id: current_user.id, job_id: job.id }.to_json,
+            key: current_user.id,
             partition_key: current_user.id
           )
           GC.start
