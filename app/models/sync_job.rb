@@ -4,5 +4,5 @@ class SyncJob < ApplicationRecord
 
   enum status: { queued: "queued", running: "running", finished: "finished", failed: "failed", dead: "dead" }, _prefix: :status
 
-  scope :active, -> { not_status_finished }
+  scope :active, -> { where(status: %i[queued running failed]) }
 end

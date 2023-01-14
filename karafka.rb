@@ -2,6 +2,7 @@
 
 # Karafka configuration
 class KarafkaApp < Karafka::App
+  # rubocop:disable Metrics/BlockLength
   setup do |config|
     config.kafka = { "bootstrap.servers": "sharenite-kafka:9092" }
     config.client_id = "sharenite_app"
@@ -11,11 +12,17 @@ class KarafkaApp < Karafka::App
     config.concurrency = 10
 
     config.producer =
-      ::WaterDrop::Producer.new do |p_config|
-        p_config.kafka = { "bootstrap.servers": "sharenite-kafka:9092", "request.required.acks": 1, "message.max.bytes": "1000000000" }
-        p_config.max_payload_size = 1_000_000_000
+      ::WaterDrop::Producer.new do |producer_config|
+        # Use all the settings already defined for consumer by default
+        producer_config.kafka = ::Karafka::Setup::AttributesMap.producer(config.kafka.dup)
+        producer_config.logger = config.logger
+
+        # Alter things you want to alter
+        producer_config.max_payload_size = 1_000_000_000
+        producer_config.kafka[:"message.max.bytes"] = 1_000_000_000
       end
   end
+  # rubocop:enable Metrics/BlockLength
 
   # Comment out this part if you are not using instrumentation and/or you are not
   # interested in logging events for certain environments. Since instrumentation
