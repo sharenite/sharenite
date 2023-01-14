@@ -25,7 +25,7 @@ ActiveAdmin.register SyncJob do
   end
 
   action_item :mark_dead, only: :show do
-    link_to "Mark Dead", mark_dead_admin_sync_job_path(resource), method: :put unless sync_job.status_dead?
+    link_to "Mark Dead", mark_dead_admin_sync_job_path(resource), method: :put unless sync_job.status_dead? || sync_job.status_finished?
   end
 
   batch_action :mark_dead do |ids|
@@ -71,7 +71,7 @@ ActiveAdmin.register SyncJob do
       Time.at(sync_job.processing_time).utc.strftime("%H:%M:%S") unless sync_job.processing_time.nil?
     end
     actions defaults: true do |sync_job|
-      link_to "Dead", mark_dead_admin_sync_job_path(sync_job), method: :put unless sync_job.status_dead?
+      link_to "Dead", mark_dead_admin_sync_job_path(sync_job), method: :put unless sync_job.status_dead? || sync_job.status_finished?
     end
   end
 
