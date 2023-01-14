@@ -9,31 +9,46 @@ class LibrarySyncConsumer < ApplicationConsumer
     @type = payload["type"]
   end
 
-  # rubocop:disable Metrics/MethodLength
+  def start_processing
+    if @sync_job.started_processing_at.nil?
+      started_processing_at = Time.current
+      @sync_job.update(started_processing_at:, waiting_time: started_processing_at - @sync_job.created_at)
+    end
+    @sync_job.status_running!
+  end
+
+  def do_processing
+    case @type
+    when "full"
+      FullLibrarySyncService.new(@games, @user, @sync_job).call
+    when "partial"
+      PartialLibrarySyncService.new(@games, @user, @sync_job).call
+    when "delete"
+      DeleteGamesSyncService.new(@games, @user, @sync_job).call
+    when "single"
+      raise "Method not implemented, check back later"
+    end
+  end
+
+  def end_processing
+    finished_processing_at = Time.current
+    @sync_job.update(finished_processing_at:, processing_time: finished_processing_at - @sync_job.started_processing_at)
+    @sync_job.status_finished!
+  end
+
   def consume
-    # rubocop:disable Metrics/BlockLength
     messages.each do |message|
       variables(message.payload)
       begin
-        @sync_job.status_running!
-        case @type
-        when "full"
-          FullLibrarySyncService.new(@games, @user, @sync_job).call
-        when "partial"
-          PartialLibrarySyncService.new(@games, @user, @sync_job).call
-        when "delete"
-          DeleteGamesSyncService.new(@games, @user, @sync_job).call
-        when "single"
-          raise "Method not implemented, check back later"
-        end
+        start_processing
+        do_processing
+        end_processing
       rescue StandardError => e
         @sync_job.status_failed!
         raise e
       end
     end
-    # rubocop:enable Metrics/BlockLength
   end
-  # rubocop:enable Metrics/MethodLength
 
   # FOR TESTING FIFO PER USER
   # def consume

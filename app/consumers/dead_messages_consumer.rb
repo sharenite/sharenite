@@ -9,6 +9,8 @@ class DeadMessagesConsumer < ApplicationConsumer
   def consume
     messages.each do |message|
       variables(message.payload)
+      finished_processing_at = Time.current
+      @sync_job.update(finished_processing_at:, processing_time: finished_processing_at - @sync_job.started_processing_at)
       @sync_job.status_dead!
     end
   end

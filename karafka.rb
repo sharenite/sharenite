@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Karafka configuration
 class KarafkaApp < Karafka::App
   setup do |config|
     config.kafka = { "bootstrap.servers": "sharenite-kafka:9092" }
@@ -37,7 +38,7 @@ class KarafkaApp < Karafka::App
         # moving the message to the DLQ topic and continuing the work
         #
         # If set to zero, will not retry at all.
-        max_retries: 2
+        max_retries: 10
       )
     end
 
