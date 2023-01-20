@@ -17,7 +17,11 @@ ActiveAdmin.register SyncJob do
 
   member_action :mark_dead, method: :put do
     finished_processing_at = Time.current
-    resource.update(finished_processing_at:, processing_time: finished_processing_at - resource.started_processing_at)
+    if resource.started_processing_at.nil?
+      resource.update(started_processing_at: finished_processing_at, finished_processing_at:, waiting_time: finished_processing_at - resource.created_at, processing_time: 0)
+    else
+      resource.update(finished_processing_at:, processing_time: finished_processing_at - resource.started_processing_at)
+    end
     resource.status_dead!
     # rubocop:disable Rails/I18nLocaleTexts
     redirect_to admin_sync_jobs_path(nil), notice: "SyncJob was marked as dead"
