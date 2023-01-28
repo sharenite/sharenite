@@ -22,6 +22,7 @@ class KarafkaApp < Karafka::App
 
         # Alter things you want to alter
         producer_config.max_payload_size = 1_000_000_000
+        producer_config.max_wait_timeout = 60
         producer_config.kafka[:"message.max.bytes"] = 1_000_000_000
       end
 
