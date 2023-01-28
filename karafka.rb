@@ -24,6 +24,15 @@ class KarafkaApp < Karafka::App
         producer_config.max_payload_size = 1_000_000_000
         producer_config.kafka[:"message.max.bytes"] = 1_000_000_000
       end
+
+    config
+      .producer
+      .monitor
+      .subscribe("error.occurred") do |event|
+        error = event[:error]
+        Appsignal.set_error(error)
+        p "WaterDrop error occurred: #{error}"
+      end
   end
   # rubocop:enable Metrics/BlockLength
 
@@ -33,6 +42,7 @@ class KarafkaApp < Karafka::App
   # listen to only what you really need for given environment.
   Karafka.monitor.subscribe(Karafka::Instrumentation::LoggerListener.new)
   # Karafka.monitor.subscribe(Karafka::Instrumentation::ProctitleListener.new)
+  Karafka.producer.monitor.subscribe(WaterDrop::Instrumentation::LoggerListener.new(Karafka.logger))
 
   routes.draw do
     # Uncomment this if you use Karafka with ActiveJob
@@ -57,3 +67,7 @@ class KarafkaApp < Karafka::App
     end
   end
 end
+
+require "karafka/web"
+
+Karafka::Web.enable!

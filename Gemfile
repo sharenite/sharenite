@@ -109,3 +109,4 @@ end
 
 gem 'devise', github: 'heartcombo/devise', ref: 'f8d1ea90bc3'
 gem "karafka", "~> 2.0"
+gem "karafka-web", github: "karafka/karafka-web", ref: '32048ea'

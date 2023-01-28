@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
+require "karafka/web"
+
 Rails.application.routes.draw do
+  authenticate :admin_user, ->(admin_user) { !admin_user.nil? } do
+    mount Karafka::Web::App, at: "/karafka"
+  end
+
   resources :profiles, controller: "profiles/profiles" do
     resources :games, controller: "profiles/games" do
       collection { post :search }
