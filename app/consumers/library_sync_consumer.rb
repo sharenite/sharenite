@@ -3,9 +3,11 @@
 # Example consumer that prints messages payloads
 class LibrarySyncConsumer < ApplicationConsumer
   def variables(payload)
-    @games = payload["games"]
     @user = User.find(payload["current_user_id"])
     @sync_job = SyncJob.find(payload["job_id"])
+    # rubocop:disable Style/GlobalVars
+    @games = JSON.parse($redis.get("syncjob:#{@sync_job.id}"))
+    # rubocop:enable Style/GlobalVars
     @type = payload["type"]
   end
 
@@ -34,6 +36,9 @@ class LibrarySyncConsumer < ApplicationConsumer
     finished_processing_at = Time.current
     @sync_job.update(finished_processing_at:, processing_time: finished_processing_at - @sync_job.started_processing_at)
     @sync_job.status_finished!
+    # rubocop:disable Style/GlobalVars
+    $redis.expire("syncjob:#{@sync_job.id}", 1)
+    # rubocop:enable Style/GlobalVars
   end
 
   def consume

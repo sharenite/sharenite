@@ -12,6 +12,9 @@ class DeadMessagesConsumer < ApplicationConsumer
       finished_processing_at = Time.current
       @sync_job.update(finished_processing_at:, processing_time: finished_processing_at - @sync_job.started_processing_at)
       @sync_job.status_dead!
+      # rubocop:disable Style/GlobalVars
+      $redis.expire("syncjob:#{@sync_job.id}", 2_678_400)
+      # rubocop:enable Style/GlobalVars
     end
   end
 
