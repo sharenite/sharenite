@@ -70,7 +70,7 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 1G
+          memory: 2G
 
   sharenite-karafka:
     build:
@@ -97,7 +97,7 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 1G
+          memory: 2G
 
   sharenite-zookeeper:
     image: bitnami/zookeeper:3.8.0
@@ -142,7 +142,7 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 1G
+          memory: 2G
 
   sharenite-kafka-ui:
     image: provectuslabs/kafka-ui
