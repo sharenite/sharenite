@@ -2,7 +2,7 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-source "https://#{ENV.fetch('BUNDLE_KARAFKA_PRO_USERNAME', nil)}:#{ENV.fetch('BUNDLE_KARAFKA_PRO_PASSWORD', nil)}@gems.karafka.io" do
+source "https://gems.karafka.io" do
   gem 'karafka-license', ENV.fetch('BUNDLE_KARAFKA_PRO_LICENSE_ID', nil)
 end
 

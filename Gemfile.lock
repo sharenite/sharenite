@@ -32,7 +32,7 @@ GIT
       tilt (~> 2.0)
 
 GEM
-  remote: https://:@gems.karafka.io/
+  remote: https://gems.karafka.io/
   specs:
     karafka-license (1.a8ccbbc2295)
 
