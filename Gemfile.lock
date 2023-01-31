@@ -32,6 +32,11 @@ GIT
       tilt (~> 2.0)
 
 GEM
+  remote: https://:@gems.karafka.io/
+  specs:
+    karafka-license (1.a8ccbbc2295)
+
+GEM
   remote: https://rubygems.org/
   specs:
     actioncable (7.0.4.2)
@@ -507,6 +512,7 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka (~> 2.0)
+  karafka-license!
   karafka-web!
   letter_opener
   letter_opener_web

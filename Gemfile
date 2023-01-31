@@ -2,6 +2,10 @@
 source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
+source "https://#{ENV.fetch('BUNDLE_KARAFKA_PRO_USERNAME', nil)}:#{ENV.fetch('BUNDLE_KARAFKA_PRO_PASSWORD', nil)}@gems.karafka.io" do
+  gem 'karafka-license', ENV.fetch('BUNDLE_KARAFKA_PRO_LICENSE_ID', nil)
+end
+
 ruby "3.1.2"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"

@@ -57,6 +57,9 @@ services:
     command: ['rails', 'server', '-p', '3000', '-b', '0.0.0.0']
     environment:
       RAILS_ENV: development
+      BUNDLE_KARAFKA_PRO_USERNAME: "${BUNDLE_KARAFKA_PRO_USERNAME}"
+      BUNDLE_KARAFKA_PRO_PASSWORD: "${BUNDLE_KARAFKA_PRO_PASSWORD}"
+      BUNDLE_KARAFKA_PRO_LICENSE_ID: "${BUNDLE_KARAFKA_PRO_LICENSE_ID}"
     depends_on:
       - sharenite-database
 
@@ -114,6 +117,9 @@ services:
     command: ['karafka', 'server']
     environment:
       RAILS_ENV: development
+      BUNDLE_KARAFKA_PRO_USERNAME: "${BUNDLE_KARAFKA_PRO_USERNAME}"
+      BUNDLE_KARAFKA_PRO_PASSWORD: "${BUNDLE_KARAFKA_PRO_PASSWORD}"
+      BUNDLE_KARAFKA_PRO_LICENSE_ID: "${BUNDLE_KARAFKA_PRO_LICENSE_ID}"
     depends_on:
       - sharenite-database
       - sharenite-kafka
