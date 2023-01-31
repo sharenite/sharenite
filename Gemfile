@@ -3,7 +3,7 @@ source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 source "https://gems.karafka.io" do
-  gem 'karafka-license', ENV.fetch('BUNDLE_KARAFKA_PRO_LICENSE_ID', nil)
+  gem 'karafka-license', ENV.fetch('KARAFKA_PRO_LICENSE_ID', nil)
 end
 
 ruby "3.1.2"
