@@ -57,7 +57,7 @@ services:
     command: ['rails', 'server', '-p', '3000', '-b', '0.0.0.0']
     environment:
       RAILS_ENV: development
-      BUNDLE_GEMS__GEMS__KARAFKA__IO: "${BUNDLE_GEMS__GEMS__KARAFKA__IO}"
+      BUNDLE_GEMS__KARAFKA__IO: "${BUNDLE_GEMS__KARAFKA__IO}"
       KARAFKA_PRO_LICENSE_ID: "${KARAFKA_PRO_LICENSE_ID}"
     depends_on:
       - sharenite-database
@@ -116,7 +116,7 @@ services:
     command: ['karafka', 'server']
     environment:
       RAILS_ENV: development
-      BUNDLE_GEMS__GEMS__KARAFKA__IO: "${BUNDLE_GEMS__GEMS__KARAFKA__IO}"
+      BUNDLE_GEMS__KARAFKA__IO: "${BUNDLE_GEMS__KARAFKA__IO}"
       KARAFKA_PRO_LICENSE_ID: "${KARAFKA_PRO_LICENSE_ID}"
     depends_on:
       - sharenite-database

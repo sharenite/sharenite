@@ -63,7 +63,7 @@ services:
     environment:
       RAILS_ENV: staging
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
-      BUNDLE_GEMS__GEMS__KARAFKA__IO: "${BUNDLE_GEMS__GEMS__KARAFKA__IO}"
+      BUNDLE_GEMS__KARAFKA__IO: "${BUNDLE_GEMS__KARAFKA__IO}"
       KARAFKA_PRO_LICENSE_ID: "${KARAFKA_PRO_LICENSE_ID}"
     depends_on:
       - sharenite-database
@@ -91,7 +91,7 @@ services:
     environment:
       RAILS_ENV: staging
       SHARENITE_DATABASE_PASSWORD: "${SHARENITE_DATABASE_PASSWORD}"
-      BUNDLE_GEMS__GEMS__KARAFKA__IO: "${BUNDLE_GEMS__GEMS__KARAFKA__IO}"
+      BUNDLE_GEMS__KARAFKA__IO: "${BUNDLE_GEMS__KARAFKA__IO}"
       KARAFKA_PRO_LICENSE_ID: "${KARAFKA_PRO_LICENSE_ID}"
     depends_on:
       - sharenite-database
