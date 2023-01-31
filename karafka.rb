@@ -5,6 +5,7 @@ class KarafkaApp < Karafka::App
   # rubocop:disable Metrics/BlockLength
   setup do |config|
     config.kafka = { "bootstrap.servers": "sharenite-kafka:9092" }
+    config.kafka[:"max.poll.interval.ms"] = 3_600_000
     config.client_id = "sharenite_app"
     # Recreate consumers with each batch. This will allow Rails code reload to work in the
     # development mode. Otherwise Karafka process would not be aware of code changes
