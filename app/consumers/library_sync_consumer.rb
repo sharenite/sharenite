@@ -44,14 +44,13 @@ class LibrarySyncConsumer < ApplicationConsumer
   def consume
     messages.each do |message|
       variables(message.payload)
-      begin
-        start_processing
-        do_processing
-        end_processing
-      rescue StandardError => e
-        @sync_job.status_failed!
-        raise e
-      end
+      start_processing
+      do_processing
+      end_processing
+    rescue StandardError => e
+      @sync_job.status_failed!
+      Appsignal.set_error(e)
+      raise e
     end
   end
 
