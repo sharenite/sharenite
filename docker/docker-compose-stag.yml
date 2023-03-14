@@ -104,7 +104,7 @@ services:
           memory: 2G
 
   sharenite-zookeeper:
-    image: bitnami/zookeeper:3.8.0
+    image: bitnami/zookeeper:3.8
     environment:
       ZOO_ENABLE_AUTH: 'yes'
       ZOO_CLIENT_USER: "${ZOO_CLIENT_USER}"
@@ -121,7 +121,7 @@ services:
           memory: 1G
 
   sharenite-kafka:
-    image: bitnami/kafka:3.3.1
+    image: bitnami/kafka:3.4
     environment:
       KAFKA_CFG_ADVERTISED_HOST_NAME: sharenite-kafka
       KAFKA_CFG_ADVERTISED_PORT: 9092
@@ -165,7 +165,7 @@ services:
           memory: 1G
 
   sharenite-kafka-init-topics:
-    image: bitnami/kafka:3.3.1
+    image: bitnami/kafka:3.4
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./kafka-init-stag.sh:/opt/bitnami/kafka-init-stag.sh
