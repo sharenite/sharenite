@@ -6,19 +6,19 @@ source "https://gems.karafka.io" do
   gem 'karafka-license', ENV.fetch('KARAFKA_PRO_LICENSE_ID', nil)
 end
 
-ruby "3.1.2"
+ruby "3.2.1"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 7.0.3", ">= 7.0.3.1"
+gem "rails"
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
 
 # Use postgresql as the database for Active Record
-gem "pg", "~> 1.1"
+gem "pg"
 
 # Use the Puma web server [https://github.com/puma/puma]
-gem "puma", "~> 5.0"
+gem "puma"
 
 # Bundle and transpile JavaScript [https://github.com/rails/jsbundling-rails]
 gem "jsbundling-rails"
@@ -36,7 +36,7 @@ gem "cssbundling-rails"
 gem "jbuilder"
 
 # Use Redis adapter to run Action Cable in production
-gem "redis", "~> 4.0"
+gem "redis"
 
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
@@ -81,15 +81,15 @@ group :development, :test do
   gem 'foreman'
   gem 'letter_opener'
   gem 'letter_opener_web'
-  gem 'prettier_print', '~> 0.1.0'
+  gem 'prettier_print'
   gem 'rspec-rails'
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rails', require: false
   gem 'rubocop-rspec', require: false
-  gem 'syntax_tree', '~> 3.4'
-  gem 'syntax_tree-haml', '~> 1.3'
-  gem 'syntax_tree-rbs', '~> 0.5.0'
+  gem 'syntax_tree'
+  gem 'syntax_tree-haml'
+  gem 'syntax_tree-rbs'
 end
 
 group :development do
@@ -112,6 +112,6 @@ group :test do
   gem "webdrivers"
 end
 
-gem 'devise', github: 'heartcombo/devise', ref: 'f8d1ea90bc3'
-gem "karafka", "~> 2.0"
-gem "karafka-web", github: "karafka/karafka-web", ref: '32048ea'
+gem 'devise'
+gem "karafka"
+gem "karafka-web"

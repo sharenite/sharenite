@@ -123,7 +123,7 @@ services:
       - sharenite-kafka
 
   sharenite-zookeeper:
-    image: bitnami/zookeeper:3.8.0
+    image: bitnami/zookeeper:3.8
     ports:
       - '2181:2181'
     environment:
@@ -145,7 +145,7 @@ services:
       - sharenite-zookeeper
 
   sharenite-kafka:
-    image: bitnami/kafka:3.3.1
+    image: bitnami/kafka:3.4
     ports:
       - '9092:9092'
     environment:
@@ -175,7 +175,7 @@ services:
       - sharenite-kafka
 
   sharenite-kafka-init-topics:
-    image: bitnami/kafka:3.3.1
+    image: bitnami/kafka:3.4
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./kafka-init-dev.sh:/opt/bitnami/kafka-init-dev.sh

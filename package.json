@@ -7,7 +7,7 @@
     "@popperjs/core": "^2.11.6",
     "bootstrap": "^5.2.0",
     "bootstrap-icons": "^1.9.1",
-    "esbuild": "^0.15.5",
+    "esbuild": "^0.17",
     "sass": "^1.54.5"
   },
   "scripts": {
@@ -18,18 +18,16 @@
   },
   "lint-staged": {
     "app/**/*.{js,es6,jsx,scss,css,haml}": [
-      "./node_modules/prettier/bin-prettier.js --write",
-      "git add"
+      "./node_modules/prettier/bin-prettier.js --write"
     ],
     "{app,test}/**/*.rb": [
-      "bundle exec rubocop -a",
-      "git add"
+      "bundle exec rubocop -a"
     ]
   },
   "devDependencies": {
     "@prettier/plugin-ruby": "^3.2.0",
-    "husky": "^0.13.4",
-    "lint-staged": "^3.6.0",
+    "husky": "^8",
+    "lint-staged": "^13",
     "prettier": "^2.7.1"
   }
 }
