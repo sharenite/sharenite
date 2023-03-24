@@ -120,7 +120,7 @@ GEM
       tzinfo (~> 2.0)
     addressable (2.8.1)
       public_suffix (>= 2.0.2, < 6.0)
-    appsignal (3.3.2)
+    appsignal (3.3.7)
       rack
     arbre (1.5.0)
       activesupport (>= 3.0.0, < 7.1)
@@ -265,6 +265,11 @@ GEM
     listen (3.8.0)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
+    lograge (0.12.0)
+      actionpack (>= 4)
+      activesupport (>= 4)
+      railties (>= 4)
+      request_store (~> 1.0)
     loofah (2.19.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -310,7 +315,7 @@ GEM
     puma (5.6.5)
       nio4r (~> 2.0)
     racc (1.6.2)
-    rack (2.2.6.2)
+    rack (2.2.6.4)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-cors (1.1.1)
@@ -362,6 +367,8 @@ GEM
     regexp_parser (2.6.2)
     reline (0.3.2)
       io-console (~> 0.5)
+    request_store (1.5.1)
+      rack (>= 1.4)
     responders (3.0.1)
       actionpack (>= 5.0)
       railties (>= 5.0)
@@ -512,10 +519,11 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka (~> 2.0)
-  karafka-license!
+  karafka-license (= 1.a8ccbbc2295)!
   karafka-web!
   letter_opener
   letter_opener_web
+  lograge
   pg (~> 1.1)
   prettier_print (~> 0.1.0)
   puma (~> 5.0)

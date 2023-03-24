@@ -3,6 +3,11 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  config.lograge.enabled = true
+  config.lograge.logger = Appsignal::Logger.new(
+    "rails",
+    format: Appsignal::Logger::LOGFMT
+  )
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
