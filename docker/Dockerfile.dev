@@ -17,6 +17,7 @@ RUN curl -sL https://deb.nodesource.com/setup_$NODE_MAJOR_VERSION.x | bash -
 RUN apt-get update -qq \
     && apt-get install -y \ 
     build-essential \
+    libgmp-dev \
     libvips \
     nodejs \
     musl-dev \
