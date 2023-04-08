@@ -15,6 +15,13 @@ class User < ApplicationRecord
   has_many :platforms, dependent: :destroy
   has_many :completion_statuses, dependent: :destroy
   has_many :sources, dependent: :destroy
+  has_many :genres, dependent: :destroy
+  has_many :developers, dependent: :destroy
+  has_many :publishers, dependent: :destroy
+  has_many :features, dependent: :destroy
+  has_many :series, dependent: :destroy
+  has_many :age_ratings, dependent: :destroy
+  has_many :regions, dependent: :destroy
   has_one :profile, dependent: :destroy
 
   has_many :invitees, foreign_key: :inviter_id, class_name: 'Friend', dependent: :destroy, inverse_of: :inviter
