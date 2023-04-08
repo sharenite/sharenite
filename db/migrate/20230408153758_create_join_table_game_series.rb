@@ -1,4 +1,4 @@
-class CreateJoinTableGameSerie < ActiveRecord::Migration[7.0]
+class CreateJoinTableGameSeries < ActiveRecord::Migration[7.0]
   def change
     create_join_table :games,
                       :series,
