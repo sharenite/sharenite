@@ -4,9 +4,6 @@ ActiveAdmin.register Rom do
   config.sort_order = "created_at_desc"
   menu parent: "Games", priority: 6
 
-  belongs_to :game, optional: true
-  includes :game
-
   # See permitted parameters documentation:
   # https://github.com/activeadmin/activeadmin/blob/master/docs/2-resource-customization.md#setting-up-strong-parameters
   #

@@ -53,7 +53,7 @@ class KarafkaApp < Karafka::App
         # moving the message to the DLQ topic and continuing the work
         #
         # If set to zero, will not retry at all.
-        max_retries: 10
+        max_retries: Rails.application.credentials.dlq_retries || 10
       )
 
       long_running_job true
