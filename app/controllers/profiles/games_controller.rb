@@ -32,7 +32,7 @@ module Profiles
     private
 
     def set_sync_jobs
-      @sync_jobs = @profile.user.sync_jobs.active.order(:created_at) if @profile == @current_user.profile
+      @sync_jobs = @profile.user.sync_jobs.active.order(:created_at) if !@current_user.nil? && @profile == @current_user.profile
     end
 
     def game
