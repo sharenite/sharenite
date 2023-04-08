@@ -17,8 +17,8 @@ class Game < ApplicationRecord
   has_and_belongs_to_many :series
   has_and_belongs_to_many :age_ratings
   has_and_belongs_to_many :regions
-  has_many :links
-  has_many :roms
+  has_many :links, dependent: :destroy
+  has_many :roms, dependent: :destroy
 
   paginates_per 100
 
