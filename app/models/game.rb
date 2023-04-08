@@ -10,6 +10,15 @@ class Game < ApplicationRecord
   has_and_belongs_to_many :tags
   has_and_belongs_to_many :categories
   has_and_belongs_to_many :platforms
+  has_and_belongs_to_many :genres
+  has_and_belongs_to_many :developers
+  has_and_belongs_to_many :publishers
+  has_and_belongs_to_many :features
+  has_and_belongs_to_many :series
+  has_and_belongs_to_many :age_ratings
+  has_and_belongs_to_many :regions
+  has_many :links
+  has_many :roms
 
   paginates_per 100
 

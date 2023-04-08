@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_01_14_124003) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_08_153810) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -47,6 +47,22 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_124003) do
     t.index ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true
   end
 
+  create_table "age_ratings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_age_ratings_on_user_id"
+  end
+
+  create_table "age_ratings_games", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "age_rating_id", null: false
+    t.index ["age_rating_id", "game_id"], name: "index_age_ratings_games_on_age_rating_id_and_game_id"
+    t.index ["game_id", "age_rating_id"], name: "index_age_ratings_games_on_game_id_and_age_rating_id"
+  end
+
   create_table "categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.uuid "playnite_id"
@@ -72,6 +88,38 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_124003) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "playnite_id"], name: "index_completion_statuses_on_user_id_and_playnite_id", unique: true
     t.index ["user_id"], name: "index_completion_statuses_on_user_id"
+  end
+
+  create_table "developers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_developers_on_user_id"
+  end
+
+  create_table "developers_games", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "developer_id", null: false
+    t.index ["developer_id", "game_id"], name: "index_developers_games_on_developer_id_and_game_id"
+    t.index ["game_id", "developer_id"], name: "index_developers_games_on_game_id_and_developer_id"
+  end
+
+  create_table "features", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_features_on_user_id"
+  end
+
+  create_table "features_games", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "feature_id", null: false
+    t.index ["feature_id", "game_id"], name: "index_features_games_on_feature_id_and_game_id"
+    t.index ["game_id", "feature_id"], name: "index_features_games_on_game_id_and_feature_id"
   end
 
   create_table "friendly_id_slugs", force: :cascade do |t|
@@ -137,11 +185,23 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_124003) do
     t.uuid "playnite_id"
     t.uuid "completion_status_id"
     t.uuid "source_id"
+    t.boolean "enable_system_hdr"
+    t.bigint "install_size"
+    t.datetime "last_size_scan_date"
+    t.boolean "override_install_state"
+    t.datetime "recent_activity"
     t.index ["completion_status_id"], name: "index_games_on_completion_status_id"
     t.index ["playnite_id", "user_id"], name: "index_games_on_playnite_id_and_user_id", unique: true
     t.index ["source_id"], name: "index_games_on_source_id"
     t.index ["user_id", "playnite_id"], name: "index_games_on_user_id_and_playnite_id", unique: true
     t.index ["user_id"], name: "index_games_on_user_id"
+  end
+
+  create_table "games_genres", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "genre_id", null: false
+    t.index ["game_id", "genre_id"], name: "index_games_genres_on_game_id_and_genre_id"
+    t.index ["genre_id", "game_id"], name: "index_games_genres_on_genre_id_and_game_id"
   end
 
   create_table "games_platforms", id: false, force: :cascade do |t|
@@ -151,11 +211,50 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_124003) do
     t.index ["platform_id", "game_id"], name: "index_games_platforms_on_platform_id_and_game_id"
   end
 
+  create_table "games_publishers", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "publisher_id", null: false
+    t.index ["game_id", "publisher_id"], name: "index_games_publishers_on_game_id_and_publisher_id"
+    t.index ["publisher_id", "game_id"], name: "index_games_publishers_on_publisher_id_and_game_id"
+  end
+
+  create_table "games_regions", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "region_id", null: false
+    t.index ["game_id", "region_id"], name: "index_games_regions_on_game_id_and_region_id"
+    t.index ["region_id", "game_id"], name: "index_games_regions_on_region_id_and_game_id"
+  end
+
+  create_table "games_series", id: false, force: :cascade do |t|
+    t.uuid "game_id", null: false
+    t.uuid "series_id", null: false
+    t.index ["game_id", "series_id"], name: "index_games_series_on_game_id_and_series_id"
+    t.index ["series_id", "game_id"], name: "index_games_series_on_series_id_and_game_id"
+  end
+
   create_table "games_tags", id: false, force: :cascade do |t|
     t.uuid "game_id", null: false
     t.uuid "tag_id", null: false
     t.index ["game_id", "tag_id"], name: "index_games_tags_on_game_id_and_tag_id"
     t.index ["tag_id", "game_id"], name: "index_games_tags_on_tag_id_and_game_id"
+  end
+
+  create_table "genres", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_genres_on_user_id"
+  end
+
+  create_table "links", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "url"
+    t.uuid "game_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_links_on_game_id"
   end
 
   create_table "platforms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -180,6 +279,42 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_124003) do
     t.index ["slug"], name: "index_profiles_on_slug", unique: true
     t.index ["user_id"], name: "index_profiles_on_user_id"
     t.index ["vanity_url"], name: "index_profiles_on_vanity_url", unique: true
+  end
+
+  create_table "publishers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_publishers_on_user_id"
+  end
+
+  create_table "regions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_regions_on_user_id"
+  end
+
+  create_table "roms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "path"
+    t.uuid "game_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_roms_on_game_id"
+  end
+
+  create_table "series", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "playnite_id"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_series_on_user_id"
   end
 
   create_table "sources", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -237,21 +372,44 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_124003) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "age_ratings", "users"
+  add_foreign_key "age_ratings_games", "age_ratings"
+  add_foreign_key "age_ratings_games", "games"
   add_foreign_key "categories", "users"
   add_foreign_key "categories_games", "categories"
   add_foreign_key "categories_games", "games"
   add_foreign_key "completion_statuses", "users"
+  add_foreign_key "developers", "users"
+  add_foreign_key "developers_games", "developers"
+  add_foreign_key "developers_games", "games"
+  add_foreign_key "features", "users"
+  add_foreign_key "features_games", "features"
+  add_foreign_key "features_games", "games"
   add_foreign_key "friends", "users", column: "invitee_id"
   add_foreign_key "friends", "users", column: "inviter_id"
   add_foreign_key "games", "completion_statuses"
   add_foreign_key "games", "sources"
   add_foreign_key "games", "users"
+  add_foreign_key "games_genres", "games"
+  add_foreign_key "games_genres", "genres"
   add_foreign_key "games_platforms", "games"
   add_foreign_key "games_platforms", "platforms"
+  add_foreign_key "games_publishers", "games"
+  add_foreign_key "games_publishers", "publishers"
+  add_foreign_key "games_regions", "games"
+  add_foreign_key "games_regions", "regions"
+  add_foreign_key "games_series", "games"
+  add_foreign_key "games_series", "series"
   add_foreign_key "games_tags", "games"
   add_foreign_key "games_tags", "tags"
+  add_foreign_key "genres", "users"
+  add_foreign_key "links", "games"
   add_foreign_key "platforms", "users"
   add_foreign_key "profiles", "users"
+  add_foreign_key "publishers", "users"
+  add_foreign_key "regions", "users"
+  add_foreign_key "roms", "games"
+  add_foreign_key "series", "users"
   add_foreign_key "sources", "users"
   add_foreign_key "sync_jobs", "users"
   add_foreign_key "tags", "users"

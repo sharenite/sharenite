@@ -35,12 +35,14 @@ class PartialLibrarySyncService
           "community_score",
           "critic_score",
           "description",
+          "enable_system_hdr",
           "favorite",
           "game_id",
           "game_started_script",
           "hidden",
           "include_library_plugin_action",
           "install_directory",
+          "install_size",
           "is_custom_game",
           "is_installed",
           "is_installing",
@@ -48,17 +50,19 @@ class PartialLibrarySyncService
           "is_running",
           "is_uninstalling",
           "last_activity",
+          "last_size_scan_date",
           "manual",
           "modified",
           "name",
           "notes",
+          "override_install_state",
           "play_count",
           "playnite_id",
           "playtime",
           "plugin_id",
           "post_script",
           "pre_script",
-          "release_date",
+          "recent_activity",
           "sorting_name",
           "use_global_game_started_script",
           "use_global_post_script",
@@ -66,44 +70,58 @@ class PartialLibrarySyncService
           "user_score",
           "version"
         ).merge(
-          "tags" => tags(playnite_game),
-          "categories" => categories(playnite_game),
-          "platforms" => platforms(playnite_game),
+          "age_ratings" => properties(playnite_game, "age_ratings"),
+          "categories" => properties(playnite_game, "categories"),
           "completion_status" => completion_status(playnite_game),
-          "source" => source(playnite_game)
+          "developers" => properties(playnite_game, "developers"),
+          "features" => properties(playnite_game, "features"),
+          "genres" => properties(playnite_game, "genres"),
+          "links" => links(playnite_game, sharenite_game),
+          "platforms" => properties(playnite_game, "platforms"),
+          "publishers" => properties(playnite_game, "publishers"),
+          "regions" => properties(playnite_game, "regions"),
+          "release_date" => release_date(playnite_game),
+          "roms" => roms(playnite_game, sharenite_game),
+          "series" => properties(playnite_game, "series"),
+          "source" => source(playnite_game),          
+          "tags" => properties(playnite_game, "tags"),
         )
       )
     end
   end
 
-  def tags(playnite_game)
-    tags = []
-    playnite_game["tags"]&.each do |playnite_tag|
-      sharenite_tag = @user.tags.find_or_create_by!(playnite_id: playnite_tag["id"])
-      sharenite_tag.update!(name: playnite_tag["name"])
-      tags << sharenite_tag
+  def properties(playnite_game, property_name)
+    properties = []
+    playnite_game[property_name]&.each do |playnite_property|
+      sharenite_property = @user.send(property_name).find_or_create_by!(playnite_id: playnite_property["id"])
+      sharenite_property.update!(name: playnite_property["name"])
+      properties << sharenite_property
     end
-    tags
+    properties
+  end
+ 
+  def links(playnite_game, sharenite_game)
+    links = []
+    playnite_game["links"]&.each do |playnite_link|
+      sharenite_link = sharenite_game.links.find_or_create_by!(name: playnite_link["name"])
+      sharenite_link.update!(url: playnite_link["url"])
+      links << sharenite_link
+    end
+    links
   end
 
-  def categories(playnite_game)
-    categories = []
-    playnite_game["categories"]&.each do |playnite_category|
-      sharenite_category = @user.categories.find_or_create_by!(playnite_id: playnite_category["id"])
-      sharenite_category.update!(name: playnite_category["name"])
-      categories << sharenite_category
+  def roms(playnite_game, sharenite_game)
+    roms = []
+    playnite_game["roms"]&.each do |playnite_rom|
+      sharenite_rom = sharenite_game.roms.find_or_create_by!(name: playnite_rom["name"])
+      sharenite_rom.update!(path: playnite_rom["path"])
+      roms << sharenite_rom
     end
-    categories
+    roms
   end
 
-  def platforms(playnite_game)
-    platforms = []
-    playnite_game["platforms"]&.each do |playnite_platform|
-      sharenite_platform = @user.platforms.find_or_create_by!(playnite_id: playnite_platform["id"])
-      sharenite_platform.update!(name: playnite_platform["name"], specification_id: playnite_platform["specification_id"])
-      platforms << sharenite_platform
-    end
-    platforms
+  def release_date(playnite_game)
+     playnite_game.dig("release_date", "ReleaseDate")
   end
 
   def completion_status(playnite_game)
