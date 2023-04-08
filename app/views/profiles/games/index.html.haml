@@ -1,6 +1,10 @@
-- unless @sync_job.nil?
+- unless @sync_jobs.nil? || @sync_jobs.count.zero?
   .alert.alert-primary
-    = "There's a synchronisation in progress, status: #{@sync_job.status}."
+    = "There's a synchronisation still being processed:"
+    .br
+    - @sync_jobs.each do |sync_job|
+      = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
+      .br
 .row
   .col-6.me-auto
     %h1 Games

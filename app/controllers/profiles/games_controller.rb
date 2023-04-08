@@ -8,7 +8,7 @@ module Profiles
 
     def index
       set_games
-      set_sync_job
+      set_sync_jobs
 
       if turbo_frame_request?
         render partial: "games", locals: { games: @games }
@@ -31,8 +31,8 @@ module Profiles
 
     private
 
-    def set_sync_job
-      @sync_job = @profile.user.sync_jobs.active&.first
+    def set_sync_jobs
+      @sync_jobs = @profile.user.sync_jobs.active.order(:created_at) if @profile == @current_user.profile
     end
 
     def game
