@@ -64,6 +64,7 @@ gem 'haml-rails'
 gem 'kaminari'
 gem 'rack-cors'
 gem 'sass-rails'
+gem 'search_cop'
 gem 'securerandom'
 
 # Use Sass to process CSS

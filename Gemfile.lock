@@ -95,9 +95,9 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
-    addressable (2.8.3)
+    addressable (2.8.4)
       public_suffix (>= 2.0.2, < 6.0)
-    appsignal (3.4.0)
+    appsignal (3.4.1)
       rack
     arbre (1.5.0)
       activesupport (>= 3.0.0, < 7.1)
@@ -159,7 +159,7 @@ GEM
     factory_bot_rails (6.2.0)
       factory_bot (~> 6.2.0)
       railties (>= 5.0.0)
-    faker (3.1.1)
+    faker (3.2.0)
       i18n (>= 1.8.11, < 2)
     ffi (1.15.5)
     foreman (0.87.2)
@@ -200,7 +200,7 @@ GEM
       railties (>= 5.2, < 7.1)
       responders (>= 2, < 4)
     io-console (0.6.0)
-    irb (1.6.3)
+    irb (1.6.4)
       reline (>= 0.3.0)
     jbuilder (2.11.5)
       actionview (>= 5.0.0)
@@ -225,7 +225,7 @@ GEM
       activerecord
       kaminari-core (= 1.2.2)
     kaminari-core (1.2.2)
-    karafka (2.0.38)
+    karafka (2.0.40)
       karafka-core (>= 2.0.12, < 3.0.0)
       thor (>= 0.20)
       waterdrop (>= 2.4.10, < 3.0.0)
@@ -237,9 +237,9 @@ GEM
       ffi (~> 1.15)
       mini_portile2 (~> 2.6)
       rake (> 12)
-    karafka-web (0.4.0)
+    karafka-web (0.5.1)
       erubi (~> 1.4)
-      karafka (>= 2.0.38, < 3.0.0)
+      karafka (>= 2.0.40, < 3.0.0)
       karafka-core (>= 2.0.12, < 3.0.0)
       roda (~> 3.63)
       tilt (~> 2.0)
@@ -289,16 +289,17 @@ GEM
     net-smtp (0.3.3)
       net-protocol
     nio4r (2.5.9)
-    nokogiri (1.14.2-x86_64-linux)
+    nokogiri (1.14.3-x86_64-linux)
       racc (~> 1.4)
     orm_adapter (0.5.0)
-    parallel (1.22.1)
+    parallel (1.23.0)
     parser (3.2.2.0)
       ast (~> 2.4.1)
     pg (1.4.6)
+    polyglot (0.3.5)
     prettier_print (1.2.1)
     public_suffix (5.0.1)
-    puma (6.2.1)
+    puma (6.2.2)
       nio4r (~> 2.0)
     racc (1.6.2)
     rack (2.2.6.4)
@@ -327,7 +328,7 @@ GEM
       nokogiri (>= 1.6)
     rails-html-sanitizer (1.5.0)
       loofah (~> 2.19, >= 2.19.1)
-    rails_live_reload (0.3.2)
+    rails_live_reload (0.3.3)
       listen
       nio4r
       railties
@@ -353,7 +354,7 @@ GEM
       redis-client (>= 0.9.0)
     redis-client (0.14.1)
       connection_pool
-    regexp_parser (2.7.0)
+    regexp_parser (2.8.0)
     reline (0.3.3)
       io-console (~> 0.5)
     request_store (1.5.1)
@@ -362,9 +363,9 @@ GEM
       actionpack (>= 5.2)
       railties (>= 5.2)
     rexml (3.2.5)
-    roda (3.66.0)
+    roda (3.67.0)
       rack
-    rspec-core (3.12.1)
+    rspec-core (3.12.2)
       rspec-support (~> 3.12.0)
     rspec-expectations (3.12.2)
       diff-lcs (>= 1.2.0, < 2.0)
@@ -381,7 +382,7 @@ GEM
       rspec-mocks (~> 3.11)
       rspec-support (~> 3.11)
     rspec-support (3.12.0)
-    rubocop (1.49.0)
+    rubocop (1.50.2)
       json (~> 2.3)
       parallel (~> 1.10)
       parser (>= 3.2.0.0)
@@ -395,14 +396,14 @@ GEM
       parser (>= 3.2.1.0)
     rubocop-capybara (2.17.1)
       rubocop (~> 1.41)
-    rubocop-performance (1.16.0)
+    rubocop-performance (1.17.1)
       rubocop (>= 1.7.0, < 2.0)
       rubocop-ast (>= 0.4.0)
-    rubocop-rails (2.19.0)
+    rubocop-rails (2.19.1)
       activesupport (>= 4.2.0)
       rack (>= 1.1)
       rubocop (>= 1.33.0, < 2.0)
-    rubocop-rspec (2.19.0)
+    rubocop-rspec (2.20.0)
       rubocop (~> 1.33)
       rubocop-capybara (~> 2.17)
     ruby-progressbar (1.13.0)
@@ -418,6 +419,8 @@ GEM
       sprockets (> 3.0)
       sprockets-rails
       tilt
+    search_cop (1.2.3)
+      treetop
     securerandom (0.2.2)
     selenium-webdriver (4.8.6)
       rexml (~> 3.2, >= 3.2.5)
@@ -452,6 +455,8 @@ GEM
     thor (1.2.1)
     tilt (2.1.0)
     timeout (0.3.2)
+    treetop (1.6.12)
+      polyglot (~> 0.3)
     turbo-rails (1.4.0)
       actionpack (>= 6.0.0)
       activejob (>= 6.0.0)
@@ -524,6 +529,7 @@ DEPENDENCIES
   rubocop-rails
   rubocop-rspec
   sass-rails
+  search_cop
   securerandom
   selenium-webdriver
   simplecov
