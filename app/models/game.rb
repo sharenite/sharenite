@@ -2,6 +2,7 @@
 
 # Game model
 class Game < ApplicationRecord
+  include SearchCop
   self.implicit_order_column = "created_at"
 
   belongs_to :user
@@ -24,4 +25,23 @@ class Game < ApplicationRecord
 
   scope :filter_by_name, ->(name) { where("name ILIKE ?", "%#{name}%") }
   scope :order_by_last_activity, -> { order("last_activity DESC NULLS LAST") }
+
+  search_scope :search do
+    attributes :name, :added, :description, :favorite, :hidden, :is_installed, :is_installing, :is_launching,
+    :is_running, :is_uninstalling, :last_activity, :modified, :play_count, :playtime, :sorting_name, :release_date,
+    :install_size, :recent_activity
+    attributes tags: "tags.name"
+    attributes categories: "categories.name"
+    attributes platforms: "platforms.name"
+    attributes genres: "genres.name"
+    attributes developers: "developers.name"
+    attributes publishers: "publishers.name"
+    attributes features: "features.name"
+    attributes series: "series.name"
+    attributes age_ratings: "age_ratings.name"
+    attributes regions: "regions.name"
+    attributes completion_status: "completion_status.name"
+    attributes source: "source.name"
+  end
 end
+

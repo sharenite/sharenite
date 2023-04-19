@@ -42,12 +42,13 @@ module Profiles
 
     def set_games
       @games = (params[:query].present? ? @profile.user.games.filter_by_name(params[:query]) : @profile.user.games).order_by_last_activity
+      @games = (params[:search_query].present? ? @profile.user.games.search(params[:search_query]) : @profile.user.games).order_by_last_activity
       @games_count = @games.count
       @games = @games.page params[:page]
     end
 
     def game_params
-      params.require(:game).permit(:name, :user_id)
+      params.require(:game).permit(:name, :user_id, :search_query)
     end
 
     def redirect_to_games_with_notice
