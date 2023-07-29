@@ -25,6 +25,6 @@ class DeleteGamesSyncService
   end
 
   def delete_games
-    @user.games.where(playnite_id: @games.map { |playnite_game| playnite_game["id"] }).destroy_all
+    @user.games.where(playnite_id: @games.pluck("id")).destroy_all
   end
 end

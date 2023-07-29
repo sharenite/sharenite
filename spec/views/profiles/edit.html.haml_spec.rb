@@ -2,7 +2,7 @@
 require "rails_helper"
 
 # rubocop:disable RSpec/InstanceVariable
-RSpec.describe "profiles/edit", type: :view do
+RSpec.describe "profiles/edit" do
   before { @profile = assign(:profile, Profile.create!(name: "MyString", user: nil)) }
 
   it "renders the edit profile form" do

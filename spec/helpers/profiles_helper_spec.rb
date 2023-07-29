@@ -11,6 +11,6 @@ require 'rails_helper'
 #     end
 #   end
 # end
-RSpec.describe ProfilesHelper, type: :helper do
+RSpec.describe ProfilesHelper do
   pending "add some examples to (or delete) #{__FILE__}"
 end

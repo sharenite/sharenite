@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-RSpec.describe Source, type: :model do
+RSpec.describe Source do
   pending "add some examples to (or delete) #{__FILE__}"
 end
