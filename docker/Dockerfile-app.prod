@@ -1,4 +1,4 @@
-FROM ruby:3.2.2
+FROM ruby:3.2.2-bullseye
 
 ENV APP_PATH /var/app
 ENV BUNDLER_VERSION 2.4.17
