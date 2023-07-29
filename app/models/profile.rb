@@ -9,6 +9,14 @@ class Profile < ApplicationRecord
 
   enum privacy: { private: "private", public: "public", friendly: "friendly" }, _prefix: :privacy
 
+  def self.ransackable_attributes(_auth_object = nil)
+    ["created_at", "id", "name", "privacy", "slug", "updated_at", "user_id", "vanity_url"]
+  end
+
+def self.ransackable_associations(_auth_object = nil)
+    ["user"]
+  end
+
   private 
 
   def should_generate_new_friendly_id?
