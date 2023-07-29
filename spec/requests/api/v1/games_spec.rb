@@ -31,7 +31,7 @@ RSpec.describe API::V1::Games do
       it "creates games" do
         games = [{ name: "First game title" }, { name: "Second game title" }]
         post "/api/v1/games",
-             games: games,
+             games:,
              session: {
                "CONTENT_TYPE" => "application/json"
              }

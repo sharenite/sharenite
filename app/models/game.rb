@@ -45,7 +45,10 @@ class Game < ApplicationRecord
   end
 
   def self.ransackable_attributes(_auth_object = nil)
-    ["added", "community_score", "completion_status_id", "created_at", "critic_score", "description", "enable_system_hdr", "favorite", "game_id", "game_started_script", "hidden", "id", "include_library_plugin_action", "install_directory", "install_size", "is_custom_game", "is_installed", "is_installing", "is_launching", "is_running", "is_uninstalling", "last_activity", "last_size_scan_date", "manual", "modified", "name", "notes", "override_install_state", "play_count", "playnite_id", "playtime", "plugin_id", "post_script", "pre_script", "recent_activity", "release_date", "sorting_name", "source_id", "updated_at", "use_global_game_started_script", "use_global_post_script", "use_global_pre_script", "user_id", "user_score", "version"]
+    ["added", "community_score", "completion_status_id", "created_at", "critic_score", "description", "enable_system_hdr", "favorite", "game_id", "game_started_script", "hidden", "id", 
+"include_library_plugin_action", "install_directory", "install_size", "is_custom_game", "is_installed", "is_installing", "is_launching", "is_running", "is_uninstalling", "last_activity", 
+"last_size_scan_date", "manual", "modified", "name", "notes", "override_install_state", "play_count", "playnite_id", "playtime", "plugin_id", "post_script", "pre_script", "recent_activity", 
+"release_date", "sorting_name", "source_id", "updated_at", "use_global_game_started_script", "use_global_post_script", "use_global_pre_script", "user_id", "user_score", "version"]
   end
 
   def self.ransackable_associations(_auth_object = nil)

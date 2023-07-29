@@ -525,7 +525,7 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka
-  karafka-license (= 1.a8ccbbc2295)!
+  karafka-license!
   karafka-web
   letter_opener
   letter_opener_web

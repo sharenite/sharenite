@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-RSpec.describe "profiles/index", type: :view do
+RSpec.describe "profiles/index" do
   before do
     assign(:profiles, [
       Profile.create!(

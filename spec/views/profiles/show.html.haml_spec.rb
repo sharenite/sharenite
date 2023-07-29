@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-RSpec.describe "profiles/show", type: :view do
+RSpec.describe "profiles/show" do
   before do
     @profile = assign(:profile, Profile.create!(
       name: "Name",
