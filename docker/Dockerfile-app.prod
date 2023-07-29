@@ -25,7 +25,7 @@ RUN apt-get update -qq \
 
 RUN ln -s /usr/lib/x86_64-linux-musl/libc.so /lib/libc.musl-x86_64.so.1
 
-RUN gem install bundler --version "$BUNDLE_VERSION" \
+RUN gem install bundler --version "$BUNDLER_VERSION" \
     && rm -rf $GEM_HOME/cache/*
 
 # navigate to app directory
