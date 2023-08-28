@@ -23,6 +23,7 @@ class User < ApplicationRecord
   has_many :age_ratings, dependent: :destroy
   has_many :regions, dependent: :destroy
   has_one :profile, dependent: :destroy
+  has_many :playlists, dependent: :destroy
 
   has_many :invitees, foreign_key: :inviter_id, class_name: 'Friend', dependent: :destroy, inverse_of: :inviter
   has_many :pending_invitees, -> { where(friends: {status: :invited}) }, foreign_key: :inviter_id, class_name: 'Friend', dependent: :destroy, inverse_of: :inviter
