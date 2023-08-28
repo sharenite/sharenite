@@ -17,6 +17,6 @@ class PlaylistItem < ApplicationRecord
     playlist = Playlist.find(playlist_id)
     igdb_cache = IgdbCache.get_by_igdb_id(igdb_id)
     last_playlist_item = PlaylistItem.where(playlist:).order(order: :desc)&.first || 0
-    PlaylistItem.create(playlist:, igdb_cache:, order: last_playlist_item + 1)
+    PlaylistItem.create(playlist:, igdb_cache:, order: last_playlist_item.order + 1)
   end
 end
