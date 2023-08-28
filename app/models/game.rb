@@ -8,6 +8,7 @@ class Game < ApplicationRecord
   belongs_to :user
   belongs_to :completion_status, optional: true
   belongs_to :source, optional: true
+  belongs_to :igdb_cache, optional: true
   has_and_belongs_to_many :tags
   has_and_belongs_to_many :categories
   has_and_belongs_to_many :platforms
@@ -26,6 +27,7 @@ class Game < ApplicationRecord
   scope :filter_by_name, ->(name) { where("name ILIKE ?", "%#{name}%") }
   scope :order_by_last_activity, -> { order("last_activity DESC NULLS LAST") }
 
+  # rubocop:disable Metrics/BlockLength
   search_scope :search do
     attributes :name, :added, :description, :favorite, :hidden, :is_installed, :is_installing, :is_launching,
     :is_running, :is_uninstalling, :last_activity, :modified, :play_count, :playtime, :sorting_name, :release_date,
@@ -43,6 +45,7 @@ class Game < ApplicationRecord
     attributes completion_status: "completion_status.name"
     attributes source: "source.name"
   end
+  # rubocop:enable Metrics/BlockLength
 
   def self.ransackable_attributes(_auth_object = nil)
     ["added", "community_score", "completion_status_id", "created_at", "critic_score", "description", "enable_system_hdr", "favorite", "game_id", "game_started_script", "hidden", "id", 
