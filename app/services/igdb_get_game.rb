@@ -13,7 +13,8 @@ class IgdbGetGame
 
   # rubocop:disable Style/GlobalVars
   def check_authentication_token
-    @token = JSON.parse($redis.get('idgb_token'))
+    token_data = $redis.get('idgb_token')
+    @token = token_data && JSON.parse(token_data)
     IgdbAuthenticate.new.call if @token.nil? || Time.at(@token['expires_at']).utc < Time.current
     @token = JSON.parse($redis.get('idgb_token'))
   end
