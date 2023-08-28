@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_08_153810) do
+ActiveRecord::Schema[7.0].define(version: 2023_08_28_192422) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -190,7 +190,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_08_153810) do
     t.datetime "last_size_scan_date"
     t.boolean "override_install_state"
     t.datetime "recent_activity"
+    t.uuid "igdb_cache_id"
     t.index ["completion_status_id"], name: "index_games_on_completion_status_id"
+    t.index ["igdb_cache_id"], name: "index_games_on_igdb_cache_id"
     t.index ["playnite_id", "user_id"], name: "index_games_on_playnite_id_and_user_id", unique: true
     t.index ["source_id"], name: "index_games_on_source_id"
     t.index ["user_id", "playnite_id"], name: "index_games_on_user_id_and_playnite_id", unique: true
@@ -246,6 +248,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_08_153810) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_genres_on_user_id"
+  end
+
+  create_table "igdb_caches", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "igdb_id", null: false
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["igdb_id"], name: "index_igdb_caches_on_igdb_id", unique: true
   end
 
   create_table "links", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -388,6 +398,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_08_153810) do
   add_foreign_key "friends", "users", column: "invitee_id"
   add_foreign_key "friends", "users", column: "inviter_id"
   add_foreign_key "games", "completion_statuses"
+  add_foreign_key "games", "igdb_caches", column: "igdb_cache_id"
   add_foreign_key "games", "sources"
   add_foreign_key "games", "users"
   add_foreign_key "games_genres", "games"

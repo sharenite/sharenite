@@ -66,6 +66,8 @@ services:
       RAILS_MAX_THREADS: 25
       BUNDLE_GEMS__KARAFKA__IO: "${BUNDLE_GEMS__KARAFKA__IO}"
       KARAFKA_PRO_LICENSE_ID: "${KARAFKA_PRO_LICENSE_ID}"
+      IGDB_CLIENT_ID: "${IGDB_CLIENT_ID}"
+      IGDB_CLIENT_SECRET: "${IGDB_CLIENT_SECRET}"
     depends_on:
       - sharenite-database
     restart: always
@@ -95,6 +97,8 @@ services:
       RAILS_MAX_THREADS: 25
       BUNDLE_GEMS__KARAFKA__IO: "${BUNDLE_GEMS__KARAFKA__IO}"
       KARAFKA_PRO_LICENSE_ID: "${KARAFKA_PRO_LICENSE_ID}"
+      IGDB_CLIENT_ID: "${IGDB_CLIENT_ID}"
+      IGDB_CLIENT_SECRET: "${IGDB_CLIENT_SECRET}"
     depends_on:
       - sharenite-database
       - sharenite-kafka
