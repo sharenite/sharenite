@@ -12,11 +12,14 @@
               = link_to 'Games', profile_games_path(current_user.profile), class: 'nav-link px-2 text-white'
             %li
               = link_to 'Friends', profile_friends_path(current_user.profile), class: 'nav-link px-2 text-white'
+            %li
+              = link_to 'Playlists', profile_playlists_path(current_user.profile), class: 'nav-link px-2 text-white'
           %li
             = link_to 'Profiles', profiles_path, class: 'nav-link px-2 text-white'
           -#
             -# %form.col-12.col-lg-auto.mb-3.mb-lg-0.me-lg-3{role: "search"}
             -# %input.form-control.form-control-dark.text-bg-dark{"aria-label" => "Search", placeholder: "Search...", type: "search"}
+
         .col-auto.text-end
           - if user_signed_in?
             .dropdown.text-end

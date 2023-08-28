@@ -1,0 +1,32 @@
+%h1
+  = "Playlist '#{@playlist.name}' items"
+%p This is experimental and not completed yet
+%br/
+%h2 Listing playlist items
+%ul.list-group.list-group-flush
+  %li.list-group-item{id: "header"}
+    .row
+      .col-3.col-sm-2.col-md-1
+        %strong
+          ORDER
+      .col-3.col-sm-4.col-md-6
+        %strong
+          NAME
+      .col-3.col-sm-2.col-md-1
+        %strong
+          OWNED
+      .col-3.col-sm-3
+        %strong
+          COMPLETION_STATUS
+  - @playlist.playlist_items.order(:order).each do |playlist_item|
+    %li.list-group-item
+      .row
+        .col-3.col-sm-2.col-md-1
+          = playlist_item.order
+        .col-3.col-sm-4.col-md-6
+          = playlist_item.igdb_cache.name
+        .col-3.col-sm-2.col-md-1
+          = playlist_item.igdb_cache.games&.where(user: @profile.user).count || 0
+        .col-3.col-sm-4
+          = playlist_item.igdb_cache.games&.where(user: @profile.user).map{ |g| g.completion_status.name}
+%br/

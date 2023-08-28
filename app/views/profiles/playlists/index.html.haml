@@ -1,0 +1,24 @@
+%h1 Playlists
+%p This is experimental and not completed yet
+%br/
+%h2 Listing playlists
+%ul.list-group.list-group-flush
+  %li.list-group-item{id: "header"}
+    .row
+      .col-3.col-sm-4.col-md-6
+        %strong
+          NAME
+      .col-3
+        %strong
+          GAMES
+  - @playlists.each do |playlist|
+    %li.list-group-item
+      .row
+        .col-3.col-sm-4.col-md-6
+          = playlist.name
+        .col-3.col-sm-4
+          = playlist.playlist_items.count
+        .col-3.col-sm-2.col-md-1
+        .col-3.col-sm-2.col-md-1
+          = link_to 'Show', profile_playlist_path(@profile, playlist)
+%br/
