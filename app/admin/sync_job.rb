@@ -3,7 +3,7 @@
 ActiveAdmin.register SyncJob do
   config.sort_order = "created_at_desc"
 
-  menu priority: 4
+  menu priority: 5
 
   belongs_to :user, optional: true
   includes :user

@@ -11,5 +11,9 @@ class IgdbCache < ApplicationRecord
   def self.ransackable_associations(_auth_object = nil)
     ["games"]
   end
-end
 
+  def self.get_by_igdb_id(igdb_id)
+    igdb_cache = IgdbCache.find_by(igdb_id: )
+    igdb_cache.nil? ? IgdbGetGame.new(igdb_id).call : igdb_cache
+  end
+end

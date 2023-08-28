@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_08_28_192422) do
+ActiveRecord::Schema[7.0].define(version: 2023_08_28_214055) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -278,6 +278,24 @@ ActiveRecord::Schema[7.0].define(version: 2023_08_28_192422) do
     t.index ["user_id"], name: "index_platforms_on_user_id"
   end
 
+  create_table "playlist_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "playlist_id", null: false
+    t.uuid "igdb_cache_id", null: false
+    t.integer "order", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["igdb_cache_id", "playlist_id"], name: "index_playlist_items_on_igdb_cache_id_and_playlist_id", unique: true
+    t.index ["igdb_cache_id"], name: "index_playlist_items_on_igdb_cache_id"
+    t.index ["order", "playlist_id"], name: "index_playlist_items_on_order_and_playlist_id", unique: true
+    t.index ["playlist_id"], name: "index_playlist_items_on_playlist_id"
+  end
+
+  create_table "playlists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "profiles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.uuid "user_id", null: false
@@ -416,6 +434,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_08_28_192422) do
   add_foreign_key "genres", "users"
   add_foreign_key "links", "games"
   add_foreign_key "platforms", "users"
+  add_foreign_key "playlist_items", "igdb_caches", column: "igdb_cache_id"
+  add_foreign_key "playlist_items", "playlists"
   add_foreign_key "profiles", "users"
   add_foreign_key "publishers", "users"
   add_foreign_key "regions", "users"
