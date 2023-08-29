@@ -28,4 +28,5 @@ ActiveAdmin.register IgdbCache do
     actions
   end
 
+  filter :name, as: :string
 end
