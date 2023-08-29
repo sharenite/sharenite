@@ -5,11 +5,13 @@
         %i.bi.bi-star-fill.yellow.text-warning
       %strong
         = highlight(game.name, params.dig(:query))
-    .col-4
+    .col-3
       - if game.last_activity
         %abbr{title: "#{game.last_activity}"}
           = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
       - else
         Never.
+    .col-1
+      = link_to "Edit", edit_profile_game_path(@profile, game), data: { 'turbo-frame': "_top" }
     .col-2
       = link_to "Show this game", profile_game_path(@profile, game), data: { 'turbo-frame': "_top" }

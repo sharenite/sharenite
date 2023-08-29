@@ -1,7 +1,7 @@
-%h1 Editing game
+%h1 Editing game '#{@game.name}'
 = render "form", game: @game
 %br/
 %div
-  = link_to "Show this game", @game
+  = link_to "Show this game", [@profile, @game]
   |
   = "#{link_to "Back to games", profile_games_path}"

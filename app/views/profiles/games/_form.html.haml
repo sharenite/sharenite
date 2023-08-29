@@ -1,17 +1,12 @@
-= form_with(model: game) do |form|
-  - if game.errors.any?
-    %div
-      %h2
-        = pluralize(game.errors.count, "error")
-        prohibited this game from being saved:
-      %ul
-        - game.errors.each do |error|
-          %li= error.full_message
-  %div
-    = form.label :name, style: "display: block"
-    = form.text_field :name
-  %div
-    = form.label :user_id, style: "display: block"
-    = form.text_field :user_id
-  %div
-    = form.submit
+= form_for [@profile, @game] do |f|
+  = turbo_frame_tag :profile_errors
+  = f.fields_for @igdb_cache do |igdb_cache|
+    .mb-3
+      = igdb_cache.label :igdb_id, {class: 'form-label'}
+      = igdb_cache.text_field :igdb_id, {class: 'form-control', "aria-describedby" => "name_help"}
+      .form-text#igdb_id IGDB ID of game to connect.
+    .mb-3
+      = igdb_cache.label :name, {class: 'form-label'}
+      = igdb_cache.text_field :name, {class: 'form-control', "aria-describedby" => "name_help", readonly: true}
+      .form-text#name Read only: name of IGDB entry.
+  = f.submit

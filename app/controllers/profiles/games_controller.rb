@@ -21,9 +21,18 @@ module Profiles
     end
 
     def edit
+      @igdb_cache = @game.igdb_cache || @game.build_igdb_cache
     end
 
     def update
+      igdb_id = params[:game][:igdb_cache][:igdb_id]
+      igdb_cache = nil
+      igdb_cache = IgdbCache.get_by_igdb_id(igdb_id) if igdb_id.present?
+    if @game.update(igdb_cache:)
+      redirect_to profile_game_path(@profile, @game) 
+    else
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("game_errors", partial: "game_errors") }
+    end
     end
 
     def destroy
@@ -40,17 +49,21 @@ module Profiles
       @game ||= redirect_to_games_with_notice # defined in app controller
     end
 
-    def set_games
-      @games = @profile.user.games
+    def filter_games
       @games = @games.filter_by_name(params[:query]) if params[:query].present?
       @games = @games.search(params[:search_query]) if params[:search_query].present?
+    end
+
+    def set_games
+      @games = @profile.user.games
+      filter_games
       @games = @games.order_by_last_activity
       @games_count = @games.count
       @games = @games.page params[:page]
     end
 
     def game_params
-      params.require(:game).permit(:name, :user_id)
+      params.require(:game).permit(igdb_cache: [:igdb_id])
     end
 
     def redirect_to_games_with_notice

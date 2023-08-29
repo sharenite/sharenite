@@ -52,7 +52,7 @@
     - unless game.completion_status.nil?
       .col-auto.text-center
         %p
-          %small.text-muted{alt: "test"} #{game.completion_status&.name}
+          %small.text-muted{alt: "test"}= "#{game.completion_status&.name}"
     - unless game.categories.empty?
       .col-auto.text-center
         %p
@@ -61,14 +61,14 @@
     - unless game.tags.empty?
       .col-auto.text-center
         %p
-          %small.text-muted{alt: "test"} #{game.tags.map(&:name)&.join(' | ')}
+          %small.text-muted{alt: "test"}= "#{game.tags.map(&:name)&.join(" | ")}"
   .card.mb-3
     .row.g-0
       .col-md-4.game-details__cover
         %img.img-fluid.rounded-start{alt: "cover_image", src: "https://picsum.photos/300/400"}/
       .col-md-8
         .card-body
-          %h5.card-title.mb-0 #{game.source&.name}
+          %h5.card-title.mb-0= "#{game.source&.name}"
           .row.mb-4
             .col-auto
               %p.card-text
@@ -82,7 +82,8 @@
             .col-auto
               %p.card-text
                 %small.text-muted
-                  = "Playtime: #{"%02d:%02d:%02d" % [game.playtime / 3600, game.playtime / 60 % 60, game.playtime % 60]}"
+                  - if game.playtime
+                    = "Playtime: #{"%02d:%02d:%02d" % [game.playtime / 3600, game.playtime / 60 % 60, game.playtime % 60]}"
             .col-auto
               %p.card-text
                 %small.text-muted
@@ -160,6 +161,16 @@
           %p.mb-0
             %strong Is Uninstalling:
             = game.is_uninstalling
+  .row
+    .col-12.align-items-stretch.d-flex
+      .card.mb-2.flex-fill
+        .card-body
+          %p
+            %strong IDGB ID:
+            = game.igdb_cache&.igdb_id
+          %p.mb-0
+            %strong IGDB name:
+            = game.igdb_cache&.name
   .row
     .col-12.align-items-stretch.d-flex
       .card.mb-2.flex-fill
