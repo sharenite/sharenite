@@ -28,5 +28,5 @@
         .col-3.col-sm-2.col-md-1
           = playlist_item.igdb_cache.games&.where(user: @profile.user).count || 0
         .col-3.col-sm-4
-          = playlist_item.igdb_cache.games&.where(user: @profile.user).map{ |g| g&.completion_status.name}
+          = playlist_item.igdb_cache.games&.where(user: @profile.user).map{ |g| g&.completion_status&.name}
 %br/
