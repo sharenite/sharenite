@@ -1,0 +1,5 @@
+%h1 Edit playlist '#{@playlist.name}'
+= render "form", game: @playlist
+%br/
+%div
+  = link_to "Back to playlists", profile_playlists_path

@@ -1,0 +1,11 @@
+= form_for [@profile, @playlist] do |f|
+  = turbo_frame_tag :playlist_errors
+  .mb-3
+    = f.label :name, {class: 'form-label'}
+    = f.text_field :name, {class: 'form-control', "aria-describedby" => "name_help"}
+    .form-text#name Name of the playlist.
+  .checkbox.mb-3
+    = f.check_box :public
+    = f.label :public
+    .form-text#public Playlist visible publicly
+  = f.submit

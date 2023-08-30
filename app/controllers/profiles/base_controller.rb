@@ -4,7 +4,7 @@
 module Profiles
   # Profiles base controller
   class BaseController < InheritedResources::Base
-    before_action :check_current_user_profile, only: %i[new edit update destroy]
+    before_action :check_current_user_profile, only: %i[new create edit update destroy]
     before_action :check_general_access_profile, only: %i[index show]
     skip_before_action :authenticate_user!, only: %i[index show]
 
@@ -13,12 +13,15 @@ module Profiles
 
     def show
     end
+
     def new
     end
-
-
     def edit
     end
+    def create
+    end
+
+
 
     def update
     end

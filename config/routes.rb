@@ -12,7 +12,7 @@ Rails.application.routes.draw do
       collection { post :search }
     end
     resources :friends, controller: "profiles/friends", only: :index
-    resources :playlists, controller: "profiles/playlists", only: [:index, :show]
+    resources :playlists, controller: "profiles/playlists"
     get "friends/invite", to: "profiles/friends#invite", as: :invite_friend
     get "friends/:id/accept", to: "profiles/friends#accept", as: :accept_friend
     get "friends/:id/decline", to: "profiles/friends#decline", as: :decline_friend

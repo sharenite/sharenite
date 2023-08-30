@@ -3,6 +3,7 @@
 # Game model
 class IgdbCache < ApplicationRecord
   has_many :games, dependent: nil
+  has_many :playlist_items, dependent: :destroy
 
   def self.ransackable_attributes(_auth_object = nil)
     ["created_at", "igdb_id", "name", "updated_at"]
