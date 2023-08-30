@@ -1,0 +1,16 @@
+= form_for [@profile, @playlist, @playlist_item] do |f|
+  = turbo_frame_tag :playlist_item_errors
+  .mb-3
+    = f.label :order, {class: 'form-label'}
+    = f.number_field :order, {class: 'form-control', "aria-describedby" => "name_help"}
+    .form-text#name Order of the playlist item.
+  = f.fields_for @igdb_cache do |igdb_cache|
+    .mb-3
+      = igdb_cache.label :igdb_id, {class: 'form-label'}
+      = igdb_cache.text_field :igdb_id, {class: 'form-control', "aria-describedby" => "name_help"}
+      .form-text#igdb_id IGDB ID of game to connect.
+    .mb-3
+      = igdb_cache.label :name, {class: 'form-label'}
+      = igdb_cache.text_field :name, {class: 'form-control', "aria-describedby" => "name_help", readonly: true}
+      .form-text#name Read only: name of IGDB entry.
+  = f.submit

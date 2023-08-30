@@ -7,17 +7,21 @@ Rails.application.routes.draw do
     mount Karafka::Web::App, at: "/karafka"
   end
 
+  # rubocop:disable Metrics/BlockLength
   resources :profiles, controller: "profiles/profiles" do
     resources :games, controller: "profiles/games" do
       collection { post :search }
     end
     resources :friends, controller: "profiles/friends", only: :index
-    resources :playlists, controller: "profiles/playlists"
+    resources :playlists, controller: "profiles/playlists/playlists" do
+      resources :playlist_items, controller: "profiles/playlists/playlist_items", only: [:new, :create, :edit, :update, :destroy]
+    end
     get "friends/invite", to: "profiles/friends#invite", as: :invite_friend
     get "friends/:id/accept", to: "profiles/friends#accept", as: :accept_friend
     get "friends/:id/decline", to: "profiles/friends#decline", as: :decline_friend
     get "friends/:id/cancel", to: "profiles/friends#cancel", as: :cancel_friend
   end
+  # rubocop:enable all
   root "static_pages#landing_page"
 
   devise_for :users

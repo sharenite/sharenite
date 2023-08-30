@@ -1,0 +1,39 @@
+%h1
+  = "Playlist '#{@playlist.name}' items"
+%p This is experimental and not completed yet
+%p
+  = link_to "New item", new_profile_playlist_playlist_item_path(playlist_id: @playlist.id)
+  = link_to "Edit playlist", edit_profile_playlist_path(@profile, @playlist)
+%br/
+%h2 Listing playlist items
+%ul.list-group.list-group-flush
+  %li.list-group-item{id: "header"}
+    .row
+      .col-3.col-sm-2.col-md-1
+        %strong
+          ORDER
+      .col-3.col-sm-4.col-md-4
+        %strong
+          NAME
+      .col-3.col-sm-3.col-md-2.col-lg-1
+        %strong
+          OWNED
+      .col-3.col-sm-1.col-md-3.col-lg-4
+        %strong
+          COMPLETION STATUS
+  - @playlist.playlist_items.order(:order).each do |playlist_item|
+    %li.list-group-item
+      .row
+        .col-3.col-sm-2.col-md-1
+          = playlist_item.order
+        .col-3.col-sm-4.col-md-4
+          = playlist_item.igdb_cache.name
+        .col-3.col-sm-3.col-md-2.col-lg-1
+          = playlist_item.igdb_cache.games&.where(user: @profile.user).count || 0
+        .col-3.col-sm-1.col-md-3.col-lg-4
+          = playlist_item.igdb_cache.games&.where(user: @profile.user).map{ |g| g&.completion_status&.name}
+        .col-1.col-sm-1.col-md-1
+          = link_to 'Edit', edit_profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), {class: "btn btn-link p-0"}
+        .col-1.col-sm-1.col-md-1
+          = button_to "Delete", profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), {class: "btn btn-link p-0", method: :delete, data: {turbo_confirm: "Are you sure?"}}
+%br/

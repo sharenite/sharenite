@@ -1,0 +1,6 @@
+- if @playlist_item.errors.any?
+  #error_explanation
+    %h2 #{pluralize(@playlist_item.errors.count, "error")} prohibited this playlist item from being saved:
+    %ul
+      - @playlist_item.errors.full_messages.each do |message|
+        %li= message

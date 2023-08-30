@@ -28,11 +28,13 @@ module Profiles
       igdb_id = params[:game][:igdb_cache][:igdb_id]
       igdb_cache = nil
       igdb_cache = IgdbCache.get_by_igdb_id(igdb_id) if igdb_id.present?
-    if @game.update(igdb_cache:)
-      redirect_to profile_game_path(@profile, @game) 
-    else
-      format.turbo_stream { render turbo_stream: turbo_stream.replace("game_errors", partial: "game_errors") }
-    end
+      respond_to do |format|
+        if @game.update(igdb_cache:)
+          format.turbo_stream { redirect_to profile_game_path(@profile, @game) }
+        else
+          format.turbo_stream { render turbo_stream: turbo_stream.replace("game_errors", partial: "game_errors") }
+        end
+      end
     end
 
     def destroy

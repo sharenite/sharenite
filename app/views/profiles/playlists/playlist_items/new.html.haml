@@ -1,0 +1,5 @@
+%h1 New playlist item
+= render "form", playlist_item: @playlist_item
+%br/
+%div
+  = link_to "Back to playlist", profile_playlist_path(@profile, @playlist)
