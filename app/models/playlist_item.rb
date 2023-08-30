@@ -4,7 +4,6 @@
 class PlaylistItem < ApplicationRecord
   belongs_to :playlist
   belongs_to :igdb_cache
-  validates :igdb_cache
   validates :order, presence: true
 
   def self.ransackable_attributes(_auth_object = nil)
