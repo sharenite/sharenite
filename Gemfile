@@ -63,6 +63,7 @@ gem 'haml-rails'
 gem 'kaminari'
 gem "lograge"
 gem 'rack-cors'
+gem 'rake-progressbar'
 gem 'sass-rails'
 gem 'search_cop'
 gem 'securerandom'

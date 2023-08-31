@@ -351,6 +351,7 @@ GEM
       zeitwerk (~> 2.5)
     rainbow (3.1.1)
     rake (13.0.6)
+    rake-progressbar (0.0.5)
     ransack (4.0.0)
       activerecord (>= 6.1.5)
       activesupport (>= 6.1.5)
@@ -523,7 +524,7 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka
-  karafka-license!
+  karafka-license (= 1.a8ccbbc2295)!
   karafka-web
   letter_opener
   letter_opener_web
@@ -534,6 +535,7 @@ DEPENDENCIES
   rack-cors
   rails
   rails_live_reload
+  rake-progressbar
   redis
   rspec-rails
   rubocop

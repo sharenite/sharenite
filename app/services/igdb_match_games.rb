@@ -17,13 +17,16 @@ class IgdbMatchGames
   def match_games
     games = Game.where(igdb_cache: nil)
     games = games.where("created_at > ?", @start_date) if @start_date.present?
+    bar = RakeProgressbar.new(games.count)
     games.each do |game|
       if IgdbMatchGame.new(game.id).call
         @matched += 1
       else
         @unmatched += 1
       end
+      bar.inc
     end
+    bar.finished
   end
 
   def print_results
