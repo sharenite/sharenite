@@ -12,8 +12,8 @@ ActiveAdmin.register PlaylistItem do
     end.map(&:to_sql).join(', ')
   end
   
-  includes :playlist
-  includes :igdb_cache
+  # includes :playlist
+  # includes :igdb_cache
 
   # See permitted parameters documentation:
   # https://github.com/activeadmin/activeadmin/blob/master/docs/2-resource-customization.md#setting-up-strong-parameters
@@ -40,4 +40,5 @@ ActiveAdmin.register PlaylistItem do
     actions
   end
 
+  filter :playlist
 end

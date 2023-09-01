@@ -31,4 +31,6 @@ ActiveAdmin.register Playlist do
     column :updated_at
     actions
   end
+
+  filter :name, as: :string
 end

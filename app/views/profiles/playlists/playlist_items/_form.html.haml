@@ -8,7 +8,7 @@
     .mb-3
       = igdb_cache.label :igdb_id, {class: 'form-label'}
       = igdb_cache.text_field :igdb_id, {class: 'form-control', "aria-describedby" => "name_help"}
-      .form-text#igdb_id IGDB ID of game to connect.
+      .form-text#igdb_id IGDB ID of game to connect (putting in incorrect ID might cause an application error).
     .mb-3
       = igdb_cache.label :name, {class: 'form-label'}
       = igdb_cache.text_field :name, {class: 'form-control', "aria-describedby" => "name_help", readonly: true}
