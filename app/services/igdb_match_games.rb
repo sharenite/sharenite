@@ -24,7 +24,7 @@ class IgdbMatchGames
     bar = RakeProgressbar.new(games.count)
     igdb_caches = IgdbCache.all.select(:id, :name)
     games.each do |game|
-      igdb_cache = igdb_caches.detect {|ic| ic.name = game.name }
+      igdb_cache = igdb_caches.detect {|ic| ic.name == game.name }
       if igdb_cache.present?
         game.update(igdb_cache:)
         @matched += 1
