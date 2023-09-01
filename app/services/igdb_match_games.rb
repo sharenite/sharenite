@@ -2,8 +2,9 @@
 
 # Job that performs call to get game from IGDB by id
 class IgdbMatchGames
-  def initialize(start_date = nil)
+  def initialize(start_date = nil, end_date = nil)
     @start_date = Date.parse(start_date) if start_date.present?
+    @end_date = Date.parse(end_date) if end_date.present?
     @matched = 0
     @unmatched = 0
   end
@@ -14,12 +15,18 @@ class IgdbMatchGames
     nil
   end
 
+  # rubocop:disable Metrics/AbcSize 
+  # rubocop:disable Metrics/MethodLength 
   def match_games
     games = Game.where(igdb_cache: nil)
-    games = games.where("created_at > ?", @start_date) if @start_date.present?
+    games = games.where("created_at >= ?", @start_date) if @start_date.present?
+    games = games.where("created_at <= ?", @end_date) if @end_date.present?
     bar = RakeProgressbar.new(games.count)
+    igdb_caches = IgdbCache.all.select(:id, :name)
     games.each do |game|
-      if IgdbMatchGame.new(game.id).call
+      igdb_cache = igdb_caches.detect {|ic| ic.name = game.name }
+      if igdb_cache.present?
+        game.update(igdb_cache:)
         @matched += 1
       else
         @unmatched += 1
@@ -28,6 +35,7 @@ class IgdbMatchGames
     end
     bar.finished
   end
+  # rubocop:enable all
 
   def print_results
     Rails.logger.debug { "Matched games: #{@matched}" }
