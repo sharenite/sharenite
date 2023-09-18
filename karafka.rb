@@ -67,4 +67,8 @@ end
 
 require "karafka/web"
 
+Karafka::Web.setup do |config|
+  config.ui.sessions.secret = ENV.fetch('KARAFKA_UI_SECRET', nil)
+end
+
 Karafka::Web.enable!
