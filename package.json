@@ -7,7 +7,7 @@
     "@popperjs/core": "^2.11.6",
     "bootstrap": "^5.2.0",
     "bootstrap-icons": "^1.9.1",
-    "esbuild": "^0.17",
+    "esbuild": "^0.19",
     "sass": "^1.54.5"
   },
   "scripts": {
@@ -25,9 +25,9 @@
     ]
   },
   "devDependencies": {
-    "@prettier/plugin-ruby": "^3.2.0",
+    "@prettier/plugin-ruby": "^4.0.2",
     "husky": "^8",
-    "lint-staged": "^13",
-    "prettier": "^2.7.1"
+    "lint-staged": "^14",
+    "prettier": "^3"
   }
 }
