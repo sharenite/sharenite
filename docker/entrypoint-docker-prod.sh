@@ -5,6 +5,7 @@ set -e
 echo "Environment: $RAILS_ENV"
 
 # Check if we need to install new gems and packages
+sleep 120
 bundle check || bundle install --jobs 20 --retry 5
 yarn check || yarn install
 rake assets:precompile
