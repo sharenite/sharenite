@@ -126,7 +126,7 @@ GEM
     concurrent-ruby (1.2.2)
     connection_pool (2.4.1)
     crass (1.0.6)
-    cssbundling-rails (1.3.2)
+    cssbundling-rails (1.3.3)
       railties (>= 6.0.0)
     date (3.3.3)
     debug (1.8.0)
@@ -239,7 +239,7 @@ GEM
       ffi (~> 1.15)
       mini_portile2 (~> 2.6)
       rake (> 12)
-    karafka-web (0.7.2)
+    karafka-web (0.7.3)
       erubi (~> 1.4)
       karafka (>= 2.2.3, < 3.0.0)
       karafka-core (>= 2.2.2, < 3.0.0)
@@ -530,7 +530,7 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka
-  karafka-license!
+  karafka-license (= 1.a8ccbbc2295)!
   karafka-web
   letter_opener
   letter_opener_web
