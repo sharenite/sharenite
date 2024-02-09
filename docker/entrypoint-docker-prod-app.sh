@@ -10,7 +10,6 @@ yarn check || yarn install
 rake assets:precompile
 rake assets:clean
 rake db:migrate
-bundle exec karafka-web migrate
 bundle exec karafka topics migrate	
 rake appsignal:update_version
 

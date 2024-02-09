@@ -114,5 +114,5 @@ group :test do
 end
 
 gem 'devise'
-gem "karafka", '2.2.14'
-gem "karafka-web", '0.7.10'
+gem "karafka"
+gem "karafka-web"
