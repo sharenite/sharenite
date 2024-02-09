@@ -6,7 +6,7 @@ source "https://gems.karafka.io" do
   gem 'karafka-license', ENV.fetch('KARAFKA_PRO_LICENSE_ID', nil)
 end
 
-ruby "3.2.2"
+ruby "3.3.0"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails"
@@ -114,5 +114,5 @@ group :test do
 end
 
 gem 'devise'
-gem "karafka"
-gem "karafka-web"
+gem "karafka", '2.2.14'
+gem "karafka-web", '0.7.10'

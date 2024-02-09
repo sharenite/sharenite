@@ -62,6 +62,7 @@ services:
       KARAFKA_UI_SECRET: "${KARAFKA_UI_SECRET}"
       IGDB_CLIENT_ID: "${IGDB_CLIENT_ID}"
       IGDB_CLIENT_SECRET: "${IGDB_CLIENT_SECRET}"
+      WEB_CONSOLE_ALLOWED_NETWORKS: "${WEB_CONSOLE_ALLOWED_NETWORKS}"
     depends_on:
       - sharenite-database
 
@@ -179,17 +180,6 @@ services:
       - development
     depends_on:
       - sharenite-kafka
-
-  sharenite-kafka-init-topics:
-    image: bitnami/kafka:3.5
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./kafka-init-dev.sh:/opt/bitnami/kafka-init-dev.sh
-    depends_on:
-      - sharenite-kafka
-    networks:
-      - development
-    command: "/opt/bitnami/kafka-init-dev.sh"
 
   # sharenite-test:
   #   image: sharenite_sharenite_app
