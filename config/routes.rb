@@ -23,13 +23,13 @@ Rails.application.routes.draw do
   end
   # rubocop:enable all
   root "static_pages#landing_page"
+  get "static_pages/dashboard"
 
   devise_for :users
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
-
-  mount API::Base, at: "/"
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
 
-  get "static_pages/dashboard"
+  # This for some reason has to be last
+  mount API::Base, at: "/"
 end

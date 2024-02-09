@@ -169,19 +169,3 @@ services:
         limits:
           cpus: '1'
           memory: 1G
-
-  sharenite-kafka-init-topics:
-    image: bitnami/kafka:3.5
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./kafka-init-stag.sh:/opt/bitnami/kafka-init-stag.sh
-    depends_on:
-      - sharenite-kafka
-    networks:
-      - staging
-    command: "/opt/bitnami/kafka-init-stag.sh"
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G

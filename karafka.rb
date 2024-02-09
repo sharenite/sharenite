@@ -37,11 +37,22 @@ class KarafkaApp < Karafka::App
   # listen to only what you really need for given environment.
   Karafka.monitor.subscribe(Karafka::Instrumentation::LoggerListener.new)
   # Karafka.monitor.subscribe(Karafka::Instrumentation::ProctitleListener.new)
-  Karafka.producer.monitor.subscribe(WaterDrop::Instrumentation::LoggerListener.new(Karafka.logger))
+
+  # This logger prints the producer development info using the Karafka logger.
+  # It is similar to the consumer logger listener but producer oriented.
+  Karafka.producer.monitor.subscribe(
+    WaterDrop::Instrumentation::LoggerListener.new(
+      # Log producer operations using the Karafka logger
+      Karafka.logger,
+      # If you set this to true, logs will contain each message details
+      # Please note, that this can be extensive
+      log_messages: false
+    )
+  )
 
   routes.draw do
     # Uncomment this if you use Karafka with ActiveJob
-    # You ned to define the topic per each queue name you use
+    # You need to define the topic per each queue name you use
     active_job_topic :default
     topic "library.sync" do
       consumer LibrarySyncConsumer
@@ -55,12 +66,22 @@ class KarafkaApp < Karafka::App
         # If set to zero, will not retry at all.
         max_retries: Rails.application.credentials.dlq_retries || 10
       )
+      
+      # Uncomment this if you want Karafka to manage your topics configuration
+      # Managing topics configuration via routing will allow you to ensure config consistency
+      # across multiple environments
+      config(partitions: 50, 'cleanup.policy': 'compact')
 
       long_running_job true
     end
 
     topic "dead.messages" do
       consumer DeadMessagesConsumer
+
+      # Uncomment this if you want Karafka to manage your topics configuration
+      # Managing topics configuration via routing will allow you to ensure config consistency
+      # across multiple environments
+      config(partitions: 2, 'cleanup.policy': 'compact')
     end
   end
 end
