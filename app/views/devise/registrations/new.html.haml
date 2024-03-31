@@ -1,20 +1,20 @@
 = render "devise/shared/error_messages", resource: resource
 .text-center.form-signin.w-100.m-auto
   = form_for(resource, as: resource_name, url: registration_path(resource_name), html: { data: { turbo: false } }) do |f|
-    %h1.h3.mb-3.fw-normal Sign up
-    .form-floating
-      = f.email_field :email, autofocus: true, autocomplete: "email", class: 'form-control top', placeholder: 'name@example.com'
-      = f.label :email
-    .form-floating
-      = f.password_field :password, autocomplete: "new-password", class: 'form-control middle', placeholder: 'Password'
-      = f.label :password
-    .form-floating
-      = f.password_field :password_confirmation, autocomplete: "new-password", class: 'form-control bottom mb-0', placeholder: 'Password confirmation'
-      = f.label :password_confirmation
-    - if @minimum_password_length
-      %em
-        = "(#{@minimum_password_length} characters minimum)"
-    .actions.mt-2
-      = f.submit "Sign up", class: "w-100 btn btn-lg btn-primary"
+    %h1.h3.mb-3.fw-normal Sign up suspended at April 1st 2024 until proper anti-bot solution is implemented, due to bots using up all free emails. Contact me directly if you really want an account.
+    -# .form-floating
+    -#   = f.email_field :email, autofocus: true, autocomplete: "email", class: 'form-control top', placeholder: 'name@example.com'
+    -#   = f.label :email
+    -# .form-floating
+    -#   = f.password_field :password, autocomplete: "new-password", class: 'form-control middle', placeholder: 'Password'
+    -#   = f.label :password
+    -# .form-floating
+    -#   = f.password_field :password_confirmation, autocomplete: "new-password", class: 'form-control bottom mb-0', placeholder: 'Password confirmation'
+    -#   = f.label :password_confirmation
+    -# - if @minimum_password_length
+    -#   %em
+    -#     = "(#{@minimum_password_length} characters minimum)"
+    -# .actions.mt-2
+    -#   = f.submit "Sign up", class: "w-100 btn btn-lg btn-primary"
   .mt-2
     = render "devise/shared/links"
