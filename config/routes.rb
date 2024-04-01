@@ -25,7 +25,10 @@ Rails.application.routes.draw do
   root "static_pages#landing_page"
   get "static_pages/dashboard"
 
-  devise_for :users
+  devise_for :users, controllers: {
+    sessions: 'users/sessions',
+    registrations: 'users/registrations'
+  }
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?

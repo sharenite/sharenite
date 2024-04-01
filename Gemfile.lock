@@ -384,6 +384,7 @@ GEM
       abbrev
     rdoc (6.6.2)
       psych (>= 4.0.0)
+    recaptcha (5.16.0)
     redis (5.1.0)
       redis-client (>= 0.17.0)
     redis-client (0.19.1)
@@ -551,7 +552,7 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka
-  karafka-license (= 1.a8ccbbc2295)!
+  karafka-license!
   karafka-web
   letter_opener
   letter_opener_web
@@ -563,6 +564,7 @@ DEPENDENCIES
   rails
   rails_live_reload
   rake-progressbar
+  recaptcha (~> 5.16)
   redis
   rspec-rails
   rubocop
