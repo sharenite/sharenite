@@ -116,3 +116,4 @@ end
 gem 'devise'
 gem "karafka"
 gem "karafka-web"
+gem "recaptcha", "~> 5.16"

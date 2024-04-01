@@ -69,6 +69,8 @@ services:
       KARAFKA_UI_SECRET: "${KARAFKA_UI_SECRET}"
       IGDB_CLIENT_ID: "${IGDB_CLIENT_ID}"
       IGDB_CLIENT_SECRET: "${IGDB_CLIENT_SECRET}"
+      RECAPTCHA_SITE_KEY: "${RECAPTCHA_SITE_KEY}"
+      RECAPTCHA_SECRET_KEY: "${RECAPTCHA_SECRET_KEY}"
     depends_on:
       - sharenite-database
     restart: always
