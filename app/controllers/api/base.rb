@@ -1,13 +1,10 @@
 # frozen_string_literal: true
 
-require "appsignal/integrations/grape"
-
 module API
   # Base API class
   class Base < Grape::API
+    insert_before Grape::Middleware::Error, Appsignal::Rack::GrapeMiddleware # Include this middleware
     before { authenticate_user! }
-
-    use Appsignal::Grape::Middleware
     mount API::V1::Base
   end
 end

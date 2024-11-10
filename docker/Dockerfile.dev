@@ -1,7 +1,7 @@
-FROM ruby:3.3.0-bookworm
+FROM ruby:3.3.6-bookworm
 
 ENV APP_PATH /var/app
-ENV BUNDLER_VERSION 2.5.6
+ENV BUNDLER_VERSION 2.5.23
 ENV BUNDLE_PATH /usr/local/bundle/gems
 ENV TMP_PATH /tmp/
 ENV RAILS_LOG_TO_STDOUT true
@@ -27,6 +27,8 @@ RUN apt-get update -qq \
     libvips \
     nodejs \
     musl-dev \
+    libreadline8 \
+    libreadline-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man \
     && npm install -g yarn

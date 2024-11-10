@@ -6,7 +6,7 @@ source "https://gems.karafka.io" do
   gem 'karafka-license', ENV.fetch('KARAFKA_PRO_LICENSE_ID', nil)
 end
 
-ruby "3.3.0"
+ruby "3.3.6"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails"
@@ -77,7 +77,8 @@ gem 'securerandom'
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   
-  gem "debug", platforms: %i[ mri mingw x64_mingw ]
+  gem "debug"
+  gem 'reline', '0.5.10'
   gem 'factory_bot_rails'
   gem 'faker'
   gem 'foreman'
