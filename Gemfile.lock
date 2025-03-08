@@ -8,6 +8,15 @@ GIT
       grape (>= 0.7, < 3.0)
       rails (>= 4.0, < 8.0)
 
+GIT
+  remote: https://github.com/iONi-io/grape-active_model_serializers.git
+  revision: 994ec1a77105197476c4d9fcc71baed0cedc9e1a
+  ref: 994ec1a77105197476c4d9fcc71baed0cedc9e1a
+  specs:
+    grape-active_model_serializers (1.5.3)
+      active_model_serializers (>= 0.10.0)
+      grape (>= 0.8.0)
+
 GEM
   remote: https://gems.karafka.io/
   specs:
@@ -196,9 +205,6 @@ GEM
       mustermann-grape (~> 1.1.0)
       rack (>= 2)
       zeitwerk
-    grape-active_model_serializers (1.5.2)
-      active_model_serializers (>= 0.10.0)
-      grape (>= 0.8.0)
     haml (6.3.0)
       temple (>= 0.8.2)
       thor
@@ -558,7 +564,7 @@ DEPENDENCIES
   foreman
   friendly_id
   grape
-  grape-active_model_serializers
+  grape-active_model_serializers!
   grape_devise!
   haml
   haml-rails
@@ -566,7 +572,7 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka
-  karafka-license!
+  karafka-license (= 1.a8ccbbc2295)!
   karafka-web
   letter_opener
   letter_opener_web
