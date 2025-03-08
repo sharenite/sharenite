@@ -1,7 +1,7 @@
 FROM ruby:3.3.6-bookworm
 
 ENV APP_PATH /var/app
-ENV BUNDLER_VERSION 2.5.23
+ENV BUNDLER_VERSION 2.6.5
 ENV BUNDLE_PATH /usr/local/bundle/gems
 ENV TMP_PATH /tmp/
 ENV RAILS_LOG_TO_STDOUT true

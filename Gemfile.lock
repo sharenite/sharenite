@@ -572,7 +572,7 @@ DEPENDENCIES
   jsbundling-rails
   kaminari
   karafka
-  karafka-license (= 1.a8ccbbc2295)!
+  karafka-license!
   karafka-web
   letter_opener
   letter_opener_web
@@ -610,4 +610,4 @@ RUBY VERSION
    ruby 3.3.6p108
 
 BUNDLED WITH
-   2.5.23
+   2.6.5
