@@ -29,6 +29,8 @@ builder:
   dockerfile: Dockerfile
   args:
     RUBY_VERSION: "3.3.0"
+  secrets:
+    - BUNDLE_GEMS__KARAFKA__IO
 
 logging:
   options:

@@ -1,0 +1,14 @@
+# Shared app/deploy secrets
+export KAMAL_REGISTRY_PASSWORD=''
+export SHARENITE_DATABASE_PASSWORD=''
+export BUNDLE_GEMS__KARAFKA__IO=''
+export KARAFKA_PRO_LICENSE_ID=''
+export KARAFKA_UI_SECRET=''
+export IGDB_CLIENT_ID=''
+export IGDB_CLIENT_SECRET=''
+export RECAPTCHA_SITE_KEY=''
+export RECAPTCHA_SECRET_KEY=''
+
+# Docker Hub auth (required in this setup for Bitnami pulls)
+export DOCKERHUB_USERNAME=''
+export DOCKERHUB_TOKEN=''

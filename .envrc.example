@@ -1,1 +1,5 @@
+# Copy templates first:
+# cp .envrc.local.example .envrc.local
+# cp .envrc.staging.example .envrc.staging
+
 source_env_if_exists .envrc.local
