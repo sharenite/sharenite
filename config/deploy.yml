@@ -17,6 +17,7 @@ builder:
     RUBY_VERSION: "3.3.0"
   secrets:
     - BUNDLE_GEMS__KARAFKA__IO
+    - RAILS_MASTER_KEY
 
 logging:
   options:
