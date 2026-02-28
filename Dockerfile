@@ -2,6 +2,7 @@
 
 ARG RUBY_VERSION=3.3.0
 FROM docker.io/library/ruby:${RUBY_VERSION}-slim AS base
+ARG RAILS_ENV=production
 
 WORKDIR /rails
 
@@ -9,7 +10,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libjemalloc2 libvips libpq5 postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-ENV RAILS_ENV="production" \
+ENV RAILS_ENV="${RAILS_ENV}" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development:test"

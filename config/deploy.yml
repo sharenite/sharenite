@@ -15,6 +15,7 @@ builder:
   dockerfile: Dockerfile
   args:
     RUBY_VERSION: "3.3.0"
+    RAILS_ENV: "production"
   secrets:
     - BUNDLE_GEMS__KARAFKA__IO
     - RAILS_MASTER_KEY
