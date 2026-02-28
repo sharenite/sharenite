@@ -1,0 +1,13 @@
+.git
+.gitignore
+.github
+.kamal
+.DS_Store
+node_modules
+tmp/*
+log/*
+storage/*
+coverage
+.ruby-lsp
+docker
+yarn-error.log

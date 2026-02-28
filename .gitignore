@@ -51,3 +51,9 @@
 
 # Docker env
 docker/.env
+
+# Local env secrets (never commit)
+.env
+.env.local
+.envrc
+.envrc.local

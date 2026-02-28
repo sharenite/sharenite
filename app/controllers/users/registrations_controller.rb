@@ -1,80 +1,41 @@
 # frozen_string_literal: true
 
-class Users::RegistrationsController < Devise::RegistrationsController
-  before_action :configure_sign_up_params, only: [:create]
-  before_action :configure_account_update_params, only: [:update]
-  prepend_before_action :check_captcha, only: [:create] # Change this to be any actions you want to protect.
+module Users
+  # Custom Devise registrations flow with conditional reCAPTCHA protection.
+  class RegistrationsController < Devise::RegistrationsController
+    before_action :configure_sign_up_params
+    before_action :configure_account_update_params
+    prepend_before_action :check_captcha
 
-  # GET /resource/sign_up
-  def new
-    super
-  end
+    protected
 
-  # GET /resource/edit
-  def edit
-    super
-  end
-  
-  # POST /resource
-  def create
-    super
-  end
+    def configure_sign_up_params
+      return unless action_name == "create"
 
+      devise_parameter_sanitizer.permit(:sign_up, keys: [:attribute])
+    end
 
-  # PUT /resource
-  def update
-    super
-  end
+    def configure_account_update_params
+      return unless action_name == "update"
 
-  # DELETE /resource
-  def destroy
-    super
-  end
+      devise_parameter_sanitizer.permit(:account_update, keys: [:attribute])
+    end
 
-  # GET /resource/cancel
-  # Forces the session data which is usually expired after sign
-  # in to be expired now. This is useful if the user wants to
-  # cancel oauth signing in/up in the middle of the process,
-  # removing all OAuth session data.
-  def cancel
-    super
-  end
+    private
 
-  protected
+    def check_captcha
+      return unless action_name == "create"
+      return unless captcha_required?
+      return if verify_recaptcha # verify_recaptcha(action: 'signup') for v3
 
-  # If you have extra params to permit, append them to the sanitizer.
-  def configure_sign_up_params
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:attribute])
-  end
+      self.resource = resource_class.new sign_up_params
+      resource.validate # Look for any other validation errors besides reCAPTCHA
+      set_minimum_password_length
 
-  # If you have extra params to permit, append them to the sanitizer.
-  def configure_account_update_params
-    devise_parameter_sanitizer.permit(:account_update, keys: [:attribute])
-  end
-
-  # The path used after sign up.
-  def after_sign_up_path_for(resource)
-    super(resource)
-  end
-
-  # The path used after sign up for inactive accounts.
-  def after_inactive_sign_up_path_for(resource)
-    super(resource)
-  end
-
-  private
-
-  def check_captcha
-    return if verify_recaptcha # verify_recaptcha(action: 'signup') for v3
-
-    self.resource = resource_class.new sign_up_params
-    resource.validate # Look for any other validation errors besides reCAPTCHA
-    set_minimum_password_length
-
-    respond_with_navigational(resource) do
-      flash.discard(:recaptcha_error) # We need to discard flash to avoid showing it on the next page reload
-      render :new
+      respond_with_navigational(resource) do
+        flash.discard(:recaptcha_error) # We need to discard flash to avoid showing it on the next page reload
+        render :new
+      end
     end
   end
 end
-

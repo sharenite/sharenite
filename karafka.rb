@@ -4,7 +4,7 @@
 class KarafkaApp < Karafka::App
   # rubocop:disable Metrics/BlockLength
   setup do |config|
-    config.kafka = { "bootstrap.servers": "sharenite-kafka:9092" }
+    config.kafka = { "bootstrap.servers": ENV.fetch("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9094") }
     config.client_id = "sharenite_app"
     # Recreate consumers with each batch. This will allow Rails code reload to work in the
     # development mode. Otherwise Karafka process would not be aware of code changes
@@ -89,7 +89,8 @@ end
 require "karafka/web"
 
 Karafka::Web.setup do |config|
-  config.ui.sessions.secret = ENV.fetch('KARAFKA_UI_SECRET', nil)
+  # Keep local development bootable even when KARAFKA_UI_SECRET is not set.
+  config.ui.sessions.secret = ENV["KARAFKA_UI_SECRET"].presence || Rails.application.secret_key_base || ("x" * 128)
 end
 
 Karafka::Web.enable!

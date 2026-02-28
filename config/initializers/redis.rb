@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 # rubocop:disable Style/GlobalVars
-$redis = Redis.new(host: "sharenite-redis", port: 6379, db: 0)
+$redis = Redis.new(url: ENV.fetch("REDIS_URL", "redis://127.0.0.1:6379/0"))
 # rubocop:enable Style/GlobalVars

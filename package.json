@@ -12,13 +12,13 @@
   },
   "scripts": {
     "precommit": "lint-staged",
-    "prettier": "./node_modules/.bin/prettier --write 'app/**/*.{js,es6,jsx,scss,css,haml}'",
+    "prettier": "./node_modules/.bin/prettier --plugin=@prettier/plugin-ruby --write 'app/**/*.{js,es6,jsx,scss,css,haml}'",
     "build": "esbuild app/javascript/*.* --bundle --sourcemap --outdir=app/assets/builds --public-path=assets",
     "build:css": "sass ./app/assets/stylesheets/application.bootstrap.scss:./app/assets/builds/application.css --no-source-map --load-path=node_modules"
   },
   "lint-staged": {
     "app/**/*.{js,es6,jsx,scss,css,haml}": [
-      "./node_modules/prettier/bin-prettier.js --write"
+      "./node_modules/.bin/prettier --plugin=@prettier/plugin-ruby --write"
     ],
     "{app,test}/**/*.rb": [
       "bundle exec rubocop -a"
