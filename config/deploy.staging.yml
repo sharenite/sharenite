@@ -15,7 +15,7 @@ servers:
 
 proxy:
   ssl: true
-  host: sharenite.testing.xenor.ovh
+  host: staging.sharenite.link
   app_port: 3000
 
 registry:
@@ -43,7 +43,7 @@ env:
     RAILS_ENV: staging
     RAILS_LOG_TO_STDOUT: "1"
     RAILS_SERVE_STATIC_FILES: "1"
-    HOST: https://sharenite.testing.xenor.ovh
+    HOST: https://staging.sharenite.link
     DB_HOST: sharenite-db
     REDIS_URL: redis://sharenite-redis:6379/0
     KAFKA_BOOTSTRAP_SERVERS: sharenite-kafka:9092
