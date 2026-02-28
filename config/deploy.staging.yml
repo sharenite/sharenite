@@ -14,7 +14,7 @@ servers:
       - 192.168.2.73
 
 proxy:
-  ssl: false
+  ssl: true
   host: sharenite.testing.xenor.ovh
   app_port: 3000
 
