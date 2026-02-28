@@ -15,5 +15,22 @@ fi
   source "${STAGING_ENV_FILE}"
   set +a
   cd "${ROOT_DIR}"
-  bundle exec kamal "$@" -d staging
+
+  args=("$@")
+  dest_args=(-d staging)
+
+  if [[ " ${args[*]} " == *" -- "* ]]; then
+    final_args=()
+    inserted=false
+    for arg in "${args[@]}"; do
+      if [[ "${arg}" == "--" && "${inserted}" == false ]]; then
+        final_args+=("${dest_args[@]}")
+        inserted=true
+      fi
+      final_args+=("${arg}")
+    done
+    exec bundle exec kamal "${final_args[@]}"
+  else
+    exec bundle exec kamal "${args[@]}" "${dest_args[@]}"
+  fi
 )
