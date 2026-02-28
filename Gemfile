@@ -67,6 +67,7 @@ gem 'rake-progressbar'
 gem 'sass-rails'
 gem 'search_cop'
 gem 'securerandom'
+gem "csv"
 
 # Use Sass to process CSS
 # gem "sassc-rails"
