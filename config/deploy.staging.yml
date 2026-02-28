@@ -83,23 +83,28 @@ accessories:
     directories:
       - data:/data
   kafka:
-    image: bitnami/kafka:3.5
+    image: apache/kafka:3.7.0
     roles:
       - worker
     port: "9092:9092"
     env:
       clear:
-        KAFKA_CFG_NODE_ID: 1
-        KAFKA_CFG_PROCESS_ROLES: broker,controller
-        KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-        KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://sharenite-kafka:9092
-        KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-        KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-        KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@sharenite-kafka:9093
-        KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
-        ALLOW_PLAINTEXT_LISTENER: "yes"
+        KAFKA_NODE_ID: 1
+        KAFKA_PROCESS_ROLES: broker,controller
+        KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://sharenite-kafka:9092
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+        KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+        KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+        KAFKA_CONTROLLER_QUORUM_VOTERS: 1@sharenite-kafka:9093
+        KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+        KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+        KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
     directories:
-      - data:/bitnami/kafka
+      - data:/tmp/kraft-combined-logs
 
 aliases:
   console: app exec --reuse -i "bin/rails console"

@@ -35,7 +35,7 @@ EOF
 direnv allow
 ```
 
-Docker Hub auth (required in this setup for Bitnami pulls):
+Docker Hub auth (recommended to avoid pull-rate limits):
 
 ```bash
 echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -74,7 +74,7 @@ export DOCKERHUB_TOKEN=...
 ```
 
 `POSTGRES_PASSWORD` is derived from `SHARENITE_DATABASE_PASSWORD` via `.kamal/secrets.staging`.
-`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are required in this setup for authenticated Docker Hub pulls.
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are optional, but recommended for authenticated Docker Hub pulls.
 
 Deploy flow:
 
