@@ -17,9 +17,9 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  host: sharenite-database
-  username: sharenite
-  password: sharenite
+  host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
+  username: <%= ENV.fetch("DB_USER", "sharenite") %>
+  password: <%= ENV.fetch("DB_PASSWORD", "sharenite") %>
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
@@ -84,12 +84,12 @@ test:
 #
 staging:
   <<: *default
-  database: sharenite_staging
-  username: sharenite
+  database: <%= ENV.fetch("DB_NAME", "sharenite_staging") %>
+  username: <%= ENV.fetch("DB_USER", "sharenite") %>
   password: <%= ENV["SHARENITE_DATABASE_PASSWORD"] %>
 
 production:
   <<: *default
-  database: sharenite_production
-  username: sharenite
+  database: <%= ENV.fetch("DB_NAME", "sharenite_production") %>
+  username: <%= ENV.fetch("DB_USER", "sharenite") %>
   password: <%= ENV["SHARENITE_DATABASE_PASSWORD"] %>

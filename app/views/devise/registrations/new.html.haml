@@ -14,8 +14,9 @@
     - if @minimum_password_length
       %em
         = "(#{@minimum_password_length} characters minimum)"
-    .form-floating.mt-3
-      = recaptcha_tags
+    - if captcha_required?
+      .form-floating.mt-3
+        = recaptcha_tags
     .actions.mt-2
       = f.submit "Sign up", class: "w-100 btn btn-lg btn-primary"
   .mt-2

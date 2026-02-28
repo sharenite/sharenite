@@ -1,0 +1,40 @@
+service: sharenite
+image: xenor/sharenite
+
+ssh:
+  user: xenor
+
+registry:
+  server: gitea.xenor.ovh
+  username: dawidxen@gmail.com
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  dockerfile: Dockerfile
+  args:
+    RUBY_VERSION: "3.3.0"
+
+logging:
+  options:
+    max-size: 100m
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+    - SHARENITE_DATABASE_PASSWORD
+    - BUNDLE_GEMS__KARAFKA__IO
+    - KARAFKA_PRO_LICENSE_ID
+    - KARAFKA_UI_SECRET
+    - IGDB_CLIENT_ID
+    - IGDB_CLIENT_SECRET
+    - RECAPTCHA_SITE_KEY
+    - RECAPTCHA_SECRET_KEY
+
+volumes:
+  - "sharenite_storage:/rails/storage"
+
+aliases:
+  console: app exec --reuse -i "bin/rails console"
+  logs: app logs -f

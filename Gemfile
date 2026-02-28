@@ -115,6 +115,7 @@ group :test do
 end
 
 gem 'devise'
+gem "kamal", require: false
 gem "karafka"
 gem "karafka-web"
 gem "recaptcha"
