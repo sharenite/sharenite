@@ -7,7 +7,7 @@ ARG RAILS_ENV=production
 WORKDIR /rails
 
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips libpq5 postgresql-client && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips libpq5 postgresql-client procps && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 ENV RAILS_ENV="${RAILS_ENV}" \
