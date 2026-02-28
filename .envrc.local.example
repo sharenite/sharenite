@@ -17,7 +17,7 @@ export IGDB_CLIENT_SECRET=''
 export RECAPTCHA_SITE_KEY=''
 export RECAPTCHA_SECRET_KEY=''
 
-# Docker Hub auth (required in this setup for Bitnami pulls)
+# Docker Hub auth (recommended to avoid pull-rate limits)
 export DOCKERHUB_USERNAME=''
 export DOCKERHUB_TOKEN=''
 
