@@ -3,6 +3,9 @@
 require "karafka/web"
 
 Rails.application.routes.draw do
+  # Kamal/proxy readiness endpoint.
+  get "up" => "rails/health#show", as: :rails_health_check
+
   authenticate :admin_user, ->(admin_user) { !admin_user.nil? } do
     mount Karafka::Web::App, at: "/karafka"
   end
