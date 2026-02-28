@@ -1,0 +1,29 @@
+# Local development env
+export DB_HOST='127.0.0.1'
+export DB_USER='sharenite'
+export DB_PASSWORD='sharenite'
+export DB_NAME='sharenite_development'
+export REDIS_URL='redis://127.0.0.1:6379/0'
+export KAFKA_BOOTSTRAP_SERVERS='127.0.0.1:9094'
+
+# Shared app/deploy secrets
+export KAMAL_REGISTRY_PASSWORD=''
+export SHARENITE_DATABASE_PASSWORD=''
+export BUNDLE_GEMS__KARAFKA__IO=''
+export KARAFKA_PRO_LICENSE_ID=''
+export KARAFKA_UI_SECRET=''
+export IGDB_CLIENT_ID=''
+export IGDB_CLIENT_SECRET=''
+export RECAPTCHA_SITE_KEY=''
+export RECAPTCHA_SECRET_KEY=''
+
+# Docker Hub auth (required in this setup for Bitnami pulls)
+export DOCKERHUB_USERNAME=''
+export DOCKERHUB_TOKEN=''
+
+# Apple Silicon native build flags for karafka-rdkafka (optional)
+export PKG_CONFIG_PATH='/opt/homebrew/opt/openssl@3/lib/pkgconfig:/opt/homebrew/opt/zstd/lib/pkgconfig:/opt/homebrew/opt/lz4/lib/pkgconfig:/opt/homebrew/opt/cyrus-sasl/lib/pkgconfig'
+export CPPFLAGS='-I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/zstd/include -I/opt/homebrew/opt/lz4/include -I/opt/homebrew/opt/cyrus-sasl/include'
+export LDFLAGS='-L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/zstd/lib -L/opt/homebrew/opt/lz4/lib -L/opt/homebrew/opt/cyrus-sasl/lib'
+unset OPENSSL_DIR
+unset OPENSSL_ROOT_DIR

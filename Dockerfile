@@ -22,7 +22,9 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
+RUN --mount=type=secret,id=BUNDLE_GEMS__KARAFKA__IO \
+    export BUNDLE_GEMS__KARAFKA__IO="$(cat /run/secrets/BUNDLE_GEMS__KARAFKA__IO)" && \
+    bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
