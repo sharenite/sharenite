@@ -8,8 +8,6 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-Appsignal.load(:grape)
-
 module Sharenite
   # Application config
   class Application < Rails::Application

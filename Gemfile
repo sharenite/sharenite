@@ -6,7 +6,7 @@ source "https://gems.karafka.io" do
   gem "karafka-license"
 end
 
-ruby "3.3.6"
+ruby "3.3.10"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails"
