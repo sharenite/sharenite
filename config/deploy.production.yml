@@ -1,0 +1,110 @@
+service: sharenite
+image: xenor/sharenite
+
+ssh:
+  user: ubuntu
+
+servers:
+  web:
+    hosts:
+      - ns3031997.ip-5-135-141.eu
+  worker:
+    cmd: bundle exec karafka server
+    hosts:
+      - ns3031997.ip-5-135-141.eu
+
+proxy:
+  ssl: true
+  host: new.sharenite.link
+  app_port: 3000
+
+registry:
+  server: gitea.xenor.ovh
+  username: dawidxen@gmail.com
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  dockerfile: Dockerfile
+  args:
+    RUBY_VERSION: "3.3.10"
+    RAILS_ENV: "production"
+  secrets:
+    - BUNDLE_GEMS__KARAFKA__IO
+    - RAILS_MASTER_KEY
+
+logging:
+  options:
+    max-size: 100m
+
+env:
+  clear:
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: "1"
+    RAILS_SERVE_STATIC_FILES: "1"
+    HOST: https://new.sharenite.link
+    DB_HOST: sharenite-db
+    REDIS_URL: redis://sharenite-redis:6379/0
+    KAFKA_BOOTSTRAP_SERVERS: sharenite-kafka:9092
+  secret:
+    - RAILS_MASTER_KEY
+    - SHARENITE_DATABASE_PASSWORD
+    - BUNDLE_GEMS__KARAFKA__IO
+    - KARAFKA_PRO_LICENSE_ID
+    - KARAFKA_UI_SECRET
+    - IGDB_CLIENT_ID
+    - IGDB_CLIENT_SECRET
+    - RECAPTCHA_SITE_KEY
+    - RECAPTCHA_SECRET_KEY
+
+volumes:
+  - "sharenite_storage:/rails/storage"
+
+accessories:
+  db:
+    image: postgres:15
+    roles:
+      - web
+      - worker
+    env:
+      clear:
+        POSTGRES_USER: sharenite
+        POSTGRES_DB: sharenite_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    roles:
+      - web
+      - worker
+    directories:
+      - data:/data
+  kafka:
+    image: apache/kafka:3.7.0
+    roles:
+      - worker
+    port: "9092:9092"
+    env:
+      clear:
+        KAFKA_NODE_ID: 1
+        KAFKA_PROCESS_ROLES: broker,controller
+        CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+        KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://sharenite-kafka:9092
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+        KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+        KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+        KAFKA_CONTROLLER_QUORUM_VOTERS: 1@sharenite-kafka:9093
+        KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+        KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+        KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+aliases:
+  console: app exec --reuse -i "bin/rails console"
+  logs: app logs -f

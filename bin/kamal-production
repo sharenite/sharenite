@@ -16,5 +16,21 @@ fi
   set +a
   cd "${ROOT_DIR}"
 
-  exec bundle exec kamal "$@"
+  args=("$@")
+  dest_args=(-d production)
+
+  if [[ " ${args[*]} " == *" -- "* ]]; then
+    final_args=()
+    inserted=false
+    for arg in "${args[@]}"; do
+      if [[ "${arg}" == "--" && "${inserted}" == false ]]; then
+        final_args+=("${dest_args[@]}")
+        inserted=true
+      fi
+      final_args+=("${arg}")
+    done
+    exec bundle exec kamal "${final_args[@]}"
+  else
+    exec bundle exec kamal "${args[@]}" "${dest_args[@]}"
+  fi
 )
