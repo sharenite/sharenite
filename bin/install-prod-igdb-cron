@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEPLOY_CONFIG="${ROOT_DIR}/config/deploy.production.yml"
+LOCAL_SCRIPT="${ROOT_DIR}/scripts/igdb_match_yesterday_production.sh"
+
+if [[ ! -f "${DEPLOY_CONFIG}" ]]; then
+  echo "Missing ${DEPLOY_CONFIG}"
+  exit 1
+fi
+
+if [[ ! -f "${LOCAL_SCRIPT}" ]]; then
+  echo "Missing ${LOCAL_SCRIPT}"
+  exit 1
+fi
+
+REMOTE_HOST="${1:-}"
+CRON_SCHEDULE="${CRON_SCHEDULE:-0 5 * * *}"
+CRON_MARKER="# sharenite-prod-igdb-match"
+
+if [[ "${REMOTE_HOST}" == "-h" || "${REMOTE_HOST}" == "--help" ]]; then
+  cat <<'EOF'
+Usage: bin/install-prod-igdb-cron [HOST]
+
+Installs scripts/igdb_match_yesterday_production.sh on the production host
+and upserts one cron entry (marked as: # sharenite-prod-igdb-match).
+
+Env overrides:
+  REMOTE_USER
+  CRON_SCHEDULE
+  REMOTE_SCRIPT_PATH
+  REMOTE_LOG_PATH
+EOF
+  exit 0
+fi
+
+if [[ -z "${REMOTE_HOST}" ]]; then
+  REMOTE_HOST="$(ruby -ryaml -e 'cfg=YAML.load_file(ARGV[0]); hosts=cfg.dig("servers","web","hosts"); puts Array(hosts).first.to_s' "${DEPLOY_CONFIG}")"
+fi
+
+if [[ -z "${REMOTE_HOST}" ]]; then
+  echo "Could not determine production host from ${DEPLOY_CONFIG}. Pass host as first argument."
+  exit 1
+fi
+
+REMOTE_USER="${REMOTE_USER:-$(ruby -ryaml -e 'cfg=YAML.load_file(ARGV[0]); puts (cfg.dig("ssh","user") || "root").to_s' "${DEPLOY_CONFIG}")}"
+REMOTE_SCRIPT_PATH="${REMOTE_SCRIPT_PATH:-/home/${REMOTE_USER}/igdb_match_yesterday_production.sh}"
+REMOTE_LOG_PATH="${REMOTE_LOG_PATH:-/home/${REMOTE_USER}/backups/igdb_match.log}"
+
+echo "Installing IGDB cron script on ${REMOTE_USER}@${REMOTE_HOST}..."
+scp "${LOCAL_SCRIPT}" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SCRIPT_PATH}"
+ssh "${REMOTE_USER}@${REMOTE_HOST}" "chmod +x '${REMOTE_SCRIPT_PATH}' && mkdir -p \"\$(dirname '${REMOTE_LOG_PATH}')\""
+
+CRON_LINE="${CRON_SCHEDULE} ${REMOTE_SCRIPT_PATH} >> ${REMOTE_LOG_PATH} 2>&1 ${CRON_MARKER}"
+
+echo "Upserting cron entry on ${REMOTE_USER}@${REMOTE_HOST}..."
+EXISTING_CRON="$(ssh "${REMOTE_USER}@${REMOTE_HOST}" "crontab -l 2>/dev/null || true")"
+FILTERED_CRON="$(printf '%s\n' "${EXISTING_CRON}" | awk -v marker="${CRON_MARKER}" '$0 !~ marker')"
+NEW_CRON="$(printf '%s\n%s\n' "${FILTERED_CRON}" "${CRON_LINE}" | sed '/^[[:space:]]*$/d')"
+printf '%s\n' "${NEW_CRON}" | ssh "${REMOTE_USER}@${REMOTE_HOST}" "crontab -"
+
+echo "Installed cron:"
+ssh "${REMOTE_USER}@${REMOTE_HOST}" "crontab -l | grep -F '${CRON_MARKER}'"

@@ -175,3 +175,41 @@ Restore example (plain SQL dump):
 ```bash
 gzip -dc /path/to/prod_dump_*.sql.gz | docker exec -i sharenite-db psql -U sharenite -d sharenite_production
 ```
+
+## Production IGDB matching cron
+
+The legacy task:
+
+```cron
+0 5 * * * docker exec ... bin/rails runner 'IgdbMatchGames.new((Date.today - 1).to_s).call'
+```
+
+is now represented in app code as:
+
+```bash
+bin/rails igdb:match_yesterday
+```
+
+For Kamal, use the host script:
+
+```bash
+scripts/igdb_match_yesterday_production.sh
+```
+
+Install script + cron entry on production host:
+
+```bash
+bin/install-prod-igdb-cron
+```
+
+Defaults:
+- schedule: `0 5 * * *`
+- script path: `/home/ubuntu/igdb_match_yesterday_production.sh`
+- log path: `/home/ubuntu/backups/igdb_match.log`
+
+Optional overrides:
+- `REMOTE_USER`
+- `CRON_SCHEDULE`
+- `REMOTE_SCRIPT_PATH`
+- `REMOTE_LOG_PATH`
+- first argument: explicit host override
