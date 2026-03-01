@@ -1,6 +1,6 @@
 - if notice.present?
   .alert.alert-success= notice
 = render 'game_details', game: @game
-.game-show-actions.d-flex.flex-column.flex-sm-row.gap-2.mt-3
-  = link_to "Edit", edit_profile_game_path(@profile, @game), class: "btn btn-outline-primary"
-  = link_to "Back to games", profile_games_path, class: "btn btn-outline-secondary"
+.game-show-actions.d-flex.flex-wrap.gap-2.mt-3
+  = link_to "Edit", edit_profile_game_path(@profile, @game), class: "games-action-pill games-action-pill-primary"
+  = link_to "Back to games", profile_games_path, class: "games-action-pill"
