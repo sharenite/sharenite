@@ -14,3 +14,9 @@
     height: auto;
   }
 }
+
+@include media-breakpoint-down(md) {
+  .game-details h1 {
+    font-size: 1.6rem;
+  }
+}

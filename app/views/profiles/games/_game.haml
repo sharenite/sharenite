@@ -1,17 +1,19 @@
 %li.list-group-item{id: "#{dom_id game}"}
-  .row
-    .col-6
-      - if game.favorite
-        %i.bi.bi-star-fill.yellow.text-warning
-      %strong
-        = highlight(game.name, params.dig(:query))
-    .col-3
+  .row.g-2.align-items-md-center
+    .col-12.col-md-6
+      .d-flex.align-items-center.gap-2
+        - if game.favorite
+          %i.bi.bi-star-fill.yellow.text-warning
+        %strong
+          = game.name
+    .col-12.col-md-3
+      .small.text-muted.d-md-none Last activity
       - if game.last_activity
         %abbr{title: "#{game.last_activity}"}
           = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
       - else
         Never.
-    .col-1
-      = link_to "Edit", edit_profile_game_path(@profile, game), data: { 'turbo-frame': "_top" }
-    .col-2
-      = link_to "Show", profile_game_path(@profile, game), data: { 'turbo-frame': "_top" }
+    .col-12.col-md-3
+      .d-flex.gap-3.gap-md-2.justify-content-between.justify-content-md-end
+        = link_to "Edit", edit_profile_game_path(@profile, game), class: "btn btn-link p-0", data: { 'turbo-frame': "_top" }
+        = link_to "Show", profile_game_path(@profile, game), class: "btn btn-link p-0", data: { 'turbo-frame': "_top" }

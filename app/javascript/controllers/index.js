@@ -3,5 +3,8 @@
 // ./bin/rails generate stimulus controllerName
 
 import { application } from "./application"
+import ChoiceController from "./choice_controller"
 import SearchFormController from "./search_form_controller"
+
+application.register("choice", ChoiceController)
 application.register("search-form", SearchFormController)

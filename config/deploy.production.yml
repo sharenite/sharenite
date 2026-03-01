@@ -20,7 +20,7 @@ proxy:
 
 registry:
   server: gitea.xenor.ovh
-  username: dawidxen@gmail.com
+  username: <%= ENV.fetch("KAMAL_REGISTRY_USERNAME") %>
   password:
     - KAMAL_REGISTRY_PASSWORD
 

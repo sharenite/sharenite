@@ -2,20 +2,21 @@
   %header.p-3.text-bg-dark
     .container
       .d-flex.flex-wrap.align-items-center.justify-content-center.justify-content-lg-start
+        - nav_link_class = ->(path, default_color = "text-white") { "nav-link px-2 #{current_page?(path) ? 'active text-white' : default_color}" }
         %ul.nav.col-10.col-sm-auto.me-sm-auto.mb-2.justify-content-center.mb-md-0
           %li
-            = link_to 'Home', root_path, class: "nav-link px-2 text-secondary"
+            = link_to 'Home', root_path, class: nav_link_class.call(root_path, "text-secondary")
           - if current_user
             %li
-              = link_to 'Dashboard', static_pages_dashboard_path, class: 'nav-link px-2 text-white'
+              = link_to 'Dashboard', static_pages_dashboard_path, class: nav_link_class.call(static_pages_dashboard_path)
             %li
-              = link_to 'Games', profile_games_path(current_user.profile), class: 'nav-link px-2 text-white'
+              = link_to 'Games', profile_games_path(current_user.profile), class: nav_link_class.call(profile_games_path(current_user.profile))
             %li
-              = link_to 'Friends', profile_friends_path(current_user.profile), class: 'nav-link px-2 text-white'
+              = link_to 'Friends', profile_friends_path(current_user.profile), class: nav_link_class.call(profile_friends_path(current_user.profile))
             %li
-              = link_to 'Playlists', profile_playlists_path(current_user.profile), class: 'nav-link px-2 text-white'
+              = link_to 'Playlists', profile_playlists_path(current_user.profile), class: nav_link_class.call(profile_playlists_path(current_user.profile))
           %li
-            = link_to 'Profiles', profiles_path, class: 'nav-link px-2 text-white'
+            = link_to 'Profiles', profiles_path, class: nav_link_class.call(profiles_path)
           -#
             -# %form.col-12.col-lg-auto.mb-3.mb-lg-0.me-lg-3{role: "search"}
             -# %input.form-control.form-control-dark.text-bg-dark{"aria-label" => "Search", placeholder: "Search...", type: "search"}

@@ -30,7 +30,7 @@ class Game < ApplicationRecord
   # rubocop:disable Metrics/BlockLength
   search_scope :search do
     attributes :name, :added, :description, :favorite, :hidden, :is_installed, :is_installing, :is_launching,
-    :is_running, :is_uninstalling, :last_activity, :modified, :play_count, :playtime, :sorting_name, :release_date,
+    :is_running, :is_uninstalling, :last_activity, :modified, :notes, :play_count, :playtime, :sorting_name, :release_date,
     :install_size, :recent_activity
     attributes tags: "tags.name"
     attributes categories: "categories.name"
@@ -44,6 +44,7 @@ class Game < ApplicationRecord
     attributes regions: "regions.name"
     attributes completion_status: "completion_status.name"
     attributes source: "source.name"
+    attributes igdb_cache: "igdb_cache.name"
   end
   # rubocop:enable Metrics/BlockLength
 
@@ -58,4 +59,3 @@ class Game < ApplicationRecord
     ["age_ratings", "categories", "completion_status", "developers", "features", "genres", "links", "platforms", "publishers", "regions", "roms", "series", "source", "tags", "user"]
   end
 end
-

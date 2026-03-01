@@ -1,16 +1,8 @@
 = turbo_frame_tag "games" do
-  %p Total games listed: #{@games_count}
+  %p.games-list-total.mt-3.mb-2 Total games listed: #{@games_count}
   .d-flex.align-items-center.justify-content-end.mb-2
     = paginate @games, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
-  %ul.list-group.list-group-flush
-    %li.list-group-item{id: "header"}
-      .row
-        .col-6
-          %strong
-            TITLE
-        .col-3
-          %strong
-            LAST ACTIVITY
+  %ul.list-group.list-group-flush.games-list
     = render games
   .d-flex.align-items-center.justify-content-end.mt-4
     = paginate @games, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"

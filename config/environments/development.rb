@@ -68,6 +68,13 @@ Rails.application.configure do
   # Suppress logger output for asset requests.
   config.assets.quiet = true
 
+  # Reload code on each request to avoid listen/evented filesystem watchers in development.
+  config.reload_classes_only_on_change = false
+
+  # Avoid listen/evented watcher issues with pnpm's .pnpm symlink layout in node_modules.
+  # This uses a simple stat-based checker instead of filesystem event subscriptions.
+  config.file_watcher = ActiveSupport::FileUpdateChecker
+
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
 

@@ -1,0 +1,92 @@
+.games-search-form {
+  width: 100%;
+}
+
+.games-search-form .form-control,
+.games-search-form .form-select,
+.games-search-form .choices__inner,
+.games-search-reset {
+  min-height: 3rem;
+  border-radius: 0.5rem;
+}
+
+.games-search-form .choices {
+  margin-bottom: 0;
+}
+
+.games-search-form .choices__inner {
+  padding: 0.55rem 0.75rem;
+}
+
+.games-search-form .choices__list--multiple .choices__item {
+  margin-bottom: 0;
+}
+
+.games-search-form .form-check-input {
+  float: none;
+  margin-left: 0;
+  margin-top: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.games-search-form .form-check-label {
+  margin-bottom: 0;
+  line-height: 1.1;
+}
+
+.games-search-options {
+  min-height: 3rem;
+}
+
+.games-search-options .form-check {
+  padding-left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+}
+
+.games-search-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1rem;
+}
+
+.games-search-options .ms-auto {
+  display: inline-flex;
+  align-items: center;
+}
+
+.games-search-mobile-actions .btn {
+  min-height: 3rem;
+}
+
+.games-list-total {
+  padding-top: 0.4rem;
+}
+
+header .nav-link.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.4rem;
+  font-weight: 600;
+}
+
+.games-list .list-group-item {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+@include media-breakpoint-down(md) {
+  .games-list .list-group-item {
+    border-left: 0;
+    border-right: 0;
+  }
+}
+
+.game-show-actions {
+  .btn {
+    min-width: 8rem;
+  }
+}

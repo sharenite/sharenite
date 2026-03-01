@@ -11,6 +11,6 @@ if defined?(RailsLiveReload)
     # config.watch %r{app/helpers/.+\.rb}, reload: :always
     # config.watch %r{config/locales/.+\.yml}, reload: :always
 
-    # config.enabled = Rails.env.development?
+    config.enabled = false
   end
 end

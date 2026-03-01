@@ -6,8 +6,6 @@
       = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
       .br
 .row
-  .col-6.me-auto
-    %h1 Games
-  .col-auto.d-flex.align-items-center.justify-content-end.text-end
+  .col-12
     = render "search_form"
 = render 'games', games: @games

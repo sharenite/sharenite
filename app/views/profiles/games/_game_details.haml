@@ -43,23 +43,23 @@
     = game.name
     - if game.favorite
       %i.bi.bi-star-fill.yellow.text-warning
-  .row.justify-content-around
+  .row.g-1.justify-content-around.mb-3
     - unless game.platforms.empty?
-      .col-auto.text-center
+      .col-12.col-md-auto.text-center
         %p
           %small.text-muted{alt: "test"}
             = "#{game.platforms.map(&:name)&.join(' | ')}"
     - unless game.completion_status.nil?
-      .col-auto.text-center
+      .col-12.col-md-auto.text-center
         %p
           %small.text-muted{alt: "test"}= "#{game.completion_status&.name}"
     - unless game.categories.empty?
-      .col-auto.text-center
+      .col-12.col-md-auto.text-center
         %p
           %small.text-muted{alt: "test"}
             = "#{game.categories.map(&:name)&.join(' | ')}"
     - unless game.tags.empty?
-      .col-auto.text-center
+      .col-12.col-md-auto.text-center
         %p
           %small.text-muted{alt: "test"}= "#{game.tags.map(&:name)&.join(" | ")}"
   .card.mb-3
