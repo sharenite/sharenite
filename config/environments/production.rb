@@ -54,6 +54,11 @@ Rails.application.configure do
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
+  # Kamal health checks hit /up over plain HTTP from inside the Docker network.
+  # Keep SSL enforced for users, but skip redirect for the health check endpoint.
+  config.assume_ssl = true
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  config.silence_healthcheck_path = "/up"
 
   # Include generic and useful information about system operation, but avoid logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII).
