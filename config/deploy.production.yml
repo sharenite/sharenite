@@ -7,14 +7,14 @@ ssh:
 servers:
   web:
     hosts:
-      - ns3031997.ip-5-135-141.eu
+      - 5.135.141.150
   worker:
     cmd: bundle exec karafka server
     hosts:
-      - ns3031997.ip-5-135-141.eu
+      - 5.135.141.150
 
 proxy:
-  ssl: false
+  ssl: true
   host: new.sharenite.link
   app_port: 3000
 
