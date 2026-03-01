@@ -73,15 +73,49 @@ header .nav-link.active {
   font-weight: 600;
 }
 
-.games-list .list-group-item {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+.games-table-wrap {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  background: var(--bs-body-bg);
+}
+
+.games-table {
+  min-width: 1200px;
+  margin-bottom: 0;
+}
+
+.games-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bs-light-bg-subtle);
+  white-space: nowrap;
+}
+
+.games-table td,
+.games-table th {
+  padding: 0.7rem 0.75rem;
+  vertical-align: middle;
+}
+
+.games-sort-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.games-sort-link.active {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.games-mobile-card {
+  border-color: var(--bs-border-color);
 }
 
 @include media-breakpoint-down(md) {
-  .games-list .list-group-item {
-    border-left: 0;
-    border-right: 0;
+  .games-table {
+    min-width: 960px;
   }
 }
 

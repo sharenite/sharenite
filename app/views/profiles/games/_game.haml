@@ -1,19 +1,76 @@
-%li.list-group-item{id: "#{dom_id game}"}
-  .row.g-2.align-items-md-center
-    .col-12.col-md-6
+- tags_label = game.tags.map(&:name).join(", ")
+- platforms_label = game.platforms.map(&:name).join(", ")
+- has_notes = game.notes.to_s.strip.present?
+- has_review = game.user_score.present?
+- playtime_seconds = game.playtime.to_i
+- playtime_label = playtime_seconds.positive? ? distance_of_time_in_words(0, playtime_seconds) : "0 min"
+
+- if view_mode == :desktop
+  %tr{id: dom_id(game)}
+    %td
       .d-flex.align-items-center.gap-2
         - if game.favorite
-          %i.bi.bi-star-fill.yellow.text-warning
-        %strong
-          = game.name
-    .col-12.col-md-3
-      .small.text-muted.d-md-none Last activity
+          %i.bi.bi-star-fill.text-warning
+        %strong= game.name
+        - if game.is_installed
+          %span.badge.rounded-pill.text-bg-success.ms-1 Installed
+    %td= game.source&.name || "No source"
+    %td= game.completion_status&.name || "No status"
+    %td
+      %span.text-muted= tags_label.presence || "No tags"
+    %td
+      %span.text-muted= platforms_label.presence || "No platform"
+    %td
       - if game.last_activity
-        %abbr{title: "#{game.last_activity}"}
-          = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
+        %abbr{title: game.last_activity.to_s} #{time_ago_in_words(game.last_activity)} ago
       - else
-        Never.
-    .col-12.col-md-3
-      .d-flex.gap-3.gap-md-2.justify-content-between.justify-content-md-end
-        = link_to "Edit", edit_profile_game_path(@profile, game), class: "btn btn-link p-0", data: { 'turbo-frame': "_top" }
-        = link_to "Show", profile_game_path(@profile, game), class: "btn btn-link p-0", data: { 'turbo-frame': "_top" }
+        Never
+    %td= playtime_label
+    %td= game.play_count.to_i
+    %td
+      - if has_notes
+        %span.badge.text-bg-light.me-1 Notes
+      - if has_review
+        %span.badge.text-bg-light Review
+      - if !has_notes && !has_review
+        %span.text-muted None
+    %td.text-end
+      .d-inline-flex.gap-3
+        = link_to "Edit", edit_profile_game_path(@profile, game), class: "btn btn-link p-0", data: { turbo_frame: "_top" }
+        = link_to "Show", profile_game_path(@profile, game), class: "btn btn-link p-0", data: { turbo_frame: "_top" }
+- else
+  .card.games-mobile-card.mb-2{id: dom_id(game)}
+    .card-body.p-3
+      .d-flex.justify-content-between.align-items-start.gap-2
+        .d-flex.align-items-center.gap-2
+          - if game.favorite
+            %i.bi.bi-star-fill.text-warning
+          %strong= game.name
+        - if game.is_installed
+          %span.badge.rounded-pill.text-bg-success Installed
+      .row.g-2.mt-1.small
+        .col-6
+          .text-muted Source
+          %div= game.source&.name || "No source"
+        .col-6
+          .text-muted Status
+          %div= game.completion_status&.name || "No status"
+        .col-6
+          .text-muted Last activity
+          %div
+            - if game.last_activity
+              = "#{time_ago_in_words(game.last_activity)} ago"
+            - else
+              Never
+        .col-6
+          .text-muted Playtime
+          %div= playtime_label
+        .col-12
+          .text-muted Tags
+          %div= tags_label.presence || "No tags"
+        .col-12
+          .text-muted Platforms
+          %div= platforms_label.presence || "No platform"
+      .d-flex.gap-3.mt-2
+        = link_to "Edit", edit_profile_game_path(@profile, game), class: "btn btn-link p-0", data: { turbo_frame: "_top" }
+        = link_to "Show", profile_game_path(@profile, game), class: "btn btn-link p-0", data: { turbo_frame: "_top" }

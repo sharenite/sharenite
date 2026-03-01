@@ -21,7 +21,8 @@
         = Rails.env.upcase
         SERVER
     = render 'layouts/navbar'
-    %main.container.pt-4
+    - main_class = (controller_path == "profiles/games" && action_name == "index") ? "container-fluid px-3 px-xl-4 pt-4" : "container pt-4"
+    %main{class: main_class}
       - flash.each do |type, msg|
         .alert{class: flash_class(type)}
           = msg

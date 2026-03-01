@@ -35,12 +35,9 @@
           = form.label :last_activity_to, "Last played to", class: "form-label mb-1 small text-muted"
           = form.date_field :last_activity_to, value: params[:last_activity_to], class: "form-control", data: { action: "change->search-form#search" }
         .col-12.col-lg-4
-          = form.label :sort, "Sort", class: "form-label mb-1 small text-muted"
-          = form.select :sort, options_for_select([["Last activity", ""], ["Name A-Z", "name_asc"], ["Name Z-A", "name_desc"], ["Playtime", "playtime_desc"], ["Play count", "play_count_desc"]], params[:sort]), {}, class: "form-select", data: { action: "change->search-form#search" }
-        .col-12.col-lg-3
           = form.label :activity_state, "Activity", class: "form-label mb-1 small text-muted"
           = form.select :activity_state, options_for_select([["All", ""], ["Played", "played"], ["Unplayed", "unplayed"]], params[:activity_state]), {}, class: "form-select", data: { action: "change->search-form#search" }
-        .col-12.col-lg-5.d-flex.align-items-end
+        .col-12.col-lg-8.d-flex.align-items-end
           .games-search-options.d-flex.flex-wrap.align-items-center.gap-3.w-100
             .form-check.m-0.d-flex.align-items-center.gap-2
               = form.check_box :favorite, { class: "form-check-input", checked: params[:favorite] == "1", data: { action: "change->search-form#search" } }, "1", "0"

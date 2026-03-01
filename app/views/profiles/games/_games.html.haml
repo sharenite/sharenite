@@ -1,8 +1,28 @@
 = turbo_frame_tag "games" do
   %p.games-list-total.mt-3.mb-2 Total games listed: #{@games_count}
+  - current_sort = params[:sort].presence || "last_activity_desc"
+
   .d-flex.align-items-center.justify-content-end.mb-2
     = paginate @games, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
-  %ul.list-group.list-group-flush.games-list
-    = render games
+  .games-list-desktop.d-none.d-lg-block
+    .table-responsive.games-table-wrap
+      %table.table.table-hover.align-middle.games-table.mb-0
+        %thead
+          %tr
+            %th= games_sort_link(@profile, "Title", current_sort, { asc: "name_asc", desc: "name_desc" })
+            %th= games_sort_link(@profile, "Source", current_sort, { asc: "source_asc", desc: "source_desc" })
+            %th= games_sort_link(@profile, "Status", current_sort, { asc: "status_asc", desc: "status_desc" })
+            %th Tags
+            %th Platforms
+            %th= games_sort_link(@profile, "Last Activity", current_sort, { asc: "last_activity_asc", desc: "last_activity_desc" })
+            %th= games_sort_link(@profile, "Playtime", current_sort, { asc: "playtime_asc", desc: "playtime_desc" })
+            %th= games_sort_link(@profile, "Plays", current_sort, { asc: "play_count_asc", desc: "play_count_desc" })
+            %th Notes/Review
+            %th.text-end Actions
+        %tbody
+          = render partial: "game", collection: games, as: :game, locals: { view_mode: :desktop }
+
+  .games-list-mobile.d-lg-none
+    = render partial: "game", collection: games, as: :game, locals: { view_mode: :mobile }
   .d-flex.align-items-center.justify-content-end.mt-4
     = paginate @games, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
