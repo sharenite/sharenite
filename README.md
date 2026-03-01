@@ -96,9 +96,9 @@ bin/kamal-staging app exec -i --reuse "bin/rails c"
 
 ## Kamal production deploy
 
-Production config is in `config/deploy.yml` and currently targets:
-- Host: `new.sharenite.link`
-- Server: `ns3031997.ip-5-135-141.eu`
+Production config is in `config/deploy.production.yml` and currently targets:
+- Host: `www.sharenite.link` (canonical)
+- Server: `5.135.141.150`
 
 Prepare env file:
 
@@ -110,7 +110,7 @@ Set production values in `.envrc.production`, then run:
 
 ```bash
 echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-# then SSH to ns3031997.ip-5-135-141.eu and run the same docker login command there
+# then SSH to 5.135.141.150 and run the same docker login command there
 bin/kamal-production setup
 bin/kamal-production deploy
 ```
@@ -132,6 +132,27 @@ This repo includes a host-level backup script for Kamal production DB accessory:
 scripts/db_backup_production.sh
 ```
 
+Kamal does not copy repository files to `/home/ubuntu/...` on the server.
+Use the helper below to install script + cron entry on the production host:
+
+```bash
+bin/install-prod-backup-cron
+```
+
+Manual install (if needed):
+
+```bash
+scp scripts/db_backup_production.sh ubuntu@sharenite.link:/home/ubuntu/db_backup_production.sh
+ssh ubuntu@sharenite.link 'chmod +x /home/ubuntu/db_backup_production.sh'
+```
+
+Optional overrides:
+- `REMOTE_USER` (defaults to `ssh.user` from `config/deploy.production.yml`)
+- `CRON_SCHEDULE` (defaults to `30 4 * * *`)
+- `REMOTE_SCRIPT_PATH` (defaults to `/home/<REMOTE_USER>/db_backup_production.sh`)
+- `REMOTE_LOG_PATH` (defaults to `/home/<REMOTE_USER>/backups/backup.log`)
+- first argument: explicit host override
+
 Defaults:
 - backup dir: `~/backups`
 - file pattern: `prod_dump_YYYY-MM-DD_HH_MM_SS.sql.gz`
@@ -140,7 +161,7 @@ Defaults:
 Example cron (daily 04:30 server time):
 
 ```cron
-30 4 * * * /home/ubuntu/sharenite/scripts/db_backup_production.sh >> /home/ubuntu/backups/backup.log 2>&1
+30 4 * * * /home/ubuntu/db_backup_production.sh >> /home/ubuntu/backups/backup.log 2>&1
 ```
 
 Optional env overrides in cron:
