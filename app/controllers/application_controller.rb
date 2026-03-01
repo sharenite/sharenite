@@ -4,6 +4,7 @@
 class ApplicationController < ActionController::Base
   http_basic_authenticate_with name: Rails.application.credentials.http_basic.user, password: Rails.application.credentials.http_basic.password, if: -> { Rails.env.staging? }
 
+  before_action :redirect_www_to_canonical_host
   before_action :authenticate_user!
   helper_method :captcha_required?
 
@@ -21,5 +22,17 @@ class ApplicationController < ActionController::Base
 
   def invalid_url!
     raise ActiveRecord::RecordNotFound, "Not Found"
+  end
+
+  def redirect_www_to_canonical_host
+    return unless Rails.env.production?
+    return if request.path == "/up"
+
+    canonical_host = ENV.fetch("HOST").sub(%r{\Ahttps?://}, "").split("/").first
+    return unless request.host == "www.#{canonical_host}"
+
+    redirect_to "#{request.protocol}#{canonical_host}#{request.fullpath}", status: :permanent_redirect, allow_other_host: true
+  rescue KeyError
+    nil
   end
 end
