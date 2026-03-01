@@ -1,22 +1,118 @@
-.game-details__cover {
-  text-align: center;
+.game-details {
+  max-width: 1280px;
+  margin-inline: auto;
 }
 
-@include media-breakpoint-up(md) {
-  .game-details__cover {
-    text-align: start;
-  }
+.game-details__title {
+  font-size: clamp(1.65rem, 3.2vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.game-details__play {
+  color: inherit;
+  text-decoration: none;
+  margin-right: 0.35rem;
+}
+
+.game-details__cover-wrap {
+  height: 100%;
+  min-height: 240px;
+  border-radius: 0.5rem 0.5rem 0 0;
+  overflow: hidden;
+}
+
+.game-details__cover-img {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+.game-details__hero .badge {
+  font-weight: 500;
+}
+
+.game-details__meta-badge {
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.45rem 0.72rem;
+}
+
+.game-details__stat {
+  width: 100%;
+  height: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  background: var(--bs-tertiary-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.game-details__stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color);
+}
+
+.game-details__stat-value {
+  margin-top: 0.15rem;
+  font-weight: 600;
+  line-height: 1.25;
+  min-height: 2.5em;
+}
+
+.game-details__stats-row > [class*="col-"] {
+  display: flex;
 }
 
 .game-details__description {
-  img {
-    max-width: 100%;
-    height: auto;
-  }
+  color: var(--bs-body-color);
+  line-height: 1.5;
 }
 
-@include media-breakpoint-down(md) {
-  .game-details h1 {
-    font-size: 1.6rem;
+.game-details__description img {
+  max-width: 100%;
+  height: auto;
+}
+
+.game-details__list {
+  display: grid;
+  grid-template-columns: minmax(110px, 180px) 1fr;
+  gap: 0.55rem 0.9rem;
+  margin-bottom: 0;
+}
+
+.game-details__list dt {
+  margin-bottom: 0;
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+}
+
+.game-details__list dd {
+  margin-bottom: 0;
+  word-break: break-word;
+}
+
+.game-details__accordion .accordion-button {
+  font-weight: 600;
+}
+
+@include media-breakpoint-down(lg) {
+  .game-details__cover-wrap {
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+
+  .game-details__list {
+    grid-template-columns: 1fr;
+    gap: 0.25rem 0;
+  }
+
+  .game-details__list dt {
+    margin-top: 0.35rem;
   }
 }

@@ -1,260 +1,162 @@
--# name
--# favorite
--# source
--# last_activity
--# playtime
--# play_count
--# cover_image
--# description
--# background_image ?
--# completion_status
--# categories
--# tags
--# platforms
--# -------------------
--# added
--# modified
--# installation_status ?
--# release_date ?
--# community_score
--# critic_score
--# user_score
--# version
--# notes
--# is_installed
--# is_installing
--# is_launching
--# is_running
--# is_uninstalling
--# publishers
--# developers
--# age_ratings
--# genres
--# features
--# regions
--# links
--# series
+- playtime_seconds = game.playtime.to_i
+- playtime_label = playtime_seconds.positive? ? distance_of_time_in_words(0, playtime_seconds) : "N/A"
+- last_activity_label = game.last_activity ? "#{time_ago_in_words(game.last_activity)} ago" : "Never"
+- added_label = game.added ? "#{time_ago_in_words(game.added)} ago" : "Never"
+- modified_label = game.modified ? "#{time_ago_in_words(game.modified)} ago" : "Never"
+- updated_label = "#{time_ago_in_words(game.updated_at)} ago"
+- platforms_label = game.platforms.map(&:name).join(", ")
+- tags_label = game.tags.map(&:name).join(", ")
+- categories_label = game.categories.map(&:name).join(", ")
+- igdb_id = game.igdb_cache&.igdb_id
+- igdb_url = igdb_id.present? ? "https://www.igdb.com/games/#{igdb_id}" : nil
+
 .game-details
-  %h1.text-center.mb-4
-    - if game.playnite_id && game.is_installed && @profile == current_user&.profile
-      %span
-        = link_to "playnite://playnite/start/" + game.playnite_id, {class: 'link-dark text-decoration-none', title: 'Play'} do
-          %i.bi.bi-play
-    = game.name
-    - if game.favorite
-      %i.bi.bi-star-fill.yellow.text-warning
-  .row.g-1.justify-content-around.mb-3
-    - unless game.platforms.empty?
-      .col-12.col-md-auto.text-center
-        %p
-          %small.text-muted{alt: "test"}
-            = "#{game.platforms.map(&:name)&.join(' | ')}"
-    - unless game.completion_status.nil?
-      .col-12.col-md-auto.text-center
-        %p
-          %small.text-muted{alt: "test"}= "#{game.completion_status&.name}"
-    - unless game.categories.empty?
-      .col-12.col-md-auto.text-center
-        %p
-          %small.text-muted{alt: "test"}
-            = "#{game.categories.map(&:name)&.join(' | ')}"
-    - unless game.tags.empty?
-      .col-12.col-md-auto.text-center
-        %p
-          %small.text-muted{alt: "test"}= "#{game.tags.map(&:name)&.join(" | ")}"
-  .card.mb-3
+  .game-details__header.mb-3
+    .d-flex.flex-wrap.align-items-center.gap-2.gap-md-3
+      %h1.game-details__title.mb-0
+        - if game.playnite_id && game.is_installed && @profile == current_user&.profile
+          = link_to "playnite://playnite/start/#{game.playnite_id}", class: "game-details__play", title: "Play" do
+            %i.bi.bi-play-fill
+        = game.name
+      - if game.favorite
+        %span.badge.rounded-pill.text-bg-warning.text-dark Favorite
+      - if game.is_installed
+        %span.badge.rounded-pill.text-bg-success Installed
+
+  .card.game-details__hero.mb-3
     .row.g-0
-      .col-md-4.game-details__cover
-        %img.img-fluid.rounded-start{alt: "cover_image", src: "https://picsum.photos/300/400"}/
-      .col-md-8
+      .col-12.col-lg-4
+        .game-details__cover-wrap
+          %img.game-details__cover-img{alt: "#{game.name} cover", src: "https://picsum.photos/seed/#{game.id}/720/480"}/
+      .col-12.col-lg-8
+        .card-body.p-3.p-lg-4
+          .d-flex.flex-wrap.gap-2.mb-3
+            %span.badge.text-bg-light.game-details__meta-badge= game.source&.name || "No source"
+            %span.badge.text-bg-light.game-details__meta-badge= game.completion_status&.name || "No status"
+            %span.badge.text-bg-light.game-details__meta-badge Platforms: #{platforms_label.presence || "N/A"}
+            %span.badge.text-bg-light.game-details__meta-badge Tags: #{tags_label.presence || "N/A"}
+
+          .row.g-2.g-md-3.mb-3.game-details__stats-row
+            .col-6.col-md-3
+              .game-details__stat
+                .game-details__stat-label Last activity
+                .game-details__stat-value= last_activity_label
+            .col-6.col-md-3
+              .game-details__stat
+                .game-details__stat-label Playtime
+                .game-details__stat-value= playtime_label
+            .col-6.col-md-3
+              .game-details__stat
+                .game-details__stat-label Play count
+                .game-details__stat-value= game.play_count.to_i
+            .col-6.col-md-3
+              .game-details__stat
+                .game-details__stat-label Last updated
+                .game-details__stat-value= updated_label
+
+          - if game.description.present?
+            .game-details__description
+              = sanitize(game.description)
+
+  .row.g-3
+    .col-12.col-xl-6
+      .card.h-100
         .card-body
-          %h5.card-title.mb-0= "#{game.source&.name}"
-          .row.mb-4
-            .col-auto
-              %p.card-text
-                %small.text-muted
-                  Last activity:
-                  - if game.last_activity
-                    %abbr{title: "#{game.last_activity}"}
-                      = "#{time_ago_in_words(game.last_activity, { include_seconds: true })} ago"
-                  - else
-                    Never.
-            .col-auto
-              %p.card-text
-                %small.text-muted
-                  - if game.playtime
-                    = "Playtime: #{"%02d:%02d:%02d" % [game.playtime / 3600, game.playtime / 60 % 60, game.playtime % 60]}"
-            .col-auto
-              %p.card-text
-                %small.text-muted
-                  = "Play count: #{game.play_count}"
-          .row.mb-4
-            .col-auto
-              - if game.description
-                .game-details__description.mb-4
-                  = sanitize(game.description)
-              %p.card-text
-                %small.text-muted
-                  Last updated
-                  %abbr{title: "#{game.updated_at}"}
-                    = "#{time_ago_in_words(game.updated_at, { include_seconds: true })} ago"
-  .row.mb-2
-    .col-12.col-md-6.col-lg-3.align-items-stretch.d-flex
-      .card.mb-2.flex-fill
+          %h5.card-title.mb-3 Library
+          %dl.game-details__list
+            %dt Added
+            %dd= added_label
+            %dt Modified
+            %dd= modified_label
+            %dt Release date
+            %dd= game.release_date || "N/A"
+            %dt Categories
+            %dd= categories_label.presence || "N/A"
+            %dt Version
+            %dd= game.version.presence || "N/A"
+
+    .col-12.col-xl-6
+      .card.h-100
         .card-body
-          %p
-            %strong Added:
-            - if game.added
-              %abbr{title: "#{game.added}"}
-                = "#{time_ago_in_words(game.added, { include_seconds: true })} ago"
-            - else
-              Never.
-          %p.mb-0
-            %strong Modified:
-            - if game.modified
-              %abbr{title: "#{game.modified}"}
-                = "#{time_ago_in_words(game.modified, { include_seconds: true })} ago"
-            - else
-              Never.
-    .col-12.col-md-6.col-lg-3.align-items-stretch.d-flex
-      .card.mb-2.flex-fill
+          %h5.card-title.mb-3 Scores & Notes
+          %dl.game-details__list
+            %dt User score
+            %dd= game.user_score || "N/A"
+            %dt Community score
+            %dd= game.community_score || "N/A"
+            %dt Critic score
+            %dd= game.critic_score || "N/A"
+            %dt Notes
+            %dd= game.notes.to_s.strip.presence || "No notes"
+
+  .row.g-3.mt-1
+    .col-12.col-xl-6
+      .card.h-100
         .card-body
-          %p
-            %strong User Score:
-            = game.user_score
-          %p
-            %strong Community Score:
-            = game.community_score
-          %p.mb-0
-            %strong Critic Score:
-            = game.critic_score
-    .col-12.col-md-6.col-lg-3.align-items-stretch.d-flex
-      .card.mb-2.flex-fill
+          %h5.card-title.mb-3 Runtime
+          %dl.game-details__list
+            %dt Custom game
+            %dd= game.is_custom_game ? "Yes" : "No"
+            %dt Installed
+            %dd= game.is_installed ? "Yes" : "No"
+            %dt Installing
+            %dd= game.is_installing ? "Yes" : "No"
+            %dt Launching
+            %dd= game.is_launching ? "Yes" : "No"
+            %dt Running
+            %dd= game.is_running ? "Yes" : "No"
+            %dt Uninstalling
+            %dd= game.is_uninstalling ? "Yes" : "No"
+
+    .col-12.col-xl-6
+      .card.h-100
         .card-body
-          %p
-            %strong Version:
-            = game.version
-          %p.mb-0
-            %strong Notes:
-            = game.notes
-          -# %p
-          -# %strong Release Date:
-          -# = game.release_date
-    .col-12.col-md-6.col-lg-3.align-items-stretch.d-flex
-      .card.mb-2.flex-fill
-        .card-body
-          %p
-            %strong Is Custom Game:
-            = game.is_custom_game
-          %p
-            %strong Is Installed:
-            = game.is_installed
-          %p
-            %strong Is Installing:
-            = game.is_installing
-          %p
-            %strong Is Launching:
-            = game.is_launching
-          %p
-            %strong Is Running:
-            = game.is_running
-          %p.mb-0
-            %strong Is Uninstalling:
-            = game.is_uninstalling
-  .row
-    .col-12.align-items-stretch.d-flex
-      .card.mb-2.flex-fill
-        .card-body
-          %p
-            %strong IDGB ID:
-            = game.igdb_cache&.igdb_id
-          %p.mb-0
-            %strong IGDB name:
-            = game.igdb_cache&.name
-  .row
-    .col-12.align-items-stretch.d-flex
-      .card.mb-2.flex-fill
-        .card-body
-          %p
-            %strong Game Id:
-            = game.game_id
-          %p
-            %strong Game Started Script:
-            = game.game_started_script
-          %p
-            %strong Hidden:
-            = game.hidden
-          %p
-            %strong Include Library Plugin Action:
-            = game.include_library_plugin_action
-          %p
-            %strong Install Directory:
-            = game.install_directory
-          %p
-            %strong Manual:
-            = game.manual
-          %p
-            %strong Playnite ID:
-            = game.playnite_id
-          %p
-            %strong Plugin Id:
-            = game.plugin_id
-          %p
-            %strong Post Script:
-            = game.post_script
-          %p
-            %strong Pre Script:
-            = game.pre_script
-          %p
-            %strong Sorting Name:
-            = game.sorting_name
-          %p
-            %strong Use Global Game Started Script:
-            = game.use_global_game_started_script
-          %p
-            %strong Use Global Post Script:
-            = game.use_global_post_script
-          %p.mb-0
-            %strong Use Global Pre Script:
-            = game.use_global_pre_script
-  -# added_segment
-  -# age_rating_ids
-  -# category_ids
-  -# community_score_group
-  -# community_score_rating
-  -# completion_status_id
-  -# critic_score_group
-  -# critic_score_rating
-  -# developer_ids
-  -# feature_ids
-  -# game_actions
-  -# game_id
-  -# game_started_script
-  -# genre_ids
-  -# hidden
-  -# icon
-  -# playnite_id
-  -# include_library_plugin_action
-  -# install_directory
-  -# is_custom_game
-  -# last_activity_segment
-  -# manual
-  -# modified_segment
-  -# platform_ids
-  -# playtime_category
-  -# post_script
-  -# pre_script
-  -# publisher_ids
-  -# region_ids
-  -# release_year
-  -# roms
-  -# series_ids
-  -# sorting_name
-  -# source_id
-  -# tag_ids
-  -# use_global_game_started_script
-  -# use_global_post_script
-  -# use_global_pre_script
-  -# user_score_group
-  -# user_score_rating
-  -# plugin_id
+          %h5.card-title.mb-3 IGDB
+          %dl.game-details__list
+            %dt IGDB ID
+            %dd= game.igdb_cache&.igdb_id || "N/A"
+            %dt IGDB name
+            %dd= game.igdb_cache&.name || "N/A"
+            %dt IGDB URL
+            %dd
+              - if igdb_url
+                = link_to "Open on IGDB", igdb_url, target: "_blank", rel: "noopener noreferrer"
+              - else
+                N/A
+
+  .accordion.game-details__accordion.mt-3#gameTechnicalDetails
+    .accordion-item
+      %h2.accordion-header#gameTechnicalHeading
+        %button.accordion-button.collapsed{type: "button", data: { bs_toggle: "collapse", bs_target: "#gameTechnicalCollapse" }, aria: { expanded: "false", controls: "gameTechnicalCollapse" }}
+          Technical Details
+      .accordion-collapse.collapse#gameTechnicalCollapse{aria: { labelledby: "gameTechnicalHeading" }, data: { bs_parent: "#gameTechnicalDetails" }}
+        .accordion-body
+          %dl.game-details__list
+            %dt Game ID
+            %dd= game.game_id || "N/A"
+            %dt Playnite ID
+            %dd= game.playnite_id || "N/A"
+            %dt Plugin ID
+            %dd= game.plugin_id || "N/A"
+            %dt Sorting name
+            %dd= game.sorting_name || "N/A"
+            %dt Hidden
+            %dd= game.hidden ? "Yes" : "No"
+            %dt Include library plugin action
+            %dd= game.include_library_plugin_action ? "Yes" : "No"
+            %dt Install directory
+            %dd= game.install_directory || "N/A"
+            %dt Manual
+            %dd= game.manual || "N/A"
+            %dt Game started script
+            %dd= game.game_started_script || "N/A"
+            %dt Pre script
+            %dd= game.pre_script || "N/A"
+            %dt Post script
+            %dd= game.post_script || "N/A"
+            %dt Use global game started script
+            %dd= game.use_global_game_started_script ? "Yes" : "No"
+            %dt Use global pre script
+            %dd= game.use_global_pre_script ? "Yes" : "No"
+            %dt Use global post script
+            %dd= game.use_global_post_script ? "Yes" : "No"
