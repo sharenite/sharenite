@@ -166,6 +166,48 @@ if Rails.env.development?
     game.platforms = Array(config[:platforms]).map { |platform_name| platforms.fetch(platform_name) }
   end
 
+  pagination_game_count = 140
+  pagination_game_count.times do |index|
+    title = format("Pagination Seed %03d", index + 1)
+    game = Game.find_or_initialize_by(user: demo_user, name: title)
+
+    game.assign_attributes(
+      description: "Pagination stress-test game ##{index + 1}.",
+      notes: (index % 6).zero? ? nil : "",
+      source: (index % 5).zero? ? nil : sources[source_names[index % source_names.size]],
+      completion_status: (index % 4).zero? ? nil : statuses[status_names[index % status_names.size]],
+      favorite: (index % 9).zero?,
+      is_installed: (index % 3) != 1,
+      is_custom_game: false,
+      hidden: false,
+      added: (index + 40).days.ago,
+      modified: (index + 10).days.ago,
+      last_activity: (index % 2).zero? ? (index + 1).hours.ago : nil,
+      play_count: index % 25,
+      playtime: (index + 1) * 120,
+      release_date: Date.new(2020, 1, 1) + index.days,
+      sorting_name: title,
+      version: "3.#{index}",
+      user_score: (index % 7).zero? ? nil : ((index % 5) + 1),
+      community_score: ((index % 5) + 1),
+      critic_score: ((index % 5) + 1),
+      game_id: "seed-pagination-#{index + 1}",
+      plugin_id: game.plugin_id || SecureRandom.uuid
+    )
+    game.save!
+
+    game.tags = if (index % 5).zero?
+                  []
+                else
+                  [tags[tag_names[index % tag_names.size]]]
+                end
+    game.platforms = if (index % 6).zero?
+                       []
+                     else
+                       [platforms[platform_names[index % platform_names.size]]]
+                     end
+  end
+
   puts "Seeded demo data: #{demo_user.email} / password: Test123$"
   puts "Games seeded: #{demo_user.games.count}"
   puts "Games with no status: #{demo_user.games.where(completion_status_id: nil).count}"
