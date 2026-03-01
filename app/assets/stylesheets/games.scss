@@ -113,6 +113,36 @@ header .nav-link.active {
   border-color: var(--bs-border-color);
 }
 
+.games-action-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.85rem;
+  padding: 0.15rem 0.65rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.games-action-pill:hover {
+  background: var(--bs-secondary-bg);
+  text-decoration: none;
+}
+
+.games-action-pill-primary {
+  border-color: rgba(var(--bs-primary-rgb), 0.4);
+  color: var(--bs-primary);
+}
+
+.games-action-pill-primary:hover {
+  background: rgba(var(--bs-primary-rgb), 0.08);
+}
+
 @include media-breakpoint-down(md) {
   .games-table {
     min-width: 960px;
