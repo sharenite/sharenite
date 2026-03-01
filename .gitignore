@@ -57,3 +57,4 @@ docker/.env
 .env.local
 .envrc.local
 .envrc.staging
+.envrc.production
