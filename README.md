@@ -123,3 +123,34 @@ bin/kamal-production app logs -f
 bin/kamal-production accessory details kafka
 bin/kamal-production app exec --roles=worker -- bundle exec karafka-web migrate
 ```
+
+## Production DB backup cron
+
+This repo includes a host-level backup script for Kamal production DB accessory:
+
+```bash
+scripts/db_backup_production.sh
+```
+
+Defaults:
+- backup dir: `~/backups`
+- file pattern: `prod_dump_YYYY-MM-DD_HH_MM_SS.sql.gz`
+- retention: 7 days
+
+Example cron (daily 04:30 server time):
+
+```cron
+30 4 * * * /home/ubuntu/sharenite/scripts/db_backup_production.sh >> /home/ubuntu/backups/backup.log 2>&1
+```
+
+Optional env overrides in cron:
+- `BACKUP_DIR` (default `~/backups`)
+- `RETENTION_DAYS` (default `7`)
+- `DB_NAME` (default `sharenite_production`)
+- `DB_USER` (default `sharenite`)
+
+Restore example (plain SQL dump):
+
+```bash
+gzip -dc /path/to/prod_dump_*.sql.gz | docker exec -i sharenite-db psql -U sharenite -d sharenite_production
+```
