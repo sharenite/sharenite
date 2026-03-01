@@ -25,14 +25,36 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_www_to_canonical_host
-    return unless Rails.env.production?
-    return if request.path == "/up"
+    return unless production_canonical_redirect?
 
-    canonical_host = ENV.fetch("HOST").sub(%r{\Ahttps?://}, "").split("/").first
-    return unless request.host == "www.#{canonical_host}"
+    canonical_host = canonical_request_host
+    return if canonical_host.blank?
+    return unless should_redirect_to_canonical_host?(canonical_host)
 
     redirect_to "#{request.protocol}#{canonical_host}#{request.fullpath}", status: :permanent_redirect, allow_other_host: true
   rescue KeyError
     nil
+  end
+
+  def production_canonical_redirect?
+    Rails.env.production? && request.path != "/up"
+  end
+
+  def canonical_request_host
+    ENV.fetch("HOST").sub(%r{\Ahttps?://}, "").split("/").first
+  end
+
+  def should_redirect_to_canonical_host?(canonical_host)
+    return false if request.host == canonical_host
+
+    redirect_source_for(canonical_host) == request.host
+  end
+
+  def redirect_source_for(canonical_host)
+    if canonical_host.start_with?("www.")
+      canonical_host.delete_prefix("www.")
+    else
+      "www.#{canonical_host}"
+    end
   end
 end
