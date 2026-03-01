@@ -17,4 +17,4 @@ if [[ -z "$web_container" ]]; then
   exit 1
 fi
 
-docker exec "$web_container" bin/rails runner 'IgdbMatchGames.new((Date.today - 1).to_s).call'
+docker exec "$web_container" bin/rails igdb:match_yesterday

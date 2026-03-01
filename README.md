@@ -178,13 +178,13 @@ gzip -dc /path/to/prod_dump_*.sql.gz | docker exec -i sharenite-db psql -U share
 
 ## Production IGDB matching cron
 
-The legacy task:
+The legacy cron command:
 
 ```cron
 0 5 * * * docker exec ... bin/rails runner 'IgdbMatchGames.new((Date.today - 1).to_s).call'
 ```
 
-is now represented in app code as:
+is represented in app code as:
 
 ```bash
 bin/rails igdb:match_yesterday
