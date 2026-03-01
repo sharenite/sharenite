@@ -142,26 +142,26 @@ bin/install-prod-backup-cron
 Manual install (if needed):
 
 ```bash
-scp scripts/db_backup_production.sh ubuntu@sharenite.link:/home/ubuntu/db_backup_production.sh
-ssh ubuntu@sharenite.link 'chmod +x /home/ubuntu/db_backup_production.sh'
+scp scripts/db_backup_production.sh ubuntu@sharenite.link:/home/ubuntu/sharenite/db_backup_production.sh
+ssh ubuntu@sharenite.link 'chmod +x /home/ubuntu/sharenite/db_backup_production.sh'
 ```
 
 Optional overrides:
 - `REMOTE_USER` (defaults to `ssh.user` from `config/deploy.production.yml`)
 - `CRON_SCHEDULE` (defaults to `30 4 * * *`)
-- `REMOTE_SCRIPT_PATH` (defaults to `/home/<REMOTE_USER>/db_backup_production.sh`)
-- `REMOTE_LOG_PATH` (defaults to `/home/<REMOTE_USER>/backups/backup.log`)
+- `REMOTE_SCRIPT_PATH` (defaults to `/home/<REMOTE_USER>/sharenite/db_backup_production.sh`)
+- `REMOTE_LOG_PATH` (defaults to `/home/<REMOTE_USER>/backups/sharenite/backup.log`)
 - first argument: explicit host override
 
 Defaults:
-- backup dir: `~/backups`
+- backup dir: `~/backups/sharenite`
 - file pattern: `prod_dump_YYYY-MM-DD_HH_MM_SS.sql.gz`
 - retention: 7 days
 
 Example cron (daily 04:30 server time):
 
 ```cron
-30 4 * * * /home/ubuntu/db_backup_production.sh >> /home/ubuntu/backups/backup.log 2>&1
+30 4 * * * /home/ubuntu/sharenite/db_backup_production.sh >> /home/ubuntu/backups/sharenite/backup.log 2>&1
 ```
 
 Optional env overrides in cron:
@@ -204,8 +204,8 @@ bin/install-prod-igdb-cron
 
 Defaults:
 - schedule: `0 5 * * *`
-- script path: `/home/ubuntu/igdb_match_yesterday_production.sh`
-- log path: `/home/ubuntu/backups/igdb_match.log`
+- script path: `/home/ubuntu/sharenite/igdb_match_yesterday_production.sh`
+- log path: `/home/ubuntu/backups/sharenite/igdb_match.log`
 
 Optional overrides:
 - `REMOTE_USER`

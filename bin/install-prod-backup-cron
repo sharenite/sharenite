@@ -45,12 +45,13 @@ if [[ -z "${REMOTE_HOST}" ]]; then
 fi
 
 REMOTE_USER="${REMOTE_USER:-$(ruby -ryaml -e 'cfg=YAML.load_file(ARGV[0]); puts (cfg.dig("ssh","user") || "root").to_s' "${DEPLOY_CONFIG}")}"
-REMOTE_SCRIPT_PATH="${REMOTE_SCRIPT_PATH:-/home/${REMOTE_USER}/db_backup_production.sh}"
-REMOTE_LOG_PATH="${REMOTE_LOG_PATH:-/home/${REMOTE_USER}/backups/backup.log}"
+REMOTE_SCRIPT_PATH="${REMOTE_SCRIPT_PATH:-/home/${REMOTE_USER}/sharenite/db_backup_production.sh}"
+REMOTE_LOG_PATH="${REMOTE_LOG_PATH:-/home/${REMOTE_USER}/backups/sharenite/backup.log}"
 
 echo "Installing backup script on ${REMOTE_USER}@${REMOTE_HOST}..."
+ssh "${REMOTE_USER}@${REMOTE_HOST}" "mkdir -p '/home/${REMOTE_USER}/sharenite' '$(dirname "${REMOTE_LOG_PATH}")'"
 scp "${LOCAL_SCRIPT}" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SCRIPT_PATH}"
-ssh "${REMOTE_USER}@${REMOTE_HOST}" "chmod +x '${REMOTE_SCRIPT_PATH}' && mkdir -p \"\$(dirname '${REMOTE_LOG_PATH}')\""
+ssh "${REMOTE_USER}@${REMOTE_HOST}" "chmod +x '${REMOTE_SCRIPT_PATH}'"
 
 CRON_LINE="${CRON_SCHEDULE} ${REMOTE_SCRIPT_PATH} >> ${REMOTE_LOG_PATH} 2>&1 ${CRON_MARKER}"
 
