@@ -15,9 +15,7 @@ servers:
 
 proxy:
   ssl: true
-  hosts:
-    - sharenite.link
-    - www.sharenite.link
+  host: sharenite.link,www.sharenite.link
   app_port: 3000
 
 registry:
