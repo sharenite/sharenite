@@ -106,7 +106,7 @@ Prepare env file:
 cp .envrc.production.example .envrc.production
 ```
 
-Set production values in `.envrc.production` (including `RAILS_MASTER_KEY`), then run:
+Set production values in `.envrc.production`, then run:
 
 ```bash
 echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
