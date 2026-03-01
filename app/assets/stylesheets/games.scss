@@ -6,7 +6,7 @@
 .games-search-form .form-select,
 .games-search-form .choices__inner,
 .games-search-reset {
-  min-height: 3rem;
+  min-height: 2.65rem;
   border-radius: 0.5rem;
 }
 
@@ -15,7 +15,7 @@
 }
 
 .games-search-form .choices__inner {
-  padding: 0.55rem 0.75rem;
+  padding: 0.35rem 0.65rem;
 }
 
 .games-search-form .choices__list--multiple .choices__item {
@@ -36,7 +36,8 @@
 }
 
 .games-search-options {
-  min-height: 3rem;
+  min-height: 2.65rem;
+  padding-top: 0.15rem;
 }
 
 .games-search-options .form-check {
@@ -60,7 +61,7 @@
 }
 
 .games-search-mobile-actions .btn {
-  min-height: 3rem;
+  min-height: 2.65rem;
 }
 
 .games-list-total {
@@ -77,19 +78,22 @@ header .nav-link.active {
   border: 1px solid var(--bs-border-color);
   border-radius: 0.5rem;
   background: var(--bs-body-bg);
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .games-table {
-  min-width: 1200px;
+  min-width: 1450px;
   margin-bottom: 0;
 }
 
 .games-table thead th {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 6;
   background: var(--bs-light-bg-subtle);
   white-space: nowrap;
+  box-shadow: inset 0 -1px var(--bs-border-color);
 }
 
 .games-table td,
@@ -109,8 +113,190 @@ header .nav-link.active {
   text-underline-offset: 0.15em;
 }
 
+.games-col-header {
+  font-weight: 700;
+}
+
+.games-col-title {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.games-col-title .games-sort-link {
+  color: inherit !important;
+  font-weight: inherit;
+}
+
+.games-col-title--source {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-color: #bfdbfe;
+}
+
+.games-col-title--status {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+.games-col-title--platform {
+  color: #5b21b6;
+  background: #ede9fe;
+  border-color: #ddd6fe;
+}
+
+.games-col-title--tag {
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.games-col-title--category {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fde68a;
+}
+
 .games-mobile-card {
   border-color: var(--bs-border-color);
+}
+
+.games-value-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  background: #f8fafc;
+  font-size: 0.87rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.games-value-pill--source {
+  border-color: #93c5fd;
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.games-value-pill--status {
+  border-color: #86efac;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.games-value-pill--platform {
+  border-color: #c4b5fd;
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.games-value-pill--tag {
+  border-color: #fca5a5;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.games-value-pill--category {
+  border-color: #facc15;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.games-value-pill--muted {
+  background: #e5e7eb;
+  font-weight: 500;
+}
+
+.games-table-compact {
+  min-width: 980px;
+}
+
+.games-meta-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.games-table-compact td .games-value-pill {
+  font-size: 0.82rem;
+}
+
+.games-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.22rem 0.5rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  background: var(--bs-tertiary-bg);
+  font-size: 0.82rem;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+.games-meta-pill--mobile {
+  width: 100%;
+  border-radius: 0.5rem;
+  justify-content: flex-start;
+}
+
+.games-meta-pill--wrap {
+  border-radius: 0.5rem;
+}
+
+.games-meta-pill__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.games-meta-pill__value {
+  color: var(--bs-body-color);
+  min-width: 0;
+}
+
+.games-meta-pill--wrap .games-meta-pill__value {
+  white-space: normal;
+}
+
+.games-meta-pill__label--source {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.games-meta-pill__label--status {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.games-meta-pill__label--platform {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.games-meta-pill__label--tag {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.games-meta-pill__label--category {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .games-action-pill {
@@ -143,9 +329,52 @@ header .nav-link.active {
   background: rgba(var(--bs-primary-rgb), 0.08);
 }
 
+.games-review-disclosure {
+  display: inline-block;
+  width: 100%;
+  max-width: 24rem;
+}
+
+.games-review-disclosure summary {
+  list-style: none;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.games-review-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.games-review-toggle::after {
+  content: " \25be";
+  font-size: 0.72rem;
+}
+
+.games-review-disclosure[open] .games-review-toggle::after {
+  content: " \25b4";
+}
+
+.games-review-popover {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  background: var(--bs-body-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
 @include media-breakpoint-down(md) {
   .games-table {
     min-width: 960px;
+  }
+
+  .games-mobile-card .games-meta-stack {
+    gap: 0.3rem;
+  }
+
+  .games-mobile-card .games-value-pill {
+    font-size: 0.82rem;
   }
 }
 

@@ -25,6 +25,7 @@ if Rails.env.development?
   source_names = ["Steam", "GOG", "Epic", "Xbox", "Switch", "Emulator"]
   status_names = ["Backlog", "Playing", "Completed", "Paused", "Dropped"]
   tag_names = ["RPG", "Action", "Indie", "Multiplayer", "Story Rich", "Co-op", "Roguelike"]
+  category_names = ["Campaign", "Endless", "Party", "Classic", "Retro", "VR", "Family"]
   platform_names = ["PC", "PS5", "Xbox Series", "Switch", "Steam Deck"]
 
   sources = source_names.index_with do |name|
@@ -35,6 +36,9 @@ if Rails.env.development?
   end
   tags = tag_names.index_with do |name|
     Tag.find_or_create_by!(user: demo_user, name:)
+  end
+  categories = category_names.index_with do |name|
+    Category.find_or_create_by!(user: demo_user, name:)
   end
   platforms = platform_names.index_with do |name|
     Platform.find_or_create_by!(user: demo_user, name:)
@@ -131,6 +135,11 @@ if Rails.env.development?
                 else
                   [tags[tag_names[index % tag_names.size]], tags[tag_names[(index + 2) % tag_names.size]]].uniq
                 end
+    game.categories = if (index % 3).zero?
+                        []
+                      else
+                        [categories[category_names[index % category_names.size]]]
+                      end
     game.platforms = (index % 5).zero? ? [] : [platforms[platform_names[index % platform_names.size]]]
   end
 
@@ -163,6 +172,11 @@ if Rails.env.development?
     game.save!
 
     game.tags = Array(config[:tags]).map { |tag_name| tags.fetch(tag_name) }
+    game.categories = if index.even?
+                        []
+                      else
+                        [categories[category_names[index % category_names.size]]]
+                      end
     game.platforms = Array(config[:platforms]).map { |platform_name| platforms.fetch(platform_name) }
   end
 
@@ -201,6 +215,11 @@ if Rails.env.development?
                 else
                   [tags[tag_names[index % tag_names.size]]]
                 end
+    game.categories = if (index % 4).zero?
+                        []
+                      else
+                        [categories[category_names[index % category_names.size]]]
+                      end
     game.platforms = if (index % 6).zero?
                        []
                      else
@@ -208,11 +227,60 @@ if Rails.env.development?
                      end
   end
 
+  showcase_game = Game.find_or_initialize_by(user: demo_user, name: "Showcase - Multi Meta")
+  showcase_game.assign_attributes(
+    description: "Single showcase game with dense metadata for responsive list/details testing.",
+    notes: "Use this game to verify pills wrapping and details blocks on all breakpoints.",
+    source: sources["Steam"],
+    completion_status: statuses["Playing"],
+    favorite: true,
+    is_installed: true,
+    is_custom_game: false,
+    hidden: false,
+    added: 3.days.ago,
+    modified: 6.hours.ago,
+    last_activity: 2.hours.ago,
+    play_count: 42,
+    playtime: 54_000,
+    release_date: Date.new(2022, 11, 18),
+    sorting_name: "Showcase - Multi Meta",
+    version: "9.9",
+    user_score: 5,
+    community_score: 4,
+    critic_score: 4,
+    game_id: "seed-showcase-multi-meta",
+    plugin_id: showcase_game.plugin_id || SecureRandom.uuid
+  )
+  showcase_game.save!
+
+  showcase_igdb = IgdbCache.find_or_create_by!(igdb_id: 90_001) do |record|
+    record.name = "Showcase - Multi Meta (IGDB)"
+  end
+  showcase_game.update!(igdb_cache: showcase_igdb)
+
+  showcase_game.tags = [
+    tags["RPG"],
+    tags["Action"],
+    tags["Story Rich"],
+    tags["Co-op"]
+  ]
+  showcase_game.categories = [
+    categories["Campaign"],
+    categories["Party"],
+    categories["VR"]
+  ]
+  showcase_game.platforms = [
+    platforms["PC"],
+    platforms["PS5"],
+    platforms["Steam Deck"]
+  ]
+
   puts "Seeded demo data: #{demo_user.email} / password: Test123$"
   puts "Games seeded: #{demo_user.games.count}"
   puts "Games with no status: #{demo_user.games.where(completion_status_id: nil).count}"
   puts "Games with no source: #{demo_user.games.where(source_id: nil).count}"
   puts "Games with no tags: #{demo_user.games.left_outer_joins(:tags).where(tags: { id: nil }).distinct.count}"
+  puts "Games with no categories: #{demo_user.games.left_outer_joins(:categories).where(categories: { id: nil }).distinct.count}"
   puts "Games with no platforms: #{demo_user.games.left_outer_joins(:platforms).where(platforms: { id: nil }).distinct.count}"
   puts "Games without notes/review: #{demo_user.games.where("COALESCE(TRIM(notes), '') = '' AND user_score IS NULL").count}"
 end

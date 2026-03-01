@@ -37,7 +37,6 @@
 .game-details__meta-badge {
   font-size: 0.92rem;
   font-weight: 600;
-  padding: 0.45rem 0.72rem;
 }
 
 .game-details__stat {
@@ -100,6 +99,15 @@
 
 .game-details__accordion .accordion-button {
   font-weight: 600;
+}
+
+.game-details__links-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.game-details__links-list li + li {
+  margin-top: 0.2rem;
 }
 
 @include media-breakpoint-down(lg) {

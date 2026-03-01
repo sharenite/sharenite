@@ -5,6 +5,13 @@ module Profiles
   # Profiles games controller
   class GamesController < BaseController # rubocop:disable Metrics/ClassLength
     NONE_FILTER_VALUE = "__none__"
+    SEARCH_OPTION_ASSOCIATIONS = {
+      source_options: :sources,
+      completion_status_options: :completion_statuses,
+      tag_options: :tags,
+      category_options: :categories,
+      platform_options: :platforms
+    }.freeze
     SORT_ORDERS = {
       "name_asc" => { name: :asc },
       "name_desc" => { name: :desc },
@@ -74,6 +81,7 @@ module Profiles
       @games = @games.filter_by_name(search_query) if search_query.present?
       apply_relational_filters
       apply_tags_filter
+      apply_categories_filter
       apply_platforms_filter
       apply_flag_filters
       apply_activity_filters
@@ -122,6 +130,23 @@ module Profiles
         values << tag_ids
       end
       clauses << "NOT EXISTS (SELECT 1 FROM games_tags gt WHERE gt.game_id = games.id)" if include_none
+
+      @games = @games.where(clauses.join(" OR "), *values)
+    end
+
+    def apply_categories_filter
+      category_ids = selected_filter_ids(:category_ids)
+      include_none = filter_includes_none?(:category_ids)
+      return if category_ids.blank? && !include_none
+
+      clauses = []
+      values = []
+
+      if category_ids.present?
+        clauses << "EXISTS (SELECT 1 FROM categories_games cg WHERE cg.game_id = games.id AND cg.category_id IN (?))"
+        values << category_ids
+      end
+      clauses << "NOT EXISTS (SELECT 1 FROM categories_games cg WHERE cg.game_id = games.id)" if include_none
 
       @games = @games.where(clauses.join(" OR "), *values)
     end
@@ -186,10 +211,10 @@ module Profiles
     end
 
     def set_search_options
-      @source_options = @profile.user.sources.order(:name).pluck(:name, :id)
-      @completion_status_options = @profile.user.completion_statuses.order(:name).pluck(:name, :id)
-      @tag_options = @profile.user.tags.order(:name).pluck(:name, :id)
-      @platform_options = @profile.user.platforms.order(:name).pluck(:name, :id)
+      SEARCH_OPTION_ASSOCIATIONS.each do |option_name, association|
+        records = @profile.user.public_send(association).order(:name).pluck(:name, :id)
+        instance_variable_set(:"@#{option_name}", records)
+      end
     end
 
     def selected_filter_ids(key)
@@ -210,7 +235,7 @@ module Profiles
     end
 
     def set_games
-      @games = @profile.user.games.includes(:source, :completion_status, :tags, :platforms)
+      @games = @profile.user.games.includes(:source, :completion_status, :tags, :categories, :platforms)
       filter_games
       sort_games
       @games_count = @games.count
