@@ -14,7 +14,7 @@ servers:
       - ns3031997.ip-5-135-141.eu
 
 proxy:
-  ssl: true
+  ssl: false
   host: new.sharenite.link
   app_port: 3000
 
