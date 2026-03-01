@@ -93,3 +93,33 @@ bin/kamal-staging app logs -f
 bin/kamal-staging app exec --reuse "bin/rails db:migrate"
 bin/kamal-staging app exec -i --reuse "bin/rails c"
 ```
+
+## Kamal production deploy
+
+Production config is in `config/deploy.yml` and currently targets:
+- Host: `new.sharenite.link`
+- Server: `ns3031997.ip-5-135-141.eu`
+
+Prepare env file:
+
+```bash
+cp .envrc.production.example .envrc.production
+```
+
+Set production values in `.envrc.production`, then run:
+
+```bash
+echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+# then SSH to ns3031997.ip-5-135-141.eu and run the same docker login command there
+bin/kamal-production setup
+bin/kamal-production deploy
+```
+
+Useful commands:
+
+```bash
+bin/kamal-production app details
+bin/kamal-production app logs -f
+bin/kamal-production accessory details kafka
+bin/kamal-production app exec --roles=worker -- bundle exec karafka-web migrate
+```

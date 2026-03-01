@@ -14,8 +14,9 @@ production:
   push_api_key: "<%= Rails.application.credentials.appsignal %>"
   name: Sharenite
   active: true
-  revision: 4df53aa
+  revision: "<%= ENV['KAMAL_VERSION'] || ENV['APP_REVISION'] || 'unknown' %>"
 staging:
   push_api_key: "<%= Rails.application.credentials.appsignal %>"
   name: Sharenite
   active: true
+  revision: "<%= ENV['KAMAL_VERSION'] || ENV['APP_REVISION'] || 'unknown' %>"
