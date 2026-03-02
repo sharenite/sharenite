@@ -106,8 +106,7 @@ module Profiles
       scope = Profile.where(user_id: accepted_friend_user_ids)
                      .where.not(privacy: :private)
                      .joins(:user)
-                     .joins("LEFT JOIN (#{games_count_subquery.to_sql}) games_count_stats ON games_count_stats.user_id = profiles.user_id")
-                     .select("profiles.*, COALESCE(games_count_stats.games_count, 0) AS games_count")
+                     .select("profiles.*, COALESCE(users.games_count, 0) AS games_count")
 
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
@@ -115,8 +114,8 @@ module Profiles
       games_from = parse_games_count_param(:games_from)
       games_to = parse_games_count_param(:games_to)
 
-      scope = scope.where("COALESCE(games_count_stats.games_count, 0) >= ?", games_from) unless games_from.nil?
-      scope = scope.where("COALESCE(games_count_stats.games_count, 0) <= ?", games_to) unless games_to.nil?
+      scope = scope.where("COALESCE(users.games_count, 0) >= ?", games_from) unless games_from.nil?
+      scope = scope.where("COALESCE(users.games_count, 0) <= ?", games_to) unless games_to.nil?
 
       ordered_scope = scope.order("profiles.name ASC")
       @friends_total_count = ordered_scope.except(:select, :order).count
@@ -159,13 +158,11 @@ module Profiles
 
     def filtered_user_ids_for_invitation_filters(name_query:, games_from:, games_to:)
       scope = User.joins(:profile)
-                  .left_joins(:games)
-                  .select("users.id")
-                  .group("users.id")
+                  .select(:id)
 
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
-      scope = scope.having("COUNT(games.id) >= ?", games_from) if games_from.present?
-      scope = scope.having("COUNT(games.id) <= ?", games_to) if games_to.present?
+      scope = scope.where("COALESCE(users.games_count, 0) >= ?", games_from) if games_from.present?
+      scope = scope.where("COALESCE(users.games_count, 0) <= ?", games_to) if games_to.present?
 
       scope.pluck(:id)
     end
@@ -211,10 +208,6 @@ module Profiles
         current_user_id: @profile.user.id,
         filtered_user_ids:
       )
-    end
-
-    def games_count_subquery
-      Game.select("games.user_id, COUNT(games.id) AS games_count").group("games.user_id")
     end
 
     def accepted_friend_user_ids

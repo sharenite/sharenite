@@ -4,7 +4,7 @@ module Admin
   # Aggregates dashboard metrics with short-lived caching.
   # rubocop:disable Metrics/ClassLength
   class DashboardMetrics
-    CACHE_TTL = 5.minutes
+    CACHE_TTL = 10.minutes
 
     class << self
       def call(as_of: Time.current)
@@ -19,7 +19,7 @@ module Admin
     end
 
     def call
-      Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) { compute_metrics }
+      Rails.cache.fetch(cache_key, expires_in: CACHE_TTL, race_condition_ttl: 30.seconds) { compute_metrics }
     end
 
     private
@@ -28,11 +28,8 @@ module Admin
 
     def cache_key
       [
-        "admin/dashboard_metrics/v2",
-        as_of.to_i / CACHE_TTL,
-        User.maximum(:updated_at).to_i,
-        Game.maximum(:updated_at).to_i,
-        SyncJob.maximum(:updated_at).to_i
+        "admin/dashboard_metrics/v3",
+        as_of.to_i / CACHE_TTL
       ]
     end
 

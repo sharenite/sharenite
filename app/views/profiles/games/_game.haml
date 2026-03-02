@@ -1,12 +1,11 @@
-- tag_names = game.tags.map(&:name).sort
-- category_names = game.categories.map(&:name).sort
-- platform_names = game.platforms.map(&:name).sort
-- playtime_seconds = game.playtime.to_i
-- playtime_label = playtime_seconds.positive? ? distance_of_time_in_words(0, playtime_seconds) : "0 min"
-- meta_pills_cache_key = ["games-meta-pills-v1", game.cache_key_with_version, game.source&.name, game.completion_status&.name, category_names, tag_names, platform_names]
-- row_cache_key = ["games-row-v1", view_mode, game.cache_key_with_version, game.source&.name, game.completion_status&.name, category_names, tag_names, platform_names]
+- row_cache_key = ["games-row-v2", view_mode, game.cache_key_with_version]
 
 - cache row_cache_key do
+  - tag_names = game.tags.map(&:name).sort
+  - category_names = game.categories.map(&:name).sort
+  - platform_names = game.platforms.map(&:name).sort
+  - playtime_seconds = game.playtime.to_i
+  - playtime_label = playtime_seconds.positive? ? distance_of_time_in_words(0, playtime_seconds) : "0 min"
   - if view_mode == :desktop_responsive
     %tr{id: dom_id(game)}
       %td
@@ -17,31 +16,30 @@
           - if game.is_installed
             %span.badge.rounded-pill.text-bg-success.ms-1 Installed
       %td.d-lg-table-cell.d-xxl-none
-        - cache [meta_pills_cache_key, :desktop_compact] do
-          .games-meta-stack
-            - if game.source&.name.present?
-              %span.games-value-pill.games-value-pill--source= game.source.name
-            - else
-              %span.games-value-pill.games-value-pill--source.games-value-pill--muted No source
-            - if game.completion_status&.name.present?
-              %span.games-value-pill.games-value-pill--status= game.completion_status.name
-            - else
-              %span.games-value-pill.games-value-pill--status.games-value-pill--muted No status
-            - if category_names.any?
-              - category_names.each do |category_name|
-                %span.games-value-pill.games-value-pill--category= category_name
-            - else
-              %span.games-value-pill.games-value-pill--category.games-value-pill--muted No categories
-            - if tag_names.any?
-              - tag_names.each do |tag_name|
-                %span.games-value-pill.games-value-pill--tag= tag_name
-            - else
-              %span.games-value-pill.games-value-pill--tag.games-value-pill--muted No tags
-            - if platform_names.any?
-              - platform_names.each do |platform_name|
-                %span.games-value-pill.games-value-pill--platform= platform_name
-            - else
-              %span.games-value-pill.games-value-pill--platform.games-value-pill--muted No platform
+        .games-meta-stack
+          - if game.source&.name.present?
+            %span.games-value-pill.games-value-pill--source= game.source.name
+          - else
+            %span.games-value-pill.games-value-pill--source.games-value-pill--muted No source
+          - if game.completion_status&.name.present?
+            %span.games-value-pill.games-value-pill--status= game.completion_status.name
+          - else
+            %span.games-value-pill.games-value-pill--status.games-value-pill--muted No status
+          - if category_names.any?
+            - category_names.each do |category_name|
+              %span.games-value-pill.games-value-pill--category= category_name
+          - else
+            %span.games-value-pill.games-value-pill--category.games-value-pill--muted No categories
+          - if tag_names.any?
+            - tag_names.each do |tag_name|
+              %span.games-value-pill.games-value-pill--tag= tag_name
+          - else
+            %span.games-value-pill.games-value-pill--tag.games-value-pill--muted No tags
+          - if platform_names.any?
+            - platform_names.each do |platform_name|
+              %span.games-value-pill.games-value-pill--platform= platform_name
+          - else
+            %span.games-value-pill.games-value-pill--platform.games-value-pill--muted No platform
       %td.d-none.d-xxl-table-cell
         - if game.source&.name.present?
           %span.games-value-pill.games-value-pill--source= game.source.name
@@ -109,31 +107,30 @@
             .text-muted Plays
             %div= game.play_count.to_i
           .col-12
-            - cache [meta_pills_cache_key, :mobile] do
-              .games-meta-stack
-                - if game.source&.name.present?
-                  %span.games-value-pill.games-value-pill--source= game.source.name
-                - else
-                  %span.games-value-pill.games-value-pill--source.games-value-pill--muted No source
-                - if game.completion_status&.name.present?
-                  %span.games-value-pill.games-value-pill--status= game.completion_status.name
-                - else
-                  %span.games-value-pill.games-value-pill--status.games-value-pill--muted No status
-                - if category_names.any?
-                  - category_names.each do |category_name|
-                    %span.games-value-pill.games-value-pill--category= category_name
-                - else
-                  %span.games-value-pill.games-value-pill--category.games-value-pill--muted No categories
-                - if tag_names.any?
-                  - tag_names.each do |tag_name|
-                    %span.games-value-pill.games-value-pill--tag= tag_name
-                - else
-                  %span.games-value-pill.games-value-pill--tag.games-value-pill--muted No tags
-                - if platform_names.any?
-                  - platform_names.each do |platform_name|
-                    %span.games-value-pill.games-value-pill--platform= platform_name
-                - else
-                  %span.games-value-pill.games-value-pill--platform.games-value-pill--muted No platform
+            .games-meta-stack
+              - if game.source&.name.present?
+                %span.games-value-pill.games-value-pill--source= game.source.name
+              - else
+                %span.games-value-pill.games-value-pill--source.games-value-pill--muted No source
+              - if game.completion_status&.name.present?
+                %span.games-value-pill.games-value-pill--status= game.completion_status.name
+              - else
+                %span.games-value-pill.games-value-pill--status.games-value-pill--muted No status
+              - if category_names.any?
+                - category_names.each do |category_name|
+                  %span.games-value-pill.games-value-pill--category= category_name
+              - else
+                %span.games-value-pill.games-value-pill--category.games-value-pill--muted No categories
+              - if tag_names.any?
+                - tag_names.each do |tag_name|
+                  %span.games-value-pill.games-value-pill--tag= tag_name
+              - else
+                %span.games-value-pill.games-value-pill--tag.games-value-pill--muted No tags
+              - if platform_names.any?
+                - platform_names.each do |platform_name|
+                  %span.games-value-pill.games-value-pill--platform= platform_name
+              - else
+                %span.games-value-pill.games-value-pill--platform.games-value-pill--muted No platform
         .d-flex.gap-3.mt-2
           = link_to "Edit", edit_profile_game_path(@profile, game), class: "games-action-pill", data: { turbo_frame: "_top" }
           = link_to "Show", profile_game_path(@profile, game), class: "games-action-pill games-action-pill-primary", data: { turbo_frame: "_top" }
