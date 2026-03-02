@@ -8,6 +8,7 @@ class Profile < ApplicationRecord
   belongs_to :user
 
   enum privacy: { private: "private", public: "public", friendly: "friendly" }, _prefix: :privacy
+  attribute :game_library_privacy, :string, default: "private"
   enum game_library_privacy: { private: "private", public: "public", friendly: "friendly" }, _prefix: :game_library_privacy
 
   def self.ransackable_attributes(_auth_object = nil)
