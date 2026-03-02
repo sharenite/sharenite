@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT_DIR}"
+
+HOST="${HOST:-http://localhost:3000}"
+COOKIE="${COOKIE:-}"
+TMP_DIR="${TMPDIR:-/tmp}"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bin/manual-sync-checks-local <command>
+
+Commands:
+  run-all [user_id]
+      Runs all checks in sequence:
+      1) force-failed-sync
+      2) full-oversize
+      3) partial-large
+      4) redis-synckeys
+      Requires COOKIE env var.
+
+  force-failed-sync [user_id]
+      Enqueue a sync job with invalid Redis JSON payload to force consumer failure.
+      If user_id is omitted, first user is used.
+
+  full-oversize
+      Build oversized full-sync payload and POST /api/v1/games (expects 413).
+      Requires COOKIE env var.
+
+  partial-large
+      Build large partial-sync payload and PUT /api/v1/games (expects 202 with chunking).
+      Requires COOKIE env var.
+
+  redis-synckeys
+      Print current syncjob:* Redis key count and up to 20 sample keys.
+
+Environment:
+  HOST   API base URL (default: http://localhost:3000)
+  COOKIE Session cookie for authenticated API calls, for example:
+         COOKIE='_your_cookie_here'
+EOF
+}
+
+require_cookie() {
+  if [[ -z "${COOKIE}" ]]; then
+    echo "COOKIE env var is required for this command."
+    exit 1
+  fi
+}
+
+force_failed_sync() {
+  local user_id="${1:-}"
+
+  if [[ -n "${user_id}" ]]; then
+    bundle exec rails runner "
+      u = User.find('${user_id}')
+      job = u.sync_jobs.create!(name: 'ForcedInvalidPayload')
+      \$redis.set(\"syncjob:\#{job.id}\", 'not-json')
+      Karafka.producer.produce_sync(
+        topic: 'library.sync',
+        payload: { type: 'partial', current_user_id: u.id, job_id: job.id }.to_json,
+        key: u.id,
+        partition_key: u.id
+      )
+      puts \"enqueued_failed_sync_job=\#{job.id}\"
+    "
+  else
+    bundle exec rails runner "
+      u = User.first
+      raise 'No users found' if u.nil?
+      job = u.sync_jobs.create!(name: 'ForcedInvalidPayload')
+      \$redis.set(\"syncjob:\#{job.id}\", 'not-json')
+      Karafka.producer.produce_sync(
+        topic: 'library.sync',
+        payload: { type: 'partial', current_user_id: u.id, job_id: job.id }.to_json,
+        key: u.id,
+        partition_key: u.id
+      )
+      puts \"user_id=\#{u.id}\"
+      puts \"enqueued_failed_sync_job=\#{job.id}\"
+    "
+  fi
+}
+
+full_oversize() {
+  require_cookie
+  local payload="${TMP_DIR}/full_oversize.json"
+
+  ruby -rjson -e "File.write('${payload}', JSON.generate({games:[{id:'oversize-test',name:'A'*6_000_000}]}))"
+  echo "Payload written: ${payload}"
+  curl -i -X POST "${HOST}/api/v1/games" \
+    -H "Content-Type: application/json" \
+    -H "Cookie: ${COOKIE}" \
+    --data-binary @"${payload}"
+}
+
+partial_large() {
+  require_cookie
+  local payload="${TMP_DIR}/partial_large.json"
+
+  ruby -rjson -e "games=(1..2000).map{|i| {id:\"p#{i}\",name:\"Game #{i}\"}}; File.write('${payload}', JSON.generate({games: games}))"
+  echo "Payload written: ${payload}"
+  curl -i -X PUT "${HOST}/api/v1/games" \
+    -H "Content-Type: application/json" \
+    -H "Cookie: ${COOKIE}" \
+    --data-binary @"${payload}"
+}
+
+redis_synckeys() {
+  bundle exec rails runner "
+    keys = \$redis.scan_each(match: 'syncjob:*').to_a
+    puts \"syncjob_key_count=\#{keys.size}\"
+    puts keys.first(20)
+  "
+}
+
+run_all() {
+  require_cookie
+  local user_id="${1:-}"
+
+  echo "==> [1/4] Enqueue forced failed sync job"
+  force_failed_sync "${user_id}"
+  echo
+
+  echo "==> [2/4] Send oversized full sync payload (expect 413)"
+  full_oversize
+  echo
+
+  echo "==> [3/4] Send large partial sync payload (expect 202)"
+  partial_large
+  echo
+
+  echo "==> Waiting 3s before Redis key snapshot..."
+  sleep 3
+  echo
+
+  echo "==> [4/4] Snapshot Redis syncjob keys"
+  redis_synckeys
+}
+
+cmd="${1:-}"
+case "${cmd}" in
+  run-all)
+    shift
+    run_all "${1:-}"
+    ;;
+  force-failed-sync)
+    shift
+    force_failed_sync "${1:-}"
+    ;;
+  full-oversize)
+    full_oversize
+    ;;
+  partial-large)
+    partial_large
+    ;;
+  redis-synckeys)
+    redis_synckeys
+    ;;
+  ""|-h|--help|help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: ${cmd}"
+    echo
+    usage
+    exit 1
+    ;;
+esac

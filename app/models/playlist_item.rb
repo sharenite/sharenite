@@ -5,9 +5,11 @@ class PlaylistItem < ApplicationRecord
   belongs_to :playlist
   belongs_to :igdb_cache
 
-  validates :igdb_cache_id, uniqueness: { scope: :playlist_id }
+  # rubocop:disable Rails/I18nLocaleTexts
+  validates :igdb_cache_id, uniqueness: { scope: :playlist_id, message: "is already added to this playlist" }
   validates :order, presence: true
-  validates :order, uniqueness: { scope: :playlist_id }
+  validates :order, uniqueness: { scope: :playlist_id, message: "position is already used in this playlist" }
+  # rubocop:enable Rails/I18nLocaleTexts
 
   after_commit :normalize_playlist_orders_after_create, on: :create
   after_commit :normalize_playlist_orders_after_update, on: :update
