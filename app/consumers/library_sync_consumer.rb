@@ -44,9 +44,7 @@ class LibrarySyncConsumer < ApplicationConsumer
     finished_processing_at = Time.current
     @sync_job.update(finished_processing_at:, processing_time: finished_processing_at - @sync_job.started_processing_at)
     @sync_job.status_finished!
-    # rubocop:disable Style/GlobalVars
-    $redis.expire("syncjob:#{@sync_job.id}", 1)
-    # rubocop:enable Style/GlobalVars
+    expire_sync_payload
   end
 
   def consume
@@ -56,31 +54,37 @@ class LibrarySyncConsumer < ApplicationConsumer
       do_processing
       end_processing
     rescue StandardError => e
-      mark_sync_job_failed
+      mark_sync_job_failed(e)
       Appsignal.set_error(e)
       raise
     end
   end
 
-  def mark_sync_job_failed
+  def mark_sync_job_failed(error)
     return if @sync_job.nil?
 
     finished_processing_at = Time.current
-    @sync_job.update(failed_sync_attributes(finished_processing_at))
+    attributes = {
+      finished_processing_at:,
+      error_message: error.full_message(highlight: false)
+    }
+
+    if @sync_job.started_processing_at.nil?
+      attributes[:waiting_time] = finished_processing_at - @sync_job.created_at
+      attributes[:processing_time] = 0
+    else
+      attributes[:processing_time] = finished_processing_at - @sync_job.started_processing_at
+    end
+
+    @sync_job.update(attributes)
     @sync_job.status_failed!
+    expire_sync_payload
   end
 
-  def failed_sync_attributes(finished_processing_at)
-    return {
-      finished_processing_at:,
-      waiting_time: finished_processing_at - @sync_job.created_at,
-      processing_time: 0
-    } if @sync_job.started_processing_at.nil?
-
-    {
-      finished_processing_at:,
-      processing_time: finished_processing_at - @sync_job.started_processing_at
-    }
+  def expire_sync_payload
+    # rubocop:disable Style/GlobalVars
+    $redis.expire("syncjob:#{@sync_job.id}", 1)
+    # rubocop:enable Style/GlobalVars
   end
 
   # FOR TESTING FIFO PER USER
