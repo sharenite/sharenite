@@ -7,6 +7,8 @@ class IgdbGetGame
   end
 
   def call
+    return nil if @igdb_id.nil?
+
     check_authentication_token
     call_igdb
   end
@@ -36,9 +38,18 @@ class IgdbGetGame
     
     response = http.request(request)
 
-    idgb_game = JSON.parse(response.body.force_encoding("UTF-8"))&.first
+    parsed_response = JSON.parse(response.body.force_encoding("UTF-8"))
+    idgb_game = parsed_response.is_a?(Array) ? parsed_response.first : nil
+    return nil if idgb_game.nil?
 
-    IgdbCache.find_or_create_by(igdb_id: idgb_game['id'], name: idgb_game['name'])
+    igdb_id = idgb_game["id"]
+    return nil if igdb_id.nil?
+
+    IgdbCache.find_or_create_by(igdb_id:) do |cache|
+      cache.name = idgb_game["name"]
+    end
+  rescue JSON::ParserError
+    nil
   end
   # rubocop:enable all
 end

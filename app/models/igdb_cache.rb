@@ -14,7 +14,17 @@ class IgdbCache < ApplicationRecord
   end
 
   def self.get_by_igdb_id(igdb_id)
-    igdb_cache = IgdbCache.find_by(igdb_id: )
-    igdb_cache.nil? ? IgdbGetGame.new(igdb_id).call : igdb_cache
+    normalized_igdb_id = normalize_igdb_id(igdb_id)
+    return nil if normalized_igdb_id.nil?
+
+    igdb_cache = IgdbCache.find_by(igdb_id: normalized_igdb_id)
+    igdb_cache.nil? ? IgdbGetGame.new(normalized_igdb_id).call : igdb_cache
+  end
+
+  def self.normalize_igdb_id(igdb_id)
+    value = igdb_id.to_s.strip
+    return nil unless /\A\d+\z/.match?(value)
+
+    value.to_i
   end
 end

@@ -50,7 +50,7 @@ module Profiles
     end
 
     def update
-      igdb_id = params[:game][:igdb_cache][:igdb_id]
+      igdb_id = params.dig(:game, :igdb_cache, :igdb_id)
       igdb_cache = nil
       igdb_cache = IgdbCache.get_by_igdb_id(igdb_id) if igdb_id.present?
       respond_to do |format|
