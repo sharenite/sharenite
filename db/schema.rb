@@ -375,6 +375,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_02_190000) do
     t.datetime "finished_processing_at"
     t.integer "waiting_time"
     t.integer "processing_time"
+    t.bigint "payload_size_bytes", default: 0, null: false
+    t.integer "payload_chunks", default: 1, null: false
+    t.integer "payload_chunk_index", default: 0, null: false
+    t.text "error_message"
     t.index ["created_at", "status"], name: "index_sync_jobs_on_created_at_and_status"
     t.index ["created_at"], name: "index_sync_jobs_on_created_at"
     t.index ["user_id"], name: "index_sync_jobs_on_user_id"
