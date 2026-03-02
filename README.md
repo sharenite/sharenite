@@ -117,6 +117,23 @@ bin/kamal-production setup
 bin/kamal-production deploy
 ```
 
+Safer local flow (recommended if you do not have CI):
+
+```bash
+bin/deploy-production-safe
+```
+
+This wrapper runs:
+1. `kamal deploy`
+2. `rails db:migrate` on production web role
+3. post-deploy checks (`db:abort_if_pending_migrations`, schema contract checks, and recent 500/schema error scan)
+
+You can also run checks only:
+
+```bash
+bin/check-production-health
+```
+
 Useful commands:
 
 ```bash

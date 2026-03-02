@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT_DIR}"
+
+SINCE="${1:-10m}"
+
+echo "==> Checking pending migrations on production"
+bin/kamal-production app exec --roles web "bundle exec rails db:abort_if_pending_migrations"
+
+echo "==> Checking production schema contract"
+bin/kamal-production app exec --roles web \
+  "bundle exec rails runner 'ok = User.column_names.include?(\"games_count\") && User.new.respond_to?(:games_count); puts(ok ? \"schema_ok\" : \"schema_missing\"); exit(ok ? 0 : 1)'"
+
+echo "==> Checking recent production error logs (${SINCE})"
+if bin/kamal-production app logs --roles web --since "${SINCE}" \
+  --grep "(Completed 500|NoMethodError|StatementInvalid|PG::UndefinedColumn|PG::UndefinedTable|PG::UndefinedFunction)"; then
+  echo "WARNING: matching error lines found in recent logs (see output above)."
+  echo "Treat this as deploy-warning and verify in AppSignal/health endpoints."
+  exit 2
+else
+  echo "No matching 500/schema error patterns in recent web logs."
+fi
+
+echo "Production checks passed."

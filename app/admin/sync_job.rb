@@ -8,12 +8,12 @@ ActiveAdmin.register SyncJob do
   belongs_to :user, optional: true
   includes :user
 
-  scope :all, default: true, show_count: false
-  scope :status_queued, show_count: false
-  scope :status_running, show_count: false
-  scope :status_failed, show_count: false
-  scope :status_finished, show_count: false
-  scope :status_dead, show_count: false
+  scope :all, default: true
+  scope :status_queued
+  scope :status_running
+  scope :status_failed
+  scope :status_finished
+  scope :status_dead
 
   member_action :mark_dead, method: :put do
     finished_processing_at = Time.current

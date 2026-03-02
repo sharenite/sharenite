@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT_DIR}"
+
+SKIP_DEPLOY=false
+SINCE="10m"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --skip-deploy)
+      SKIP_DEPLOY=true
+      shift
+      ;;
+    --since)
+      SINCE="${2:-}"
+      if [[ -z "${SINCE}" ]]; then
+        echo "--since requires a value, for example: --since 15m"
+        exit 1
+      fi
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      echo "Usage: bin/deploy-production-safe [--skip-deploy] [--since 15m]"
+      exit 1
+      ;;
+  esac
+done
+
+if [[ "${SKIP_DEPLOY}" == "false" ]]; then
+  echo "==> Deploying latest production revision"
+  bin/kamal-production deploy
+else
+  echo "==> Skipping deploy step"
+fi
+
+echo "==> Running production migrations"
+bin/kamal-production app exec --roles web "bundle exec rails db:migrate"
+
+echo "==> Running post-deploy health checks"
+bin/check-production-health "${SINCE}"
+
+echo "Safe deploy flow completed."

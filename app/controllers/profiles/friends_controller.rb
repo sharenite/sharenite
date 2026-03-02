@@ -114,7 +114,7 @@ module Profiles
       scope = apply_games_count_filter(scope, games_from:, games_to:)
 
       ordered_scope = scope.order("profiles.name ASC")
-      @friends_total_count = ordered_scope.except(:select, :order).count
+      @friends_total_count = normalize_count_result(ordered_scope.except(:select, :order).count)
       @friends = if @active_tab == "friends"
                    ordered_scope.page(params[:page]).per(25)
                  else
@@ -262,6 +262,10 @@ module Profiles
         games_from:,
         games_to:
       )
+    end
+
+    def normalize_count_result(result)
+      result.is_a?(Hash) ? result.size : result
     end
 
     # rubocop:enable Metrics/AbcSize
