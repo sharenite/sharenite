@@ -64,36 +64,16 @@ module Profiles
       return {} if ids.empty?
 
       relations_by_other_user_id = Hash.new { |hash, key| hash[key] = [] }
-      friend_relations_scope(ids).find_each do |relation|
+      FriendshipStateResolver.relations_scope(current_user_id: current_user.id, user_ids: ids).find_each do |relation|
         other_user_id = relation.inviter_id == current_user.id ? relation.invitee_id : relation.inviter_id
         relations_by_other_user_id[other_user_id] << relation
       end
 
-      relations_by_other_user_id.transform_values { |relations| friendship_state_from_relations(relations) }
+      relations_by_other_user_id.transform_values do |relations|
+        FriendshipStateResolver.state_from_relations(relations:, current_user_id: current_user.id)
+      end
     end
     # rubocop:enable Metrics/AbcSize
-
-    def friend_relations_scope(user_ids)
-      Friend.where(
-        "(inviter_id = :current_id AND invitee_id IN (:user_ids)) OR (invitee_id = :current_id AND inviter_id IN (:user_ids))",
-        current_id: current_user.id,
-        user_ids:
-      )
-    end
-
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-    def friendship_state_from_relations(relations)
-      return nil if relations.blank?
-
-      return :friends if relations.any?(&:status_accepted?)
-      return :invite_sent if relations.any? { |relation| relation.status_invited? && relation.inviter_id == current_user.id }
-      return :invite_received if relations.any? { |relation| relation.status_invited? && relation.invitee_id == current_user.id }
-      return :invite_declined if relations.any? { |relation| relation.status_declined? && relation.inviter_id == current_user.id }
-      return :you_declined if relations.any? { |relation| relation.status_declined? && relation.invitee_id == current_user.id }
-
-      nil
-    end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def check_profile
       redirect_to_profiles_with_notice if @profile.nil? || 
