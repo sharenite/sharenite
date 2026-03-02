@@ -58,29 +58,29 @@ force_failed_sync() {
     bundle exec rails runner "
       u = User.find('${user_id}')
       job = u.sync_jobs.create!(name: 'ForcedInvalidPayload')
-      \$redis.set(\"syncjob:\#{job.id}\", 'not-json')
+      \$redis.set('syncjob:' + job.id.to_s, 'not-json')
       Karafka.producer.produce_sync(
         topic: 'library.sync',
         payload: { type: 'partial', current_user_id: u.id, job_id: job.id }.to_json,
         key: u.id,
         partition_key: u.id
       )
-      puts \"enqueued_failed_sync_job=\#{job.id}\"
+      puts 'enqueued_failed_sync_job=' + job.id.to_s
     "
   else
     bundle exec rails runner "
       u = User.first
       raise 'No users found' if u.nil?
       job = u.sync_jobs.create!(name: 'ForcedInvalidPayload')
-      \$redis.set(\"syncjob:\#{job.id}\", 'not-json')
+      \$redis.set('syncjob:' + job.id.to_s, 'not-json')
       Karafka.producer.produce_sync(
         topic: 'library.sync',
         payload: { type: 'partial', current_user_id: u.id, job_id: job.id }.to_json,
         key: u.id,
         partition_key: u.id
       )
-      puts \"user_id=\#{u.id}\"
-      puts \"enqueued_failed_sync_job=\#{job.id}\"
+      puts 'user_id=' + u.id.to_s
+      puts 'enqueued_failed_sync_job=' + job.id.to_s
     "
   fi
 }
@@ -112,7 +112,7 @@ partial_large() {
 redis_synckeys() {
   bundle exec rails runner "
     keys = \$redis.scan_each(match: 'syncjob:*').to_a
-    puts \"syncjob_key_count=\#{keys.size}\"
+    puts 'syncjob_key_count=' + keys.size.to_s
     puts keys.first(20)
   "
 }
