@@ -97,7 +97,7 @@ bin/deploy-staging-safe
 This wrapper runs:
 1. `kamal deploy`
 2. `rails db:migrate` on staging web role
-3. post-deploy checks (`db:abort_if_pending_migrations`, schema contract checks, and recent 500/schema error scan)
+3. post-deploy checks (`db:abort_if_pending_migrations` and recent 500/schema error scan)
 
 You can also run checks only:
 
@@ -143,7 +143,7 @@ bin/deploy-production-safe
 This wrapper runs:
 1. `kamal deploy`
 2. `rails db:migrate` on production web role
-3. post-deploy checks (`db:abort_if_pending_migrations`, schema contract checks, and recent 500/schema error scan)
+3. post-deploy checks (`db:abort_if_pending_migrations` and recent 500/schema error scan)
 
 You can also run checks only:
 

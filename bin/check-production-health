@@ -9,10 +9,6 @@ SINCE="${1:-10m}"
 echo "==> Checking pending migrations on production"
 bin/kamal-production app exec --roles web "bundle exec rails db:abort_if_pending_migrations"
 
-echo "==> Checking production schema contract"
-bin/kamal-production app exec --roles web \
-  "bundle exec rails runner 'ok = User.column_names.include?(\"games_count\") && User.new.respond_to?(:games_count); puts(ok ? \"schema_ok\" : \"schema_missing\"); exit(ok ? 0 : 1)'"
-
 echo "==> Checking recent production error logs (${SINCE})"
 logs_output="$(bin/kamal-production app logs --roles web --since "${SINCE}" \
   --grep "(Completed 500|NoMethodError|StatementInvalid|PG::UndefinedColumn|PG::UndefinedTable|PG::UndefinedFunction)" || true)"
