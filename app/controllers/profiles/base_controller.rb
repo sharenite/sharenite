@@ -83,7 +83,17 @@ module Profiles
     end
 
     def profile_friend?
-      current_user&.friends&.include?(@profile.user) && !@profile.privacy_private?
+      return false unless current_user
+      return false if @profile.privacy_private?
+
+      Friend.where(status: :accepted).exists?(
+        ["(inviter_id = :current_user_id AND invitee_id = :profile_user_id) OR " \
+         "(invitee_id = :current_user_id AND inviter_id = :profile_user_id)",
+         {
+           current_user_id: current_user.id,
+           profile_user_id: @profile.user_id
+         }]
+      )
     end
 
     def redirect_to_profiles_with_notice

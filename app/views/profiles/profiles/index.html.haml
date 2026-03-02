@@ -34,7 +34,7 @@
         %tbody
           - @profiles.each do |profile|
             - games_count = profile.read_attribute(:games_count).to_i
-            - is_own_profile = user_signed_in? && current_user.profile == profile
+            - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
             - friendship_state = @friendship_states_by_user_id[profile.user_id]
             - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
             - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
@@ -47,7 +47,7 @@
                   = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
-                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(current_user.profile, tab: "received"), class: profile_friendship_state_class(friendship_state), data: { turbo_frame: "_top" }
+                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile_slug, tab: "received"), class: profile_friendship_state_class(friendship_state), data: { turbo_frame: "_top" }
                     - elsif friendship_state.present? && friendship_state.to_sym != :you_declined
                       %span{class: profile_friendship_state_class(friendship_state)}= profile_friendship_state_label(friendship_state)
                     - else
@@ -57,7 +57,7 @@
     .row.g-2
       - @profiles.each do |profile|
         - games_count = profile.read_attribute(:games_count).to_i
-        - is_own_profile = user_signed_in? && current_user.profile == profile
+        - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
         - friendship_state = @friendship_states_by_user_id[profile.user_id]
         - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
         - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
@@ -73,7 +73,7 @@
                   = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
-                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(current_user.profile, tab: "received"), class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm", data: { turbo_frame: "_top" }
+                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile_slug, tab: "received"), class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm", data: { turbo_frame: "_top" }
                     - elsif friendship_state.present? && friendship_state.to_sym != :you_declined
                       %span{class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm"}= profile_friendship_state_label(friendship_state)
                     - else

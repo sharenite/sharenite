@@ -5,10 +5,13 @@ module Profiles
   # Profiles friends controller
   # rubocop:disable Metrics/ClassLength
   class FriendsController < BaseController
+    TABS = %w[friends received sent declined].freeze
+
     before_action :check_current_user_profile, only: %i[index accept decline cancel]
     before_action :check_friendly_access_profile, only: %i[invite]
 
     def index
+      @active_tab = active_tab
       set_friends
       set_invitations
       render :index
@@ -100,7 +103,7 @@ module Profiles
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def set_friends
-      scope = Profile.where(user: @profile.user.friends)
+      scope = Profile.where(user_id: accepted_friend_user_ids)
                      .where.not(privacy: :private)
                      .joins(:user)
                      .left_joins(user: :games)
@@ -116,7 +119,15 @@ module Profiles
       scope = scope.having("COUNT(games.id) >= ?", games_from) unless games_from.nil?
       scope = scope.having("COUNT(games.id) <= ?", games_to) unless games_to.nil?
 
-      @friends = scope.order("profiles.name ASC").page(params[:page]).per(25)
+      ordered_scope = scope.order("profiles.name ASC")
+      # Avoid counting the aggregated SELECT list ("profiles.*, COUNT(...) AS games_count"),
+      # which can produce invalid SQL in Postgres when ActiveRecord builds COUNT(...).
+      @friends_total_count = ordered_scope.except(:order).reselect("profiles.id").count.length
+      @friends = if @active_tab == "friends"
+                   ordered_scope.page(params[:page]).per(25)
+                 else
+                   Profile.none.page(params[:page]).per(25)
+                 end
     end
 
     def set_invitations
@@ -126,28 +137,17 @@ module Profiles
       any_filter = name_query.present? || games_from.present? || games_to.present?
       filtered_user_ids = any_filter ? filtered_user_ids_for_invitation_filters(name_query:, games_from:, games_to:) : nil
 
-      @invitations_received = @profile.user.pending_inviters
-                                     .includes(inviter: :profile)
-                                     .order(created_at: :desc)
-      @invitations_received = @invitations_received.where(inviter_id: filtered_user_ids) if any_filter
+      received_scope = invitation_received_scope(any_filter:, filtered_user_ids:)
+      @invitations_received_count = received_scope.count
+      @invitations_received = @active_tab == "received" ? received_scope.load : []
 
-      @invitations_sent = @profile.user.pending_invitees
-                                 .includes(invitee: :profile)
-                                 .order(created_at: :desc)
-      @invitations_sent = @invitations_sent.where(invitee_id: filtered_user_ids) if any_filter
+      sent_scope = invitation_sent_scope(any_filter:, filtered_user_ids:)
+      @invitations_sent_count = sent_scope.count
+      @invitations_sent = @active_tab == "sent" ? sent_scope.load : []
 
-      @invitations_declined = Friend.where(status: :declined)
-                                    .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: @profile.user.id)
-                                    .includes(inviter: :profile, invitee: :profile)
-                                    .order(updated_at: :desc)
-      return unless any_filter
-
-      @invitations_declined = @invitations_declined.where(
-        "(inviter_id = :current_user_id AND invitee_id IN (:filtered_user_ids)) OR " \
-        "(invitee_id = :current_user_id AND inviter_id IN (:filtered_user_ids))",
-        current_user_id: @profile.user.id,
-        filtered_user_ids:
-      )
+      declined_scope = invitation_declined_scope(any_filter:, filtered_user_ids:)
+      @invitations_declined_count = declined_scope.count
+      @invitations_declined = @active_tab == "declined" ? declined_scope.load : []
     end
 
     def parse_games_count_param(key)
@@ -174,9 +174,56 @@ module Profiles
     end
 
     def redirect_tab(default_tab)
-      allowed = %w[friends received sent declined]
       requested = params[:tab].to_s
-      allowed.include?(requested) ? requested : default_tab
+      TABS.include?(requested) ? requested : default_tab
+    end
+
+    def active_tab
+      requested = params[:tab].to_s
+      TABS.include?(requested) ? requested : "friends"
+    end
+
+    def invitation_received_scope(any_filter:, filtered_user_ids:)
+      scope = @profile.user.pending_inviters
+                      .includes(inviter: :profile)
+                      .order(created_at: :desc)
+      return scope unless any_filter
+
+      scope.where(inviter_id: filtered_user_ids)
+    end
+
+    def invitation_sent_scope(any_filter:, filtered_user_ids:)
+      scope = @profile.user.pending_invitees
+                      .includes(invitee: :profile)
+                      .order(created_at: :desc)
+      return scope unless any_filter
+
+      scope.where(invitee_id: filtered_user_ids)
+    end
+
+    def invitation_declined_scope(any_filter:, filtered_user_ids:)
+      scope = Friend.where(status: :declined)
+                    .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: @profile.user.id)
+                    .includes(inviter: :profile, invitee: :profile)
+                    .order(updated_at: :desc)
+      return scope unless any_filter
+
+      scope.where(
+        "(inviter_id = :current_user_id AND invitee_id IN (:filtered_user_ids)) OR " \
+        "(invitee_id = :current_user_id AND inviter_id IN (:filtered_user_ids))",
+        current_user_id: @profile.user.id,
+        filtered_user_ids:
+      )
+    end
+
+    def accepted_friend_user_ids
+      user_id = @profile.user.id
+      rows = Friend.where(status: :accepted)
+                   .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
+                   .pluck(:inviter_id, :invitee_id)
+      rows.each_with_object([]) do |(inviter_id, invitee_id), ids|
+        ids << (inviter_id == user_id ? invitee_id : inviter_id)
+      end.uniq
     end
 
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength

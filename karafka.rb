@@ -35,7 +35,7 @@ class KarafkaApp < Karafka::App
   # interested in logging events for certain environments. Since instrumentation
   # notifications add extra boilerplate, if you want to achieve max performance,
   # listen to only what you really need for given environment.
-  Karafka.monitor.subscribe(Karafka::Instrumentation::LoggerListener.new)
+  Karafka.monitor.subscribe(Karafka::Instrumentation::LoggerListener.new(log_polling: false))
   # Karafka.monitor.subscribe(Karafka::Instrumentation::ProctitleListener.new)
 
   # This logger prints the producer development info using the Karafka logger.

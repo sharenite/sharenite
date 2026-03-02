@@ -33,13 +33,14 @@ ActiveAdmin.register_page "Dashboard" do
 
     sync_jobs_30d = SyncJob.where(created_at: window_30_days)
     sync_jobs_prev_30d = SyncJob.where(created_at: previous_30_days)
-    sync_events_30d = sync_jobs_30d.count
+    sync_status_counts_30d = sync_jobs_30d.group(:status).count
+    sync_events_30d = sync_status_counts_30d.values.sum
     sync_active_users_30d = sync_jobs_30d.select(:user_id).distinct.count
-    sync_finished_30d = sync_jobs_30d.where(status: :finished).count
-    sync_failed_30d = sync_jobs_30d.where(status: :failed).count
-    sync_dead_30d = sync_jobs_30d.where(status: :dead).count
-    sync_running_30d = sync_jobs_30d.where(status: :running).count
-    sync_events_prev_30d = sync_jobs_prev_30d.count
+    sync_finished_30d = sync_status_counts_30d.fetch("finished", 0)
+    sync_failed_30d = sync_status_counts_30d.fetch("failed", 0)
+    sync_dead_30d = sync_status_counts_30d.fetch("dead", 0)
+    sync_running_30d = sync_status_counts_30d.fetch("running", 0)
+    sync_events_prev_30d = sync_jobs_prev_30d.group(:status).count.values.sum
     sync_avg_processing_time = sync_jobs_30d.where.not(processing_time: nil).average(:processing_time)&.round(2)
     sync_terminal_count = sync_finished_30d + sync_failed_30d + sync_dead_30d
     sync_success_rate = if sync_terminal_count.zero?
@@ -72,7 +73,10 @@ ActiveAdmin.register_page "Dashboard" do
     top_games_added_users = User
       .joins(:games)
       .where(games: { created_at: window_30_days })
-      .select("users.*, COUNT(games.id) AS games_added_count")
+      .select(
+        "users.*, COUNT(games.id) AS games_added_count, " \
+        "(SELECT COUNT(*) FROM games all_games WHERE all_games.user_id = users.id) AS total_games_count"
+      )
       .group("users.id")
       .order("games_added_count DESC")
       .limit(8)
@@ -200,7 +204,7 @@ ActiveAdmin.register_page "Dashboard" do
               table_for top_games_added_users do
                 column("User") { |user| link_to(user.email, admin_user_path(user)) }
                 column("Games added") { |user| number.call(user.read_attribute(:games_added_count).to_i) }
-                column("Total games now") { |user| number.call(user.games.count) }
+                column("Total games now") { |user| number.call(user.read_attribute(:total_games_count).to_i) }
               end
             else
               para "No game additions in the last 30 days."

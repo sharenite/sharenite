@@ -1,8 +1,8 @@
-- games_count = @profile.user.games.count
-- playlists_count = @profile.user.playlists.count
-- is_own_profile = user_signed_in? && current_user.profile == @profile
-- active_friends_count = @profile.user.friends.count
-- pending_received_count = is_own_profile ? current_user.pending_inviters.count : 0
+- games_count = @profile_stats[:games_count]
+- playlists_count = @profile_stats[:playlists_count]
+- is_own_profile = user_signed_in? && @current_user_id == @profile.user_id
+- active_friends_count = @profile_stats[:active_friends_count]
+- pending_received_count = @profile_stats[:pending_received_count]
 - profile_url_value = profile_url(@profile)
 - invite_tab = @friendship_state&.to_sym == :you_declined ? "friends" : "sent"
 - invite_data = @friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
@@ -31,7 +31,7 @@
           = link_to "Playlists", profile_playlists_path(@profile), class: "profiles-action-pill"
         - elsif user_signed_in?
           - if @friendship_state&.to_sym == :invite_received
-            = link_to profile_friendship_state_label(@friendship_state), profile_friends_path(current_user.profile, tab: "received"), class: profile_friendship_state_class(@friendship_state)
+            = link_to profile_friendship_state_label(@friendship_state), profile_friends_path(@current_profile, tab: "received"), class: profile_friendship_state_class(@friendship_state)
           - elsif @friendship_state.present? && @friendship_state.to_sym != :you_declined
             %span{class: profile_friendship_state_class(@friendship_state)}= profile_friendship_state_label(@friendship_state)
           - else

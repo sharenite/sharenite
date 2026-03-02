@@ -84,7 +84,7 @@ header .nav-link.active {
 }
 
 .games-table {
-  min-width: 1450px;
+  min-width: 1020px;
   margin-bottom: 0;
 }
 
@@ -215,18 +215,10 @@ header .nav-link.active {
   font-weight: 500;
 }
 
-.games-table-compact {
-  min-width: 980px;
-}
-
 .games-meta-stack {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-}
-
-.games-table-compact td .games-value-pill {
-  font-size: 0.82rem;
 }
 
 .games-meta-pill {
@@ -376,6 +368,12 @@ header .nav-link.active {
 
   .games-mobile-card .games-value-pill {
     font-size: 0.82rem;
+  }
+}
+
+@include media-breakpoint-up(xxl) {
+  .games-table {
+    min-width: 1450px;
   }
 }
 

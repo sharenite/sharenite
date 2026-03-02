@@ -7,10 +7,15 @@ module Profiles
     def index
       @profiles = profiles_scope.page(params[:page])
       @friendship_states_by_user_id = friendship_states_for_user_ids(@profiles.map(&:user_id))
+      @current_user_id = current_user&.id
+      @current_profile_slug = current_user&.profile&.slug
     end
 
     def show
       @friendship_state = friendship_states_for_user_ids([@profile.user_id])[@profile.user_id]
+      @current_user_id = current_user&.id
+      @current_profile = current_user&.profile
+      @profile_stats = build_profile_stats
     end
 
     def update
@@ -92,7 +97,21 @@ module Profiles
     end
 
     def set_profile
-      @profile = Profile.friendly.find(params[:id])
+      @profile = Profile.includes(:user).friendly.find(params[:id])
+    end
+
+    def build_profile_stats
+      profile_user_id = @profile.user_id
+      is_own_profile = user_signed_in? && @current_user_id == profile_user_id
+
+      {
+        games_count: Game.where(user_id: profile_user_id).count,
+        playlists_count: Playlist.where(user_id: profile_user_id).count,
+        active_friends_count: Friend.where(status: :accepted)
+                                    .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: profile_user_id)
+                                    .count,
+        pending_received_count: is_own_profile ? Friend.where(invitee_id: profile_user_id, status: :invited).count : 0
+      }
     end
   end
 end
