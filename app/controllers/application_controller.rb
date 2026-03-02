@@ -29,7 +29,16 @@ class ApplicationController < ActionController::Base
 
   def captcha_required?
     default = Rails.env.production? || Rails.env.staging?
-    ActiveModel::Type::Boolean.new.cast(ENV.fetch("RECAPTCHA_ENABLED", default))
+    enabled = ActiveModel::Type::Boolean.new.cast(ENV.fetch("RECAPTCHA_ENABLED", default))
+    return false unless enabled
+    return true if recaptcha_configured?
+
+    Rails.logger.warn("[captcha] RECAPTCHA is enabled but missing site/secret keys. Captcha protection disabled.")
+    false
+  end
+
+  def recaptcha_configured?
+    ENV["RECAPTCHA_SITE_KEY"].present? && ENV["RECAPTCHA_SECRET_KEY"].present?
   end
 
   def invalid_url!
