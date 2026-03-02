@@ -38,7 +38,10 @@ class IgdbGetGame
     
     response = http.request(request)
 
-    parsed_response = JSON.parse(response.body.force_encoding("UTF-8"))
+    body = response.body
+    return nil if body.blank?
+
+    parsed_response = JSON.parse(body.force_encoding("UTF-8"))
     idgb_game = parsed_response.is_a?(Array) ? parsed_response.first : nil
     return nil if idgb_game.nil?
 
@@ -48,7 +51,7 @@ class IgdbGetGame
     IgdbCache.find_or_create_by(igdb_id:) do |cache|
       cache.name = idgb_game["name"]
     end
-  rescue JSON::ParserError
+  rescue JSON::ParserError, TypeError
     nil
   end
   # rubocop:enable all

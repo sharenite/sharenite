@@ -3,6 +3,60 @@
 require "rails_helper"
 
 RSpec.describe Profiles::Playlists::PlaylistItemsController do
+  describe "POST #create" do
+    let(:owner) { create(:user) }
+    let(:playlist) { create(:playlist, user: owner) }
+
+    before { sign_in owner }
+
+    it "renders inline error when IGDB id is not found" do
+      allow(IgdbCache).to receive(:get_by_igdb_id).with("999999").and_return(nil)
+
+      post :create,
+           params: {
+             profile_id: owner.profile.slug,
+             playlist_id: playlist.id,
+             playlist_item: {
+               order: 1,
+               igdb_cache: { igdb_id: "999999" }
+             }
+           },
+           format: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include("IGDB entry was not found for ID 999999.")
+    end
+  end
+
+  describe "PATCH #update" do
+    let(:owner) { create(:user) }
+    let(:playlist) { create(:playlist, user: owner) }
+    let(:playlist_item) { create(:playlist_item, playlist:, order: 1) }
+
+    before { sign_in owner }
+
+    it "renders inline error when IGDB id is not found" do
+      allow(IgdbCache).to receive(:get_by_igdb_id).with("888888").and_return(nil)
+
+      patch :update,
+            params: {
+              profile_id: owner.profile.slug,
+              playlist_id: playlist.id,
+              id: playlist_item.id,
+              playlist_item: {
+                order: 1,
+                igdb_cache: { igdb_id: "888888" }
+              }
+            },
+            format: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include("IGDB entry was not found for ID 888888.")
+    end
+  end
+
   describe "PATCH #reorder" do
     let(:owner) { create(:user) }
     let(:playlist) { create(:playlist, user: owner) }

@@ -3,6 +3,29 @@
 require "rails_helper"
 
 RSpec.describe PlaylistItem do
+  describe "validations" do
+    it "enforces unique igdb_cache per playlist" do
+      playlist = create(:playlist)
+      igdb_cache = create(:igdb_cache)
+      create(:playlist_item, playlist:, igdb_cache:, order: 1)
+
+      duplicate = build(:playlist_item, playlist:, igdb_cache:, order: 2)
+
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors[:igdb_cache_id]).to include("has already been taken")
+    end
+
+    it "enforces unique order per playlist" do
+      playlist = create(:playlist)
+      create(:playlist_item, playlist:, order: 1)
+
+      duplicate_order = build(:playlist_item, playlist:, order: 1)
+
+      expect(duplicate_order).not_to be_valid
+      expect(duplicate_order.errors[:order]).to include("has already been taken")
+    end
+  end
+
   describe ".reorder_for_playlist!" do
     it "reorders deterministically using current order for omitted ids" do
       playlist = create(:playlist)
