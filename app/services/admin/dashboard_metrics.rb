@@ -35,12 +35,15 @@ module Admin
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def compute_metrics
-      users_total = User.count
-      users_new_30d = User.where(created_at: window_30_days).count
-      users_new_prev_30d = User.where(created_at: previous_30_days).count
-      users_confirmed_total = User.where.not(confirmed_at: nil).count
-      users_confirmed_30d = User.where(confirmed_at: window_30_days).count
-      users_active_sign_in_30d = User.where(last_sign_in_at: window_30_days).count
+      users_total, users_new_30d, users_new_prev_30d, users_confirmed_total, users_confirmed_30d, users_active_sign_in_30d =
+        User.pick(
+          Arel.sql("COUNT(*)"),
+          Arel.sql(range_count_sql("created_at", window_30_days)),
+          Arel.sql(range_count_sql("created_at", previous_30_days)),
+          Arel.sql("COUNT(*) FILTER (WHERE confirmed_at IS NOT NULL)"),
+          Arel.sql(range_count_sql("confirmed_at", window_30_days)),
+          Arel.sql(range_count_sql("last_sign_in_at", window_30_days))
+        ).map(&:to_i)
 
       sync_jobs_30d = SyncJob.where(created_at: window_30_days)
       sync_jobs_prev_30d = SyncJob.where(created_at: previous_30_days)
@@ -64,13 +67,16 @@ module Admin
       users_sync_only_30d = [sync_active_users_30d - users_active_both_30d, 0].max
       users_sign_in_only_30d = [users_active_sign_in_30d - users_active_both_30d, 0].max
 
-      games_total = Game.count
-      games_new_30d = Game.where(created_at: window_30_days).count
-      games_new_prev_30d = Game.where(created_at: previous_30_days).count
-      games_with_recent_activity = Game.where(last_activity: window_30_days).count
-      games_installed = Game.where(is_installed: true).count
-      games_favorite = Game.where(favorite: true).count
-      games_with_notes = Game.where.not(notes: [nil, ""]).count
+      games_total, games_new_30d, games_new_prev_30d, games_with_recent_activity, games_installed, games_favorite, games_with_notes =
+        Game.pick(
+          Arel.sql("COUNT(*)"),
+          Arel.sql(range_count_sql("created_at", window_30_days)),
+          Arel.sql(range_count_sql("created_at", previous_30_days)),
+          Arel.sql(range_count_sql("last_activity", window_30_days)),
+          Arel.sql("COUNT(*) FILTER (WHERE is_installed = TRUE)"),
+          Arel.sql("COUNT(*) FILTER (WHERE favorite = TRUE)"),
+          Arel.sql("COUNT(*) FILTER (WHERE notes IS NOT NULL AND notes != '')")
+        ).map(&:to_i)
       avg_games_per_user = users_total.zero? ? 0 : (games_total.to_f / users_total).round(2)
 
       top_sync_users = User.joins(:sync_jobs)
@@ -84,7 +90,7 @@ module Admin
                                   .where(games: { created_at: window_30_days })
                                   .select(
                                     "users.*, COUNT(games.id) AS games_added_count, " \
-                                    "(SELECT COUNT(*) FROM games all_games WHERE all_games.user_id = users.id) AS total_games_count"
+                                    "users.games_count AS total_games_count"
                                   )
                                   .group("users.id")
                                   .order("games_added_count DESC")
@@ -122,6 +128,13 @@ module Admin
       }
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+    def range_count_sql(column_name, range)
+      from = ActiveRecord::Base.connection.quote(range.begin)
+      to = ActiveRecord::Base.connection.quote(range.end)
+      upper_bound_operator = range.exclude_end? ? "<" : "<="
+      "COUNT(*) FILTER (WHERE #{column_name} >= #{from} AND #{column_name} #{upper_bound_operator} #{to})"
+    end
   end
   # rubocop:enable Metrics/ClassLength
 end

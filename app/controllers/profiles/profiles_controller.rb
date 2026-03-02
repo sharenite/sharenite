@@ -8,13 +8,13 @@ module Profiles
       @profiles = profiles_scope.page(params[:page])
       @friendship_states_by_user_id = friendship_states_for_user_ids(@profiles.map(&:user_id))
       @current_user_id = current_user&.id
-      @current_profile_slug = current_user&.profile&.slug
+      @current_profile_slug = current_profile&.slug
     end
 
     def show
       @friendship_state = friendship_states_for_user_ids([@profile.user_id])[@profile.user_id]
       @current_user_id = current_user&.id
-      @current_profile = current_user&.profile
+      @current_profile = current_profile
       @profile_stats = build_profile_stats
     end
 
@@ -59,24 +59,11 @@ module Profiles
       nil
     end
 
-    # rubocop:disable Metrics/AbcSize
     def friendship_states_for_user_ids(user_ids)
       return {} unless user_signed_in?
 
-      ids = user_ids.uniq - [current_user.id]
-      return {} if ids.empty?
-
-      relations_by_other_user_id = Hash.new { |hash, key| hash[key] = [] }
-      FriendshipStateResolver.relations_scope(current_user_id: current_user.id, user_ids: ids).find_each do |relation|
-        other_user_id = relation.inviter_id == current_user.id ? relation.invitee_id : relation.inviter_id
-        relations_by_other_user_id[other_user_id] << relation
-      end
-
-      relations_by_other_user_id.transform_values do |relations|
-        FriendshipStateResolver.state_from_relations(relations:, current_user_id: current_user.id)
-      end
+      FriendshipStateResolver.states_for_users(current_user_id: current_user.id, user_ids:)
     end
-    # rubocop:enable Metrics/AbcSize
 
     def check_profile
       redirect_to_profiles_with_notice if @profile.nil? || 

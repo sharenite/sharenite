@@ -37,7 +37,7 @@ module Profiles
 
     def check_current_user_profile
       set_profile
-      redirect_to_profiles_with_notice if @profile != current_user.profile
+      redirect_to_profiles_with_notice if @profile != current_profile
     rescue ActiveRecord::RecordNotFound
       redirect_to_profiles_with_notice
     end
@@ -75,7 +75,7 @@ module Profiles
     end
 
     def profile_own?
-      @profile == current_user&.profile
+      @profile == current_profile
     end
 
     def profile_public?

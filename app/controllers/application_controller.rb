@@ -6,7 +6,7 @@ class ApplicationController < ActionController::Base
 
   before_action :redirect_www_to_canonical_host
   before_action :authenticate_user!
-  helper_method :captcha_required?
+  helper_method :captcha_required?, :current_profile, :pending_friend_invites_count
 
   # Devise overrides
   def after_sign_out_path_for(_resource_or_scope)
@@ -14,6 +14,18 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def current_profile
+    return unless user_signed_in?
+
+    @current_profile ||= current_user.profile
+  end
+
+  def pending_friend_invites_count
+    return 0 unless user_signed_in?
+
+    @pending_friend_invites_count ||= Friend.where(invitee_id: current_user.id, status: :invited).count
+  end
 
   def captcha_required?
     default = Rails.env.production? || Rails.env.staging?

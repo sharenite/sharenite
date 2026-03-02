@@ -6,7 +6,7 @@ class StaticPagesController < ApplicationController
 
   # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def dashboard
-    @profile = current_user.profile
+    @profile = current_profile
     user_id = current_user.id
     games_scope = current_user.games
     games_total, games_favorites, games_installed, games_played = game_counts(games_scope)

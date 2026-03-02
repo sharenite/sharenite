@@ -103,7 +103,7 @@ module Profiles
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def set_friends
-      scope = Profile.where(user_id: accepted_friend_user_ids)
+      scope = Profile.where(user_id: accepted_friend_user_ids_scope)
                      .where.not(privacy: :private)
                      .joins(:user)
                      .select("profiles.*, COALESCE(users.games_count, 0) AS games_count")
@@ -164,7 +164,7 @@ module Profiles
       scope = scope.where("COALESCE(users.games_count, 0) >= ?", games_from) if games_from.present?
       scope = scope.where("COALESCE(users.games_count, 0) <= ?", games_to) if games_to.present?
 
-      scope.pluck(:id)
+      scope
     end
 
     def redirect_tab(default_tab)
@@ -210,13 +210,13 @@ module Profiles
       )
     end
 
-    def accepted_friend_user_ids
+    def accepted_friend_user_ids_scope
       user_id = @profile.user.id
       quoted_user_id = ActiveRecord::Base.connection.quote(user_id)
       sql = "DISTINCT CASE WHEN inviter_id = #{quoted_user_id} THEN invitee_id ELSE inviter_id END"
       Friend.where(status: :accepted)
             .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
-            .pluck(Arel.sql(sql))
+            .select(Arel.sql(sql))
     end
 
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
