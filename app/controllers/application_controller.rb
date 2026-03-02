@@ -3,6 +3,7 @@
 # Main application controller
 class ApplicationController < ActionController::Base
   http_basic_authenticate_with name: Rails.application.credentials.http_basic.user, password: Rails.application.credentials.http_basic.password, if: -> { Rails.env.staging? }
+  class_attribute :missing_recaptcha_keys_warning_logged, instance_writer: false, default: false
 
   before_action :redirect_www_to_canonical_host
   before_action :authenticate_user!
@@ -33,12 +34,19 @@ class ApplicationController < ActionController::Base
     return false unless enabled
     return true if recaptcha_configured?
 
-    Rails.logger.warn("[captcha] RECAPTCHA is enabled but missing site/secret keys. Captcha protection disabled.")
+    log_missing_recaptcha_keys_once
     false
   end
 
   def recaptcha_configured?
     ENV["RECAPTCHA_SITE_KEY"].present? && ENV["RECAPTCHA_SECRET_KEY"].present?
+  end
+
+  def log_missing_recaptcha_keys_once
+    return if self.class.missing_recaptcha_keys_warning_logged
+
+    Rails.logger.warn("[captcha] RECAPTCHA is enabled but missing site/secret keys. Captcha protection disabled.")
+    self.class.missing_recaptcha_keys_warning_logged = true
   end
 
   def invalid_url!

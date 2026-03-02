@@ -7,6 +7,7 @@ RSpec.describe ApplicationController do
     subject(:captcha_required) { described_class.new.send(:captcha_required?) }
 
     before do
+      described_class.missing_recaptcha_keys_warning_logged = false
       allow(ENV).to receive(:fetch).and_call_original
       allow(ENV).to receive(:[]).and_call_original
     end
@@ -40,8 +41,9 @@ RSpec.describe ApplicationController do
         allow(ENV).to receive(:[]).with("RECAPTCHA_SECRET_KEY").and_return(nil)
       end
 
-      it "returns false and logs a warning" do
+      it "returns false and logs a warning once" do
         expect(Rails.logger).to receive(:warn).with(/RECAPTCHA is enabled but missing site\/secret keys/)
+        expect(captcha_required).to be(false)
         expect(captcha_required).to be(false)
       end
     end
