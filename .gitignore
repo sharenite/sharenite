@@ -6,6 +6,8 @@
 
 # Ignore bundler config.
 /.bundle
+/.bundle_home
+/vendor/bundle
 
 # Ignore all logfiles and tempfiles.
 /log/*
@@ -24,6 +26,7 @@
 /tmp/storage/*
 !/tmp/storage/
 !/tmp/storage/.keep
+/tmp_root_owned_backup_*/
 
 /public/assets
 
@@ -58,3 +61,8 @@ docker/.env
 .envrc.local
 .envrc.staging
 .envrc.production
+
+# Local-only override: don't track tmp keep files in this clone
+/tmp/.keep
+/tmp/pids/.keep
+/tmp/storage/.keep

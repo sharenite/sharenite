@@ -6,15 +6,9 @@ class LibrarySyncConsumer < ApplicationConsumer
   InvalidSyncPayloadError = Class.new(StandardError)
 
   def variables(payload)
-    @user = User.find(payload["current_user_id"])
-    @sync_job = SyncJob.find(payload["job_id"])
-    # rubocop:disable Style/GlobalVars
-    raw_games = $redis.get("syncjob:#{@sync_job.id}")
-    raise MissingSyncPayloadError, "Missing Redis payload for syncjob:#{@sync_job.id}" if raw_games.blank?
-
-    @games = JSON.parse(raw_games)
-    # rubocop:enable Style/GlobalVars
-    @type = payload["type"]
+    assign_sync_context(payload)
+    load_sync_payload!
+    assign_payload_metadata(payload)
   rescue JSON::ParserError => e
     raise InvalidSyncPayloadError, "Invalid Redis payload for syncjob:#{@sync_job.id}: #{e.message}"
   end
@@ -28,16 +22,7 @@ class LibrarySyncConsumer < ApplicationConsumer
   end
 
   def do_processing
-    case @type
-    when "full"
-      FullLibrarySyncService.new(@games, @user, @sync_job).call
-    when "partial"
-      PartialLibrarySyncService.new(@games, @user, @sync_job).call
-    when "delete"
-      DeleteGamesSyncService.new(@games, @user, @sync_job).call
-    when "single"
-      raise "Method not implemented, check back later"
-    end
+    sync_service_for_type.call
   end
 
   def end_processing
@@ -85,6 +70,51 @@ class LibrarySyncConsumer < ApplicationConsumer
     # rubocop:disable Style/GlobalVars
     $redis.expire("syncjob:#{@sync_job.id}", 1)
     # rubocop:enable Style/GlobalVars
+  end
+
+  def assign_sync_context(payload)
+    @user = User.find(payload["current_user_id"])
+    @sync_job = SyncJob.find(payload["job_id"])
+  end
+
+  def load_sync_payload!
+    # rubocop:disable Style/GlobalVars
+    raw_games = $redis.get("syncjob:#{@sync_job.id}")
+    # rubocop:enable Style/GlobalVars
+    raise MissingSyncPayloadError, "Missing Redis payload for syncjob:#{@sync_job.id}" if raw_games.blank?
+
+    @games = JSON.parse(raw_games)
+  end
+
+  def assign_payload_metadata(payload)
+    @type = payload["type"]
+    @sync_batch_id = payload["sync_batch_id"]
+    @chunk_index = payload["chunk_index"]
+    @total_chunks = payload["total_chunks"]
+  end
+
+  def sync_service_for_type
+    case @type
+    when "full"
+      full_sync_service
+    when "partial"
+      PartialLibrarySyncService.new(@games, @user, @sync_job)
+    when "delete"
+      DeleteGamesSyncService.new(@games, @user, @sync_job)
+    when "single"
+      raise "Method not implemented, check back later"
+    end
+  end
+
+  def full_sync_service
+    FullLibrarySyncService.new(
+      @games,
+      @user,
+      @sync_job,
+      sync_batch_id: @sync_batch_id,
+      chunk_index: @chunk_index,
+      total_chunks: @total_chunks
+    )
   end
 
   # FOR TESTING FIFO PER USER

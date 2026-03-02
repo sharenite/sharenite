@@ -3,10 +3,13 @@
 # Job that performs a full library sync asynchornously
 # rubocop:disable Metrics:ClassLength
 class FullLibrarySyncService
-  def initialize(games, user, sync_job)
+  def initialize(games, user, sync_job, sync_batch_id: nil, chunk_index: 0, total_chunks: 1)
     @games = games
     @user = user
     @sync_job = sync_job
+    @sync_batch_id = sync_batch_id
+    @chunk_index = chunk_index.to_i
+    @total_chunks = total_chunks.to_i
   end
 
   def call
@@ -26,8 +29,6 @@ class FullLibrarySyncService
   end
 
   def synchronise_games
-    @user.games.where.not(playnite_id: @games.pluck("id")).or(@user.games.where(playnite_id: nil)).destroy_all
-
     @games.each do |playnite_game|
       sharenite_game = @user.games.find_or_create_by!(playnite_id: playnite_game["id"])
 
@@ -90,6 +91,41 @@ class FullLibrarySyncService
         )
       )
     end
+
+    delete_missing_games if final_chunk?
+  end
+
+  def delete_missing_games
+    ids_to_keep = full_sync_ids
+    @user.games.where.not(playnite_id: ids_to_keep).or(@user.games.where(playnite_id: nil)).destroy_all
+    clear_full_sync_ids if @sync_batch_id.present?
+  end
+
+  def full_sync_ids
+    return @games.pluck("id") if @sync_batch_id.blank?
+
+    # rubocop:disable Style/GlobalVars
+    raw_ids = $redis.get(full_sync_ids_redis_key)
+    # rubocop:enable Style/GlobalVars
+    return @games.pluck("id") if raw_ids.blank?
+
+    JSON.parse(raw_ids)
+  rescue JSON::ParserError
+    @games.pluck("id")
+  end
+
+  def clear_full_sync_ids
+    # rubocop:disable Style/GlobalVars
+    $redis.del(full_sync_ids_redis_key)
+    # rubocop:enable Style/GlobalVars
+  end
+
+  def full_sync_ids_redis_key
+    "full_sync_ids:#{@sync_batch_id}"
+  end
+
+  def final_chunk?
+    @chunk_index >= @total_chunks - 1
   end
 
   def properties(playnite_game, property_name)

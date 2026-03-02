@@ -1,5 +1,7 @@
 .games-search-form {
   width: 100%;
+  position: relative;
+  z-index: 20;
 }
 
 .games-search-form .form-control,
@@ -13,6 +15,15 @@
 
 .games-search-form .choices {
   margin-bottom: 0;
+  position: relative;
+}
+
+.games-search-form .choices.is-open {
+  z-index: 30;
+}
+
+.games-search-form .choices .choices__list--dropdown {
+  z-index: 40;
 }
 
 .games-search-form .choices__inner {
@@ -79,6 +90,8 @@ header .nav-link.active {
   border: 1px solid var(--bs-border-color);
   border-radius: 0.5rem;
   background: var(--bs-body-bg);
+  position: relative;
+  z-index: 1;
   overflow-x: auto;
   overflow-y: visible;
 }

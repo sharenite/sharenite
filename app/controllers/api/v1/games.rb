@@ -7,8 +7,8 @@ module API
     class Games < Grape::API
       include API::V1::Defaults
 
-      MAX_SYNCJOB_PAYLOAD_BYTES = ENV.fetch("SYNCJOB_MAX_PAYLOAD_BYTES", 5.megabytes).to_i
-      MAX_SYNCJOB_GAMES_PER_JOB = ENV.fetch("SYNCJOB_MAX_GAMES_PER_JOB", 1_000).to_i
+      SYNCJOB_CHUNK_GAMES_PER_JOB = ENV.fetch("SYNCJOB_CHUNK_GAMES_PER_JOB", ENV.fetch("SYNCJOB_MAX_GAMES_PER_JOB", 1_000)).to_i
+      FULL_SYNC_IDS_REDIS_TTL = 24.hours
 
       resource :games do
         desc "Return all games"
@@ -60,6 +60,7 @@ module API
 
       helpers do
         def enqueue_sync_jobs!(type:, base_job_name:, games:)
+          sync_batch_id = prepare_full_sync_batch_id(type, games)
           chunked_games = chunk_sync_payload(type, games)
           total_chunks = chunked_games.size
           chunked_games.each_with_index do |chunk_games, chunk_index|
@@ -69,33 +70,37 @@ module API
                 type:,
                 base_job_name:,
                 total_chunks:,
-                chunk_index:
+                chunk_index:,
+                sync_batch_id:
               }
             )
           end
         end
 
-        def chunk_sync_payload(type, games)
-          payload_json = games.to_json
-          payload_size = payload_json.bytesize
+        def prepare_full_sync_batch_id(type, games)
+          return nil unless type == "full"
 
-          Rails.logger.debug { "[syncjob] type=#{type} user_id=#{current_user.id} payload_size_mb=#{(payload_size.to_f / 1024 / 1024).round(2)}" }
-
-          return [games] if payload_size <= MAX_SYNCJOB_PAYLOAD_BYTES
-          if type == "full"
-            error!(
-              "Full library sync payload exceeds #{MAX_SYNCJOB_PAYLOAD_BYTES} bytes. Please reduce sync payload size or increase server limit.",
-              413
-            )
-          end
-
-          chunk_by_count_and_bytes(type, games)
+          sync_batch_id = SecureRandom.uuid
+          persist_full_sync_ids(sync_batch_id, games)
+          sync_batch_id
         end
 
-        def sync_type_for_chunk(type, chunk_index)
-          return type unless type == "full" && chunk_index.positive?
+        def persist_full_sync_ids(sync_batch_id, games)
+          ids = games.filter_map { |game| game["id"] }.uniq
+          # rubocop:disable Style/GlobalVars
+          $redis.set(full_sync_ids_redis_key(sync_batch_id), ids.to_json, ex: FULL_SYNC_IDS_REDIS_TTL.to_i)
+          # rubocop:enable Style/GlobalVars
+        end
 
-          "partial"
+        def full_sync_ids_redis_key(sync_batch_id)
+          "full_sync_ids:#{sync_batch_id}"
+        end
+
+        def chunk_sync_payload(type, games)
+          Rails.logger.debug { "[syncjob] type=#{type} user_id=#{current_user.id} games_count=#{games.size}" }
+          games.each_slice(SYNCJOB_CHUNK_GAMES_PER_JOB).to_a
+        rescue ArgumentError
+          [games]
         end
 
         def sync_job_name(base_job_name, total_chunks, chunk_index)
@@ -106,19 +111,19 @@ module API
 
         def enqueue_single_sync_job!(type:, chunk_games:, metadata:)
           payload_json = chunk_games.to_json
-          job = create_sync_job(payload_size: payload_json.bytesize, **metadata)
+          job = create_sync_job(metadata:, payload_size: payload_json.bytesize)
 
           persist_sync_payload(job, payload_json)
-          publish_sync_job(job, type)
+          publish_sync_job(job, type, metadata)
           job
         end
 
-        def create_sync_job(base_job_name:, total_chunks:, chunk_index:, payload_size:)
+        def create_sync_job(metadata:, payload_size:)
           current_user.sync_jobs.create!(
-            name: sync_job_name(base_job_name, total_chunks, chunk_index),
+            name: sync_job_name(metadata[:base_job_name], metadata[:total_chunks], metadata[:chunk_index]),
             payload_size_bytes: payload_size,
-            payload_chunks: total_chunks,
-            payload_chunk_index: chunk_index
+            payload_chunks: metadata[:total_chunks],
+            payload_chunk_index: metadata[:chunk_index]
           )
         end
 
@@ -128,10 +133,17 @@ module API
           # rubocop:enable Style/GlobalVars
         end
 
-        def publish_sync_job(job, type)
+        def publish_sync_job(job, type, metadata)
           Karafka.producer.produce_sync(
             topic: "library.sync",
-            payload: { type:, current_user_id: current_user.id, job_id: job.id }.to_json,
+            payload: {
+              type:,
+              current_user_id: current_user.id,
+              job_id: job.id,
+              total_chunks: metadata[:total_chunks],
+              chunk_index: metadata[:chunk_index],
+              sync_batch_id: metadata[:sync_batch_id]
+            }.to_json,
             key: current_user.id,
             partition_key: current_user.id
           )
@@ -139,7 +151,7 @@ module API
 
         def enqueue_chunk_with_recovery(chunk_games:, metadata:)
           job = enqueue_single_sync_job!(
-            type: sync_type_for_chunk(metadata[:type], metadata[:chunk_index]),
+            type: metadata[:type],
             chunk_games:,
             metadata: {
               base_job_name: metadata[:base_job_name],
@@ -152,42 +164,6 @@ module API
           raise
         end
 
-        def chunk_by_count_and_bytes(type, games)
-          chunks = []
-          current_chunk = []
-          current_chunk_bytes = 2 # JSON array brackets: []
-          games.each do |game|
-            game_json = game.to_json
-            game_bytes = json_entry_size(current_chunk, game_json)
-            current_chunk, current_chunk_bytes = roll_chunk_if_needed(chunks, current_chunk, current_chunk_bytes, game_bytes)
-            validate_single_game_payload_size!(type, game_json)
-            current_chunk << game
-            current_chunk_bytes += game_bytes
-          end
-          chunks << current_chunk if current_chunk.any?
-          chunks
-        end
-
-        def roll_chunk_if_needed(chunks, current_chunk, current_chunk_bytes, game_bytes)
-          return [current_chunk, current_chunk_bytes] unless current_chunk.any? && chunk_limit_reached?(current_chunk, current_chunk_bytes, game_bytes)
-
-          chunks << current_chunk
-          [[], 2]
-        end
-
-        def chunk_limit_reached?(chunk, chunk_bytes, next_game_bytes)
-          chunk.size >= MAX_SYNCJOB_GAMES_PER_JOB || (chunk_bytes + next_game_bytes > MAX_SYNCJOB_PAYLOAD_BYTES)
-        end
-
-        def json_entry_size(current_chunk, game_json)
-          game_json.bytesize + (current_chunk.empty? ? 0 : 1) # comma separator
-        end
-
-        def validate_single_game_payload_size!(type, game_json)
-          return unless game_json.bytesize + 2 > MAX_SYNCJOB_PAYLOAD_BYTES
-
-          error!("A single game payload is too large for #{type} sync (#{MAX_SYNCJOB_PAYLOAD_BYTES} bytes limit).", 413)
-        end
       end
     end
     # rubocop:enable Metrics/ClassLength
