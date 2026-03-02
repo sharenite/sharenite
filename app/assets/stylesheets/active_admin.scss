@@ -15,3 +15,118 @@
 // For example, to change the default status-tag color:
 //
 //   .status_tag { background: #6090DB; }
+
+// Dashboard polish: scoped to admin dashboard page only.
+body.admin_dashboard {
+  #titlebar h2 {
+    letter-spacing: 0.01em;
+  }
+
+  .admin-dashboard-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .admin-kpi-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    border: 1px solid #d8e2f1;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    padding: 12px;
+  }
+
+  .admin-kpi-label {
+    color: #53627a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .admin-kpi-value {
+    color: #1b2638;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-top: 6px;
+  }
+
+  .admin-kpi-meta {
+    color: #5f6f87;
+    font-size: 12px;
+    margin-top: 6px;
+  }
+
+  .admin-kpi-trend {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 8px;
+    padding: 2px 8px;
+  }
+
+  .admin-kpi-trend.is-up {
+    background: #e7f9ee;
+    border-color: #b8ebca;
+    color: #146c37;
+  }
+
+  .admin-kpi-trend.is-down {
+    background: #ffecec;
+    border-color: #f7c0c0;
+    color: #aa2222;
+  }
+
+  .admin-kpi-trend.is-neutral {
+    background: #eef2f8;
+    border-color: #d4dce8;
+    color: #4f5f78;
+  }
+
+  .columns .panel {
+    border-radius: 12px;
+    border: 1px solid #d7deea;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    overflow: hidden;
+  }
+
+  .columns .panel > h3 {
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+    border-bottom: 1px solid #d7deea;
+    color: #22324a;
+    font-weight: 700;
+  }
+
+  .columns .panel_contents {
+    background: #ffffff;
+  }
+
+  .attributes_table table th {
+    color: #55657d;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    width: 40%;
+  }
+
+  .attributes_table table td {
+    color: #1f2a3d;
+    font-weight: 600;
+  }
+
+  table.index_table th {
+    background: #f3f7ff;
+    color: #43536c;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  table.index_table tbody tr:hover td {
+    background: #f9fbff;
+  }
+}

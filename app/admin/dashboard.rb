@@ -18,6 +18,13 @@ ActiveAdmin.register_page "Dashboard" do
         format("%+.1f%%", change)
       end
     end
+    trend_class = lambda do |change_text|
+      return "is-neutral" unless change_text.start_with?("+", "-")
+      return "is-up" if change_text.start_with?("+")
+
+      "is-down"
+    end
+    number = ->(value) { helpers.number_with_delimiter(value) }
 
     users_total = User.count
     users_new_this_month = User.where(created_at: month_start..now).count
@@ -69,86 +76,124 @@ ActiveAdmin.register_page "Dashboard" do
       .order("games_added_count DESC")
       .limit(8)
 
-    columns do
-      column do
-        panel "Users Overview" do
-          attributes_table_for :users do
-            row("Total users") { users_total }
-            row("Confirmed users") { users_confirmed_total }
-            row("New users (this month)") { "#{users_new_this_month} (MoM: #{percent_change.call(users_new_this_month, users_new_prev_month)})" }
-            row("Confirmed this month") { users_confirmed_this_month }
-            row("Active by sign-in (30d)") { users_active_sign_in_30d }
-            row("Active by sync job (30d)") { sync_active_users_30d }
-          end
+    users_mom = percent_change.call(users_new_this_month, users_new_prev_month)
+    games_mom = percent_change.call(games_this_month, games_prev_month)
+
+    div class: "admin-dashboard" do
+      div class: "admin-dashboard-kpis" do
+        div class: "admin-kpi-card" do
+          div "Total users", class: "admin-kpi-label"
+          div number.call(users_total), class: "admin-kpi-value"
+          div "Confirmed: #{number.call(users_confirmed_total)}", class: "admin-kpi-meta"
+        end
+        div class: "admin-kpi-card" do
+          div "New users this month", class: "admin-kpi-label"
+          div number.call(users_new_this_month), class: "admin-kpi-value"
+          span users_mom, class: "admin-kpi-trend #{trend_class.call(users_mom)}"
+        end
+        div class: "admin-kpi-card" do
+          div "Active users (30d)", class: "admin-kpi-label"
+          div number.call(users_active_sign_in_30d), class: "admin-kpi-value"
+          div "Sync-active: #{number.call(sync_active_users_30d)}", class: "admin-kpi-meta"
+        end
+        div class: "admin-kpi-card" do
+          div "Total games", class: "admin-kpi-label"
+          div number.call(games_total), class: "admin-kpi-value"
+          div "Installed: #{number.call(games_installed)}", class: "admin-kpi-meta"
+        end
+        div class: "admin-kpi-card" do
+          div "New games this month", class: "admin-kpi-label"
+          div number.call(games_this_month), class: "admin-kpi-value"
+          span games_mom, class: "admin-kpi-trend #{trend_class.call(games_mom)}"
+        end
+        div class: "admin-kpi-card" do
+          div "Sync success rate", class: "admin-kpi-label"
+          div sync_success_rate, class: "admin-kpi-value"
+          div "Avg processing: #{sync_avg_processing_time || 'N/A'}s", class: "admin-kpi-meta"
         end
       end
 
-      column do
-        panel "Activity Correlation (30 days)" do
-          attributes_table_for :activity do
-            row("Active in both (sign-in + sync)") { users_active_both_30d }
-            row("Sign-in only") { users_sign_in_only_30d }
-            row("Sync-only") { users_sync_only_30d }
-          end
-          para "Useful to compare auth activity against actual library sync usage."
-        end
-      end
-    end
-
-    columns do
-      column do
-        panel "Sync Jobs Health (30 days)" do
-          attributes_table_for :sync_jobs do
-            row("Finished") { sync_finished_30d }
-            row("Failed") { sync_failed_30d }
-            row("Dead") { sync_dead_30d }
-            row("Running") { sync_running_30d }
-            row("Success rate (finished/(finished+failed+dead))") { sync_success_rate }
-            row("Avg processing time (s)") { sync_avg_processing_time || "N/A" }
-          end
-        end
-      end
-
-      column do
-        panel "Games Overview" do
-          attributes_table_for :games do
-            row("Total games") { games_total }
-            row("New games (this month)") { "#{games_this_month} (MoM: #{percent_change.call(games_this_month, games_prev_month)})" }
-            row("Games with activity in 30d") { games_with_recent_activity }
-            row("Installed games") { games_installed }
-            row("Favorite games") { games_favorite }
-            row("Games with notes") { games_with_notes }
-            row("Average games per user") { avg_games_per_user }
-          end
-        end
-      end
-    end
-
-    columns do
-      column do
-        panel "Top Users by Sync Jobs (30 days)" do
-          if top_sync_users.any?
-            table_for top_sync_users do
-              column("User") { |user| link_to(user.email, admin_user_path(user)) }
-              column("Sync jobs") { |user| user.read_attribute(:sync_jobs_count).to_i }
-              column("Last sign-in") { |user| user.last_sign_in_at&.strftime("%Y-%m-%d %H:%M") || "Never" }
+      columns do
+        column do
+          panel "Users Overview" do
+            attributes_table_for :users do
+              row("Total users") { number.call(users_total) }
+              row("Confirmed users") { number.call(users_confirmed_total) }
+              row("New users (this month)") { "#{number.call(users_new_this_month)} (MoM: #{users_mom})" }
+              row("Confirmed this month") { number.call(users_confirmed_this_month) }
+              row("Active by sign-in (30d)") { number.call(users_active_sign_in_30d) }
+              row("Active by sync job (30d)") { number.call(sync_active_users_30d) }
             end
-          else
-            para "No sync activity yet."
+          end
+        end
+
+        column do
+          panel "Activity Correlation (30 days)" do
+            attributes_table_for :activity do
+              row("Active in both (sign-in + sync)") { number.call(users_active_both_30d) }
+              row("Sign-in only") { number.call(users_sign_in_only_30d) }
+              row("Sync-only") { number.call(users_sync_only_30d) }
+            end
+            para "Useful to compare auth activity against actual library sync usage."
           end
         end
       end
 
-      column do
-        panel "Top Users by Added Games (30 days)" do
-          if top_games_added_users.any?
-            table_for top_games_added_users do
-              column("User") { |user| link_to(user.email, admin_user_path(user)) }
-              column("Games added") { |user| user.read_attribute(:games_added_count).to_i }
-              column("Total games now") { |user| user.games.count }
+      columns do
+        column do
+          panel "Sync Jobs Health (30 days)" do
+            attributes_table_for :sync_jobs do
+              row("Finished") { number.call(sync_finished_30d) }
+              row("Failed") { number.call(sync_failed_30d) }
+              row("Dead") { number.call(sync_dead_30d) }
+              row("Running") { number.call(sync_running_30d) }
+              row("Success rate (finished/(finished+failed+dead))") { sync_success_rate }
+              row("Avg processing time (s)") { sync_avg_processing_time || "N/A" }
             end
-          else
-            para "No game additions in the last 30 days."
+          end
+        end
+
+        column do
+          panel "Games Overview" do
+            attributes_table_for :games do
+              row("Total games") { number.call(games_total) }
+              row("New games (this month)") { "#{number.call(games_this_month)} (MoM: #{games_mom})" }
+              row("Games with activity in 30d") { number.call(games_with_recent_activity) }
+              row("Installed games") { number.call(games_installed) }
+              row("Favorite games") { number.call(games_favorite) }
+              row("Games with notes") { number.call(games_with_notes) }
+              row("Average games per user") { avg_games_per_user }
+            end
+          end
+        end
+      end
+
+      columns do
+        column do
+          panel "Top Users by Sync Jobs (30 days)" do
+            if top_sync_users.any?
+              table_for top_sync_users do
+                column("User") { |user| link_to(user.email, admin_user_path(user)) }
+                column("Sync jobs") { |user| number.call(user.read_attribute(:sync_jobs_count).to_i) }
+                column("Last sign-in") { |user| user.last_sign_in_at&.strftime("%Y-%m-%d %H:%M") || "Never" }
+              end
+            else
+              para "No sync activity yet."
+            end
+          end
+        end
+
+        column do
+          panel "Top Users by Added Games (30 days)" do
+            if top_games_added_users.any?
+              table_for top_games_added_users do
+                column("User") { |user| link_to(user.email, admin_user_path(user)) }
+                column("Games added") { |user| number.call(user.read_attribute(:games_added_count).to_i) }
+                column("Total games now") { |user| number.call(user.games.count) }
+              end
+            else
+              para "No game additions in the last 30 days."
+            end
           end
         end
       end
