@@ -86,6 +86,10 @@ module Profiles
       return false unless current_user
       return false if @profile.privacy_private?
 
+      accepted_friendship_with_profile_user?
+    end
+
+    def accepted_friendship_with_profile_user?
       Friend.where(status: :accepted).exists?(
         ["(inviter_id = :current_user_id AND invitee_id = :profile_user_id) OR " \
          "(invitee_id = :current_user_id AND inviter_id = :profile_user_id)",

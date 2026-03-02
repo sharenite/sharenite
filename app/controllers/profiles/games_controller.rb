@@ -28,7 +28,9 @@ module Profiles
       "status_desc" => "(SELECT LOWER(completion_statuses.name) FROM completion_statuses WHERE completion_statuses.id = games.completion_status_id) DESC NULLS LAST, LOWER(games.name) ASC"
     }.freeze
 
+    before_action :check_game_library_access_profile, only: %i[index show]
     before_action :game, only: %i[show edit update destroy]
+    skip_before_action :check_general_access_profile, only: %i[index show]
 
     def index
       set_games
@@ -74,6 +76,23 @@ module Profiles
 
     private
 
+    def check_game_library_access_profile
+      set_profile
+      return if profile_own?
+      return if @profile.game_library_privacy_public?
+      return if @profile.game_library_privacy_friendly? && game_library_friend?
+
+      redirect_to_profiles_with_notice
+    rescue ActiveRecord::RecordNotFound
+      redirect_to_profiles_with_notice
+    end
+
+    def game_library_friend?
+      return false unless current_user
+
+      accepted_friendship_with_profile_user?
+    end
+
     def set_sync_jobs
       return if @current_user.nil? || @profile != @current_user.profile
 
@@ -82,8 +101,11 @@ module Profiles
     end
 
     def game
+      set_profile if @profile.blank?
       @game = @profile.user.games.find_by(id: params[:id])
       @game ||= redirect_to_games_with_notice # defined in app controller
+    rescue ActiveRecord::RecordNotFound
+      redirect_to_games_with_notice
     end
 
     def filter_games
