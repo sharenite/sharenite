@@ -63,7 +63,7 @@ module Profiles
         if updated
           format.turbo_stream { redirect_to profile_game_path(@profile, @game) }
         else
-          format.turbo_stream { render turbo_stream: turbo_stream.replace("game_errors", partial: "game_errors") }
+          format.turbo_stream { render turbo_stream: turbo_stream.replace("profile_errors", partial: "game_errors") }
         end
       end
     end
