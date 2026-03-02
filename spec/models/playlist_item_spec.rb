@@ -12,7 +12,7 @@ RSpec.describe PlaylistItem do
       duplicate = build(:playlist_item, playlist:, igdb_cache:, order: 2)
 
       expect(duplicate).not_to be_valid
-      expect(duplicate.errors[:igdb_cache_id]).to include("is already added to this playlist")
+      expect(duplicate.errors[:igdb_cache_id]).to include("IGDB ID is already added to this playlist.")
     end
 
     it "enforces unique order per playlist" do

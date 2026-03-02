@@ -6,7 +6,8 @@ class PlaylistItem < ApplicationRecord
   belongs_to :igdb_cache
 
   # rubocop:disable Rails/I18nLocaleTexts
-  validates :igdb_cache_id, uniqueness: { scope: :playlist_id, message: "is already added to this playlist" }
+  validates :igdb_cache_id,
+            uniqueness: { scope: :playlist_id, message: "IGDB ID is already added to this playlist." }
   validates :order, presence: true
   validates :order, uniqueness: { scope: :playlist_id, message: "position is already used in this playlist" }
   # rubocop:enable Rails/I18nLocaleTexts

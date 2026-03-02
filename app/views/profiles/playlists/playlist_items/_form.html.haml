@@ -1,6 +1,5 @@
 = form_for [@profile, @playlist, @playlist_item] do |f|
-  = turbo_frame_tag :playlist_item_errors do
-    = render "playlist_item_errors"
+  = render "playlist_item_errors"
 
   .mb-3
     = f.label :order, class: "form-label"
@@ -9,7 +8,7 @@
 
   = f.fields_for @igdb_cache do |igdb_cache|
     .mb-3
-      = igdb_cache.label :igdb_id, class: "form-label"
+      = igdb_cache.label :igdb_id, "IGDB ID", class: "form-label"
       = igdb_cache.text_field :igdb_id, class: "form-control", aria: { describedby: "playlist_item_igdb_id_help" }
       .form-text#playlist_item_igdb_id_help IGDB ID of game to connect.
     .mb-3

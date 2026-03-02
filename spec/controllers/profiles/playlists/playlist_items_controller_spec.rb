@@ -25,7 +25,43 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-      expect(response.body).to include("IGDB entry was not found for ID 999999.")
+      expect(response.body).to include("IGDB ID not found.")
+    end
+
+    it "renders inline error when IGDB id is already in playlist" do
+      igdb_cache = create(:igdb_cache, igdb_id: 3)
+      create(:playlist_item, playlist:, igdb_cache:, order: 1)
+      allow(IgdbCache).to receive(:get_by_igdb_id).with("3").and_return(igdb_cache)
+
+      post :create,
+           params: {
+             profile_id: owner.profile.slug,
+             playlist_id: playlist.id,
+             playlist_item: {
+               order: 2,
+               igdb_cache: { igdb_id: "3" }
+             }
+           },
+           format: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("IGDB ID is already added to this playlist.")
+    end
+
+    it "renders inline error when IGDB id is blank" do
+      post :create,
+           params: {
+             profile_id: owner.profile.slug,
+             playlist_id: playlist.id,
+             playlist_item: {
+               order: 2,
+               igdb_cache: { igdb_id: "" }
+             }
+           },
+           format: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("IGDB ID must exist.")
     end
   end
 
@@ -53,7 +89,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-      expect(response.body).to include("IGDB entry was not found for ID 888888.")
+      expect(response.body).to include("IGDB ID not found.")
     end
   end
 
