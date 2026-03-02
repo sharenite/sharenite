@@ -2,13 +2,21 @@
 
 # Example consumer that prints messages payloads
 class LibrarySyncConsumer < ApplicationConsumer
+  MissingSyncPayloadError = Class.new(StandardError)
+  InvalidSyncPayloadError = Class.new(StandardError)
+
   def variables(payload)
     @user = User.find(payload["current_user_id"])
     @sync_job = SyncJob.find(payload["job_id"])
     # rubocop:disable Style/GlobalVars
-    @games = JSON.parse($redis.get("syncjob:#{@sync_job.id}"))
+    raw_games = $redis.get("syncjob:#{@sync_job.id}")
+    raise MissingSyncPayloadError, "Missing Redis payload for syncjob:#{@sync_job.id}" if raw_games.blank?
+
+    @games = JSON.parse(raw_games)
     # rubocop:enable Style/GlobalVars
     @type = payload["type"]
+  rescue JSON::ParserError => e
+    raise InvalidSyncPayloadError, "Invalid Redis payload for syncjob:#{@sync_job.id}: #{e.message}"
   end
 
   def start_processing
@@ -48,7 +56,7 @@ class LibrarySyncConsumer < ApplicationConsumer
       do_processing
       end_processing
     rescue StandardError => e
-      @sync_job.status_failed!
+      @sync_job&.status_failed!
       Appsignal.set_error(e)
       raise e
     end

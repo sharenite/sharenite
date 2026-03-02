@@ -50,11 +50,11 @@ module Profiles
     end
 
     def update
-      igdb_id = params.dig(:game, :igdb_cache, :igdb_id)
-      igdb_cache = nil
-      igdb_cache = IgdbCache.get_by_igdb_id(igdb_id) if igdb_id.present?
+      should_update_igdb_cache = igdb_cache_update_requested?
+      igdb_cache = resolved_igdb_cache_from_params if should_update_igdb_cache
       respond_to do |format|
-        if @game.update(igdb_cache:)
+        updated = should_update_igdb_cache ? @game.update(igdb_cache:) : true
+        if updated
           format.turbo_stream { redirect_to profile_game_path(@profile, @game) }
         else
           format.turbo_stream { render turbo_stream: turbo_stream.replace("game_errors", partial: "game_errors") }
@@ -232,6 +232,17 @@ module Profiles
       Date.iso8601(value)
     rescue ArgumentError
       nil
+    end
+
+    def igdb_cache_update_requested?
+      params.dig(:game, :igdb_cache)&.key?(:igdb_id)
+    end
+
+    def resolved_igdb_cache_from_params
+      igdb_id = params.dig(:game, :igdb_cache, :igdb_id)
+      return nil if igdb_id.blank?
+
+      IgdbCache.get_by_igdb_id(igdb_id)
     end
 
     def set_games
