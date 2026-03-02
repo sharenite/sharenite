@@ -5,6 +5,14 @@
     - @sync_jobs.each do |sync_job|
       = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
       .br
+- unless @failed_sync_jobs.nil? || @failed_sync_jobs.count.zero?
+  .alert.alert-danger
+    = "Some recent synchronisations failed:"
+    .br
+    - @failed_sync_jobs.each do |sync_job|
+      = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
+      .br
+    = "Please retry synchronization from the plugin."
 .row
   .col-12
     = render "search_form"
