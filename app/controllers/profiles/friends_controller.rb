@@ -101,12 +101,9 @@ module Profiles
 
     private
 
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
     def set_friends
-      scope = Profile.where(user_id: accepted_friend_user_ids_scope)
-                     .where.not(privacy: :private)
-                     .joins(:user)
-                     .select("profiles.*, COALESCE(users.games_count, 0) AS games_count")
+      scope = base_friends_scope
 
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
@@ -114,8 +111,7 @@ module Profiles
       games_from = parse_games_count_param(:games_from)
       games_to = parse_games_count_param(:games_to)
 
-      scope = scope.where("COALESCE(users.games_count, 0) >= ?", games_from) unless games_from.nil?
-      scope = scope.where("COALESCE(users.games_count, 0) <= ?", games_to) unless games_to.nil?
+      scope = apply_games_count_filter(scope, games_from:, games_to:)
 
       ordered_scope = scope.order("profiles.name ASC")
       @friends_total_count = ordered_scope.except(:select, :order).count
@@ -161,10 +157,7 @@ module Profiles
                   .select(:id)
 
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
-      scope = scope.where("COALESCE(users.games_count, 0) >= ?", games_from) if games_from.present?
-      scope = scope.where("COALESCE(users.games_count, 0) <= ?", games_to) if games_to.present?
-
-      scope
+      apply_user_games_count_filter(scope, games_from:, games_to:)
     end
 
     def redirect_tab(default_tab)
@@ -219,7 +212,59 @@ module Profiles
             .select(Arel.sql(sql))
     end
 
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+    def base_friends_scope
+      scope = Profile.where(user_id: accepted_friend_user_ids_scope)
+                     .where.not(privacy: :private)
+                     .joins(:user)
+      return scope.select("profiles.*, COALESCE(users.games_count, 0) AS games_count") if User.games_count_available?
+
+      scope.left_joins(user: :games)
+           .select("profiles.*, COUNT(games.id) AS games_count")
+           .group("profiles.id")
+    end
+
+    def apply_games_count_filter(scope, games_from:, games_to:)
+      return scope if games_from.nil? && games_to.nil?
+
+      comparator = User.games_count_available? ? "COALESCE(users.games_count, 0)" : "COUNT(games.id)"
+      apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
+    end
+
+    def apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
+      if User.games_count_available?
+        scope = scope.where("#{comparator} >= ?", games_from) unless games_from.nil?
+        return scope.where("#{comparator} <= ?", games_to) unless games_to.nil?
+
+        return scope
+      end
+
+      scope = scope.having("#{comparator} >= ?", games_from) unless games_from.nil?
+      return scope.having("#{comparator} <= ?", games_to) unless games_to.nil?
+
+      scope
+    end
+
+    def apply_user_games_count_filter(scope, games_from:, games_to:)
+      return scope if games_from.nil? && games_to.nil?
+
+      if User.games_count_available?
+        return apply_games_count_bounds(
+          scope,
+          comparator: "COALESCE(users.games_count, 0)",
+          games_from:,
+          games_to:
+        )
+      end
+
+      apply_games_count_bounds(
+        scope.left_joins(:games).group("users.id"),
+        comparator: "COUNT(games.id)",
+        games_from:,
+        games_to:
+      )
+    end
+
+    # rubocop:enable Metrics/AbcSize
   end
   # rubocop:enable Metrics/ClassLength
 end

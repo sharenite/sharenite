@@ -30,11 +30,8 @@ module Profiles
 
     private
 
-    # rubocop:disable Metrics/AbcSize
     def profiles_scope
-      scope = Profile.privacy_public
-                     .joins(:user)
-                     .select("profiles.*, COALESCE(users.games_count, 0) AS games_count")
+      scope = base_profiles_scope
 
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
@@ -42,12 +39,10 @@ module Profiles
       games_from = parse_games_count_param(:games_from)
       games_to = parse_games_count_param(:games_to)
 
-      scope = scope.where("COALESCE(users.games_count, 0) >= ?", games_from) unless games_from.nil?
-      scope = scope.where("COALESCE(users.games_count, 0) <= ?", games_to) unless games_to.nil?
+      scope = apply_games_count_filter(scope, games_from:, games_to:)
 
       scope.order("profiles.name ASC")
     end
-    # rubocop:enable Metrics/AbcSize
 
     def parse_games_count_param(key)
       value = params[key].to_s.strip
@@ -90,13 +85,49 @@ module Profiles
       is_own_profile = user_signed_in? && @current_user_id == profile_user_id
 
       {
-        games_count: @profile.user.games_count.to_i,
+        games_count: games_count_value(@profile.user),
         playlists_count: Playlist.where(user_id: profile_user_id).count,
         active_friends_count: Friend.where(status: :accepted)
                                     .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: profile_user_id)
                                     .count,
         pending_received_count: is_own_profile ? Friend.where(invitee_id: profile_user_id, status: :invited).count : 0
       }
+    end
+
+    def base_profiles_scope
+      scope = Profile.privacy_public.joins(:user)
+      return scope.select("profiles.*, COALESCE(users.games_count, 0) AS games_count") if User.games_count_available?
+
+      scope.left_joins(user: :games)
+           .select("profiles.*, COUNT(games.id) AS games_count")
+           .group("profiles.id")
+    end
+
+    def apply_games_count_filter(scope, games_from:, games_to:)
+      return scope if games_from.nil? && games_to.nil?
+
+      comparator = User.games_count_available? ? "COALESCE(users.games_count, 0)" : "COUNT(games.id)"
+      apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
+    end
+
+    def apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
+      if User.games_count_available?
+        scope = scope.where("#{comparator} >= ?", games_from) unless games_from.nil?
+        return scope.where("#{comparator} <= ?", games_to) unless games_to.nil?
+
+        return scope
+      end
+
+      scope = scope.having("#{comparator} >= ?", games_from) unless games_from.nil?
+      return scope.having("#{comparator} <= ?", games_to) unless games_to.nil?
+
+      scope
+    end
+
+    def games_count_value(user)
+      return user.games_count.to_i if User.games_count_available?
+
+      user.games.count
     end
   end
 end

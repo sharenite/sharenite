@@ -52,6 +52,10 @@ class User < ApplicationRecord
 "remember_created_at", "reset_password_sent_at", "reset_password_token", "sign_in_count", "unconfirmed_email", "updated_at"]
   end
 
+  def self.games_count_available?
+    columns_hash.key?("games_count")
+  end
+
   private
 
   def create_profile

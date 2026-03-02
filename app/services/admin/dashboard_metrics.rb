@@ -90,7 +90,7 @@ module Admin
                                   .where(games: { created_at: window_30_days })
                                   .select(
                                     "users.*, COUNT(games.id) AS games_added_count, " \
-                                    "users.games_count AS total_games_count"
+                                    "#{total_games_count_sql} AS total_games_count"
                                   )
                                   .group("users.id")
                                   .order("games_added_count DESC")
@@ -134,6 +134,14 @@ module Admin
       to = ActiveRecord::Base.connection.quote(range.end)
       upper_bound_operator = range.exclude_end? ? "<" : "<="
       "COUNT(*) FILTER (WHERE #{column_name} >= #{from} AND #{column_name} #{upper_bound_operator} #{to})"
+    end
+
+    def total_games_count_sql
+      if User.games_count_available?
+        "users.games_count"
+      else
+        "(SELECT COUNT(*) FROM games all_games WHERE all_games.user_id = users.id)"
+      end
     end
   end
   # rubocop:enable Metrics/ClassLength
