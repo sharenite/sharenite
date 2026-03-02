@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register Friend do
-    config.sort_order = "created_at_desc"
-    menu priority: 3
+  config.sort_order = "created_at_desc"
+  menu priority: 3
+  includes :inviter, :invitee
   
     # belongs_to :user, optional: true
     # includes :user
@@ -34,5 +35,5 @@ ActiveAdmin.register Friend do
     # end
   
     # filter :user_email, as: :string
-  end
+end
   

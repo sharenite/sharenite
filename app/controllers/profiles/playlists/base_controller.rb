@@ -72,7 +72,7 @@ module Profiles
         # rubocop:disable Rails/I18nLocaleTexts
         flash[:notice] = "Playlist not found or set to private."
         # rubocop:enable all
-        redirect_to profile_playlists_path
+        redirect_to profile_playlists_path(@profile || current_user.profile)
       end
     end
   end

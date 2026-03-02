@@ -1,35 +1,37 @@
-%h2
-  = "Edit #{resource_name.to_s.humanize}"
-= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, data: { turbo: false } }) do |f|
-  = render "devise/shared/error_messages", resource: resource
-  .mb-3
-    = f.label :email, {class: 'form-label'}
-    %br/
-    = f.email_field :email, autofocus: true, autocomplete: "email", class: 'form-control'
-  - if devise_mapping.confirmable? && resource.pending_reconfirmation?
-    %div
-      = "Currently waiting confirmation for: #{resource.unconfirmed_email}"
-  .mb-3
-    = f.label :password, {class: 'form-label'}
-    %i (leave blank if you don't want to change it)
-    %br/
-    = f.password_field :password, autocomplete: "new-password", class: 'form-control', "aria-describedby" => "password_help"
-    - if @minimum_password_length
-      .form-text#password_help
-        = @minimum_password_length
-        characters minimum
-  .mb-3
-    = f.label :password_confirmation, {class: 'form-label'}
-    %br/
-    = f.password_field :password_confirmation, autocomplete: "new-password", class: 'form-control'
-  .mb-3
-    = f.label :current_password, {class: 'form-label'}
-    %i (we need your current password to confirm your changes)
-    %br/
-    = f.password_field :current_password, autocomplete: "current-password", class: 'form-control'
-  .actions
-    = f.submit "Update", { class: 'btn btn-primary' }
-.mt-4
-  %p.mt-2 If you want to completely delete your account, use the button below.
-  = button_to "Cancel my account", registration_path(resource_name), form: { data: { turbo_confirm: "Are you sure? This action will completely delete your data from the system and is irreversible." } }, class: 'btn btn-danger', method: :delete
-  -# = link_to "Back", :back
+%h1.mb-3 Account settings
+
+.card.profiles-section-card.mb-3
+  .card-body
+    = form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, data: { turbo: false }, class: "profile-form-card" }) do |f|
+      = render "devise/shared/error_messages", resource: resource
+      .row.g-3
+        .col-12
+          = f.label :email, class: "form-label"
+          = f.email_field :email, autofocus: true, autocomplete: "email", class: "form-control"
+        - if devise_mapping.confirmable? && resource.pending_reconfirmation?
+          .col-12
+            .alert.alert-warning.py-2.mb-0
+              = "Currently waiting confirmation for: #{resource.unconfirmed_email}"
+        .col-12.col-lg-6
+          = f.label :password, class: "form-label"
+          = f.password_field :password, autocomplete: "new-password", class: "form-control", "aria-describedby" => "password_help"
+          .form-text#password_help
+            Leave blank if you don't want to change it.
+            - if @minimum_password_length
+              = " #{@minimum_password_length} characters minimum."
+        .col-12.col-lg-6
+          = f.label :password_confirmation, class: "form-label"
+          = f.password_field :password_confirmation, autocomplete: "new-password", class: "form-control"
+        .col-12
+          = f.label :current_password, class: "form-label"
+          = f.password_field :current_password, autocomplete: "current-password", class: "form-control", "aria-describedby" => "current_password_help"
+          .form-text#current_password_help We need your current password to confirm account changes.
+      .d-flex.flex-wrap.justify-content-end.gap-2.mt-3
+        = link_to "Back", profiles_path, class: "btn btn-outline-secondary"
+        = f.submit "Update account", class: "btn btn-primary"
+
+.card.profiles-section-card.border-danger-subtle
+  .card-body
+    %h2.h5.mb-2.text-danger Delete account
+    %p.text-muted.mb-3 This action permanently deletes your account and associated data.
+    = button_to "Cancel my account", registration_path(resource_name), form: { data: { turbo_confirm: "Are you sure? This action will completely delete your data from the system and is irreversible." } }, class: "btn btn-danger", method: :delete

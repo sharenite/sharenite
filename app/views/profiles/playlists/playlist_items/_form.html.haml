@@ -1,16 +1,22 @@
 = form_for [@profile, @playlist, @playlist_item] do |f|
-  = turbo_frame_tag :playlist_item_errors
+  = turbo_frame_tag :playlist_item_errors do
+    = render "playlist_item_errors"
+
   .mb-3
-    = f.label :order, {class: 'form-label'}
-    = f.number_field :order, {class: 'form-control', "aria-describedby" => "name_help"}
-    .form-text#name Order of the playlist item.
+    = f.label :order, class: "form-label"
+    = f.number_field :order, class: "form-control", min: 1, aria: { describedby: "playlist_item_order_help" }
+    .form-text#playlist_item_order_help Position of this game in the playlist.
+
   = f.fields_for @igdb_cache do |igdb_cache|
     .mb-3
-      = igdb_cache.label :igdb_id, {class: 'form-label'}
-      = igdb_cache.text_field :igdb_id, {class: 'form-control', "aria-describedby" => "name_help"}
-      .form-text#igdb_id IGDB ID of game to connect (putting in incorrect ID might cause an application error).
+      = igdb_cache.label :igdb_id, class: "form-label"
+      = igdb_cache.text_field :igdb_id, class: "form-control", aria: { describedby: "playlist_item_igdb_id_help" }
+      .form-text#playlist_item_igdb_id_help IGDB ID of game to connect.
     .mb-3
-      = igdb_cache.label :name, {class: 'form-label'}
-      = igdb_cache.text_field :name, {class: 'form-control', "aria-describedby" => "name_help", readonly: true}
-      .form-text#name Read only: name of IGDB entry.
-  = f.submit
+      = igdb_cache.label :name, class: "form-label"
+      = igdb_cache.text_field :name, class: "form-control", readonly: true, aria: { describedby: "playlist_item_igdb_name_help" }
+      .form-text#playlist_item_igdb_name_help Read-only name pulled from IGDB cache.
+
+  .d-flex.flex-wrap.gap-2.mt-3
+    = f.submit "Save item", class: "btn btn-primary"
+    = link_to "Back to playlist", profile_playlist_path(@profile, @playlist), class: "profiles-action-pill", data: { turbo_frame: "_top" }

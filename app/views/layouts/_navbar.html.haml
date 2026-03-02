@@ -3,6 +3,10 @@
     .container
       .d-flex.flex-wrap.align-items-center.justify-content-center.justify-content-lg-start
         - nav_link_class = ->(path, default_color = "text-white") { "nav-link px-2 #{current_page?(path) ? 'active text-white' : default_color}" }
+        - pending_friend_invites_count = 0
+        - if user_signed_in?
+          - pending_count = current_user.pending_inviters.count
+          - pending_friend_invites_count = pending_count > 99 ? "99+" : pending_count
         %ul.nav.col-10.col-sm-auto.me-sm-auto.mb-2.justify-content-center.mb-md-0
           %li
             = link_to 'Home', root_path, class: nav_link_class.call(root_path, "text-secondary")
@@ -12,7 +16,12 @@
             %li
               = link_to 'Games', profile_games_path(current_user.profile), class: nav_link_class.call(profile_games_path(current_user.profile))
             %li
-              = link_to 'Friends', profile_friends_path(current_user.profile), class: nav_link_class.call(profile_friends_path(current_user.profile))
+              = link_to profile_friends_path(current_user.profile, tab: "friends"), class: nav_link_class.call(profile_friends_path(current_user.profile, tab: "friends")) do
+                %span Friends
+                - if pending_friend_invites_count.to_i.positive?
+                  %span.badge.rounded-pill.text-bg-danger.ms-1.align-middle
+                    %i.bi.bi-bell-fill.me-1
+                    = pending_friend_invites_count
             %li
               = link_to 'Playlists', profile_playlists_path(current_user.profile), class: nav_link_class.call(profile_playlists_path(current_user.profile))
           %li
