@@ -16,8 +16,9 @@
 //
 //   .status_tag { background: #6090DB; }
 
-// Dashboard polish: scoped to admin dashboard page only.
-body.admin_dashboard {
+// Dashboard and stats polish.
+body.admin_dashboard,
+body.admin_stats {
   #titlebar h2 {
     letter-spacing: 0.01em;
   }
@@ -128,5 +129,71 @@ body.admin_dashboard {
 
   table.index_table tbody tr:hover td {
     background: #f9fbff;
+  }
+
+  .admin-stats-filters {
+    background: #fff;
+    border: 1px solid #d7deea;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    padding: 12px;
+  }
+
+  .admin-stats-filter-grid {
+    align-items: end;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .admin-stats-filter-grid label {
+    color: #53627a;
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .admin-stats-filter-grid input,
+  .admin-stats-filter-grid select {
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .admin-stats-filter-actions {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
+  .admin-mini-chart {
+    align-items: end;
+    display: flex;
+    gap: 6px;
+    min-height: 140px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+
+  .admin-mini-chart-col {
+    min-width: 44px;
+    text-align: center;
+  }
+
+  .admin-mini-chart-bar {
+    background: linear-gradient(180deg, #7aa3ff 0%, #3765d8 100%);
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 5px;
+    width: 100%;
+  }
+
+  .admin-mini-chart-label {
+    color: #55657d;
+    display: block;
+    font-size: 10px;
+    line-height: 1.2;
+    white-space: nowrap;
   }
 }

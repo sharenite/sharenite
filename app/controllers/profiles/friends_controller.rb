@@ -106,9 +106,8 @@ module Profiles
       scope = Profile.where(user_id: accepted_friend_user_ids)
                      .where.not(privacy: :private)
                      .joins(:user)
-                     .left_joins(user: :games)
-                     .select("profiles.*, COUNT(games.id) AS games_count")
-                     .group("profiles.id")
+                     .joins("LEFT JOIN (#{games_count_subquery.to_sql}) games_count_stats ON games_count_stats.user_id = profiles.user_id")
+                     .select("profiles.*, COALESCE(games_count_stats.games_count, 0) AS games_count")
 
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
@@ -116,13 +115,11 @@ module Profiles
       games_from = parse_games_count_param(:games_from)
       games_to = parse_games_count_param(:games_to)
 
-      scope = scope.having("COUNT(games.id) >= ?", games_from) unless games_from.nil?
-      scope = scope.having("COUNT(games.id) <= ?", games_to) unless games_to.nil?
+      scope = scope.where("COALESCE(games_count_stats.games_count, 0) >= ?", games_from) unless games_from.nil?
+      scope = scope.where("COALESCE(games_count_stats.games_count, 0) <= ?", games_to) unless games_to.nil?
 
       ordered_scope = scope.order("profiles.name ASC")
-      # Avoid counting the aggregated SELECT list ("profiles.*, COUNT(...) AS games_count"),
-      # which can produce invalid SQL in Postgres when ActiveRecord builds COUNT(...).
-      @friends_total_count = ordered_scope.except(:order).reselect("profiles.id").count.length
+      @friends_total_count = ordered_scope.except(:select, :order).count
       @friends = if @active_tab == "friends"
                    ordered_scope.page(params[:page]).per(25)
                  else
@@ -216,14 +213,17 @@ module Profiles
       )
     end
 
+    def games_count_subquery
+      Game.select("games.user_id, COUNT(games.id) AS games_count").group("games.user_id")
+    end
+
     def accepted_friend_user_ids
       user_id = @profile.user.id
-      rows = Friend.where(status: :accepted)
-                   .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
-                   .pluck(:inviter_id, :invitee_id)
-      rows.each_with_object([]) do |(inviter_id, invitee_id), ids|
-        ids << (inviter_id == user_id ? invitee_id : inviter_id)
-      end.uniq
+      quoted_user_id = ActiveRecord::Base.connection.quote(user_id)
+      sql = "DISTINCT CASE WHEN inviter_id = #{quoted_user_id} THEN invitee_id ELSE inviter_id END"
+      Friend.where(status: :accepted)
+            .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
+            .pluck(Arel.sql(sql))
     end
 
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength

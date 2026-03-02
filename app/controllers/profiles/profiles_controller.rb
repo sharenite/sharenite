@@ -34,9 +34,8 @@ module Profiles
     def profiles_scope
       scope = Profile.privacy_public
                      .joins(:user)
-                     .left_joins(user: :games)
-                     .select("profiles.*, COUNT(games.id) AS games_count")
-                     .group("profiles.id")
+                     .joins("LEFT JOIN (#{games_count_subquery.to_sql}) games_count_stats ON games_count_stats.user_id = profiles.user_id")
+                     .select("profiles.*, COALESCE(games_count_stats.games_count, 0) AS games_count")
 
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
@@ -44,12 +43,16 @@ module Profiles
       games_from = parse_games_count_param(:games_from)
       games_to = parse_games_count_param(:games_to)
 
-      scope = scope.having("COUNT(games.id) >= ?", games_from) unless games_from.nil?
-      scope = scope.having("COUNT(games.id) <= ?", games_to) unless games_to.nil?
+      scope = scope.where("COALESCE(games_count_stats.games_count, 0) >= ?", games_from) unless games_from.nil?
+      scope = scope.where("COALESCE(games_count_stats.games_count, 0) <= ?", games_to) unless games_to.nil?
 
       scope.order("profiles.name ASC")
     end
     # rubocop:enable Metrics/AbcSize
+
+    def games_count_subquery
+      Game.select("games.user_id, COUNT(games.id) AS games_count").group("games.user_id")
+    end
 
     def parse_games_count_param(key)
       value = params[key].to_s.strip
