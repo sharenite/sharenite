@@ -88,6 +88,23 @@ bin/kamal-staging setup
 bin/kamal-staging deploy
 ```
 
+Safer local flow (recommended if you do not have CI):
+
+```bash
+bin/deploy-staging-safe
+```
+
+This wrapper runs:
+1. `kamal deploy`
+2. `rails db:migrate` on staging web role
+3. post-deploy checks (`db:abort_if_pending_migrations`, schema contract checks, and recent 500/schema error scan)
+
+You can also run checks only:
+
+```bash
+bin/check-staging-health
+```
+
 Useful commands:
 
 ```bash
