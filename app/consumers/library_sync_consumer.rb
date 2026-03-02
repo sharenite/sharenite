@@ -56,10 +56,31 @@ class LibrarySyncConsumer < ApplicationConsumer
       do_processing
       end_processing
     rescue StandardError => e
-      @sync_job&.status_failed!
+      mark_sync_job_failed
       Appsignal.set_error(e)
-      raise e
+      raise
     end
+  end
+
+  def mark_sync_job_failed
+    return if @sync_job.nil?
+
+    finished_processing_at = Time.current
+    @sync_job.update(failed_sync_attributes(finished_processing_at))
+    @sync_job.status_failed!
+  end
+
+  def failed_sync_attributes(finished_processing_at)
+    return {
+      finished_processing_at:,
+      waiting_time: finished_processing_at - @sync_job.created_at,
+      processing_time: 0
+    } if @sync_job.started_processing_at.nil?
+
+    {
+      finished_processing_at:,
+      processing_time: finished_processing_at - @sync_job.started_processing_at
+    }
   end
 
   # FOR TESTING FIFO PER USER

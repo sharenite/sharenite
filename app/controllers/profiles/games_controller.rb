@@ -68,7 +68,10 @@ module Profiles
     private
 
     def set_sync_jobs
-      @sync_jobs = @profile.user.sync_jobs.active.order(:created_at) if !@current_user.nil? && @profile == @current_user.profile
+      return if @current_user.nil? || @profile != @current_user.profile
+
+      @sync_jobs = @profile.user.sync_jobs.active.order(:created_at)
+      @failed_sync_jobs = @profile.user.sync_jobs.recent_failures.limit(3)
     end
 
     def game

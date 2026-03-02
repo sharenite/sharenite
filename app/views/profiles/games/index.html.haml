@@ -1,10 +1,18 @@
-- unless @sync_jobs.nil? || @sync_jobs.count.zero?
+- if @sync_jobs&.any?
   .alert.alert-primary
-    = "There's a synchronisation still being processed:"
+    = "There's a synchronization still being processed:"
     .br
     - @sync_jobs.each do |sync_job|
       = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
       .br
+- if @failed_sync_jobs&.any?
+  .alert.alert-danger
+    = "Some recent synchronizations failed:"
+    .br
+    - @failed_sync_jobs.each do |sync_job|
+      = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
+      .br
+    = "Please retry synchronization from the plugin."
 .row
   .col-12
     = render "search_form"
