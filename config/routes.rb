@@ -17,7 +17,9 @@ Rails.application.routes.draw do
     end
     resources :friends, controller: "profiles/friends", only: :index
     resources :playlists, controller: "profiles/playlists/playlists" do
-      resources :playlist_items, controller: "profiles/playlists/playlist_items", only: [:new, :create, :edit, :update, :destroy]
+      resources :playlist_items, controller: "profiles/playlists/playlist_items", only: [:new, :create, :edit, :update, :destroy] do
+        collection { patch :reorder }
+      end
     end
     get "friends/invite", to: "profiles/friends#invite", as: :invite_friend
     get "friends/:id/accept", to: "profiles/friends#accept", as: :accept_friend

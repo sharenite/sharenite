@@ -1,62 +1,195 @@
 %h1 Friends
-%p You can set your profile to friendly in the 'avatar' menu and send your profile URL for a friend to invite.
-%h2 Listing invitations received
-%ul.list-group.list-group-flush
-  %li.list-group-item{id: "header"}
-    .row
-      .col-3.col-sm-4.col-md-6
-        %strong
-          NAME
-  - @invitations_received.each do |invitation_received|
-    %li.list-group-item
-      .row
-        .col-3.col-sm-4.col-md-6
-          = invitation_received.inviter.profile.name
-        .col-0.col-sm-2.col-md-3
-        .col-3.col-sm-2.col-md-1
-          = link_to 'Show', invitation_received.inviter.profile
-        .col-3.col-sm-2.col-md-1
-          = link_to 'Accept', profile_accept_friend_path(id: invitation_received)
-        .col-3.col-sm-2.col-md-1
-          = link_to 'Decline', profile_decline_friend_path(id: invitation_received)
-%br/
-%h2 Listing invitations sent
-%ul.list-group.list-group-flush
-  %li.list-group-item{id: "header"}
-    .row
-      .col-3.col-sm-4.col-md-6
-        %strong
-          NAME
-  - @invitations_sent.each do |invitation_sent|
-    %li.list-group-item
-      .row
-        .col-3.col-sm-4.col-md-6
-          = invitation_sent.invitee.profile.name
-        .col-3.col-sm-4
-        .col-3.col-sm-2.col-md-1
-          = link_to 'Show', invitation_sent.invitee.profile
-        .col-3.col-sm-2.col-md-1
-          = link_to 'Cancel', profile_cancel_friend_path(id: invitation_sent)
-%br/
-%h2 Listing friends
-%ul.list-group.list-group-flush
-  %li.list-group-item{id: "header"}
-    .row
-      .col-3.col-sm-4.col-md-6
-        %strong
-          NAME
-      .col-3
-        %strong
-          GAMES
-  - @friends.each do |friend|
-    %li.list-group-item
-      .row
-        .col-3.col-sm-4.col-md-6
-          = friend.name
-        .col-3.col-sm-4
-          = friend.user.games.count
-        .col-3.col-sm-2.col-md-1
-          = link_to 'Games', profile_games_path(friend)
-        .col-3.col-sm-2.col-md-1
-          = link_to 'Show', friend
-%br/
+%p.text-muted.mb-3 You can set your profile to friendly in the avatar menu and share your profile URL for a friend to invite.
+
+.profiles-search-form.mb-3
+  = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
+    .row.g-2
+      .col-12.col-md-6
+        = form.label :search_name, "Search name", class: "form-label mb-1 small text-muted"
+        = form.text_field :search_name, value: params[:search_name], class: "form-control", placeholder: "Friend name...", data: { action: "input->search-form#search" }
+      .col-6.col-md-3
+        = form.label :games_from, "Games from", class: "form-label mb-1 small text-muted"
+        = form.number_field :games_from, value: params[:games_from], min: 0, class: "form-control", placeholder: "0", data: { action: "input->search-form#search" }
+      .col-6.col-md-3
+        = form.label :games_to, "Games to", class: "form-label mb-1 small text-muted"
+        = form.number_field :games_to, value: params[:games_to], min: 0, class: "form-control", placeholder: "No max", data: { action: "input->search-form#search" }
+      .col-12.d-flex.justify-content-end.gap-2
+        = link_to "Reset", profile_friends_path(@profile), class: "btn btn-outline-secondary"
+        = form.submit "Apply", class: "btn btn-primary"
+
+= turbo_frame_tag "friends_list" do
+  .card.profiles-section-card.mt-3
+    .card-body
+      %ul.nav.nav-tabs.profiles-friends-tabs.mb-3{role: "tablist", data: { controller: "friends-tabs" }}
+        %li.nav-item{role: "presentation"}
+          %button.nav-link.active{
+            id: "friends-tab",
+            type: "button",
+            role: "tab",
+            data: { bs_toggle: "tab", bs_target: "#friends-pane" },
+            "data-friends-tabs-target" => "tabButton",
+            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            aria: { controls: "friends-pane", selected: "true" }
+          }
+            Friends
+            %span.badge.rounded-pill.text-bg-secondary.ms-1= @friends.total_count
+        %li.nav-item{role: "presentation"}
+          %button.nav-link{
+            id: "friends-received-tab",
+            type: "button",
+            role: "tab",
+            data: { bs_toggle: "tab", bs_target: "#friends-received-pane" },
+            "data-friends-tabs-target" => "tabButton",
+            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            aria: { controls: "friends-received-pane", selected: "false" }
+          }
+            Received
+            %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_received.size
+        %li.nav-item{role: "presentation"}
+          %button.nav-link{
+            id: "friends-sent-tab",
+            type: "button",
+            role: "tab",
+            data: { bs_toggle: "tab", bs_target: "#friends-sent-pane" },
+            "data-friends-tabs-target" => "tabButton",
+            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            aria: { controls: "friends-sent-pane", selected: "false" }
+          }
+            Sent
+            %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_sent.size
+        %li.nav-item{role: "presentation"}
+          %button.nav-link{
+            id: "friends-declined-tab",
+            type: "button",
+            role: "tab",
+            data: { bs_toggle: "tab", bs_target: "#friends-declined-pane" },
+            "data-friends-tabs-target" => "tabButton",
+            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            aria: { controls: "friends-declined-pane", selected: "false" }
+          }
+            Declined
+            %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_declined.size
+
+      .tab-content
+        #friends-pane.tab-pane.fade.show.active{role: "tabpanel", aria: { labelledby: "friends-tab" }}
+          .d-flex.align-items-center.justify-content-end.mb-2
+            = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
+
+          %p.mb-2= "Total friends listed: #{@friends.total_count}"
+
+          .profiles-list-desktop.d-none.d-md-block
+            .table-responsive.profiles-table-wrap
+              %table.table.table-hover.align-middle.profiles-table.mb-0
+                %thead
+                  %tr
+                    %th Name
+                    %th Games
+                    %th.text-end Actions
+                %tbody
+                  - if @friends.any?
+                    - @friends.each do |friend|
+                      - games_count = friend.read_attribute(:games_count).to_i
+                      %tr
+                        %td.fw-semibold= friend.name
+                        %td= games_count
+                        %td.text-end
+                          .d-inline-flex.gap-2
+                            = link_to "Games", profile_games_path(friend), class: "profiles-action-pill", data: { turbo_frame: "_top" }
+                            = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                  - else
+                    %tr
+                      %td.text-muted{colspan: 3} No friends match current filters.
+
+          .profiles-list-mobile.d-md-none
+            .row.g-2
+              - if @friends.any?
+                - @friends.each do |friend|
+                  - games_count = friend.read_attribute(:games_count).to_i
+                  .col-12
+                    .card.profiles-mobile-card
+                      .card-body.py-2.px-3
+                        .d-flex.justify-content-between.align-items-start.gap-2
+                          .min-w-0
+                            .fw-semibold.text-break= friend.name
+                            .small.text-muted= "Games: #{games_count}"
+                          .d-inline-flex.gap-1.flex-shrink-0
+                            = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                            = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
+              - else
+                .col-12
+                  .text-muted No friends match current filters.
+
+          .d-flex.align-items-center.justify-content-end.mt-3
+            = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
+
+        #friends-received-pane.tab-pane.fade{role: "tabpanel", aria: { labelledby: "friends-received-tab" }}
+          %p.mb-2= "Total received invitations listed: #{@invitations_received.size}"
+          - if @invitations_received.any?
+            .table-responsive.profiles-table-wrap
+              %table.table.table-sm.align-middle.profiles-table.mb-0
+                %thead
+                  %tr
+                    %th Name
+                    %th.text-end Actions
+                %tbody
+                  - @invitations_received.each do |invitation_received|
+                    %tr
+                      %td.fw-semibold= invitation_received.inviter.profile&.name || invitation_received.inviter.email
+                      %td.text-end
+                        .d-inline-flex.gap-1.flex-wrap.justify-content-end
+                          = link_to "Show", invitation_received.inviter.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                          = link_to "Accept", profile_accept_friend_path(@profile, id: invitation_received.id, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
+                          = link_to "Decline", profile_decline_friend_path(@profile, id: invitation_received.id, tab: "declined"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
+          - else
+            %p.text-muted.mb-0 No invitations received.
+
+        #friends-sent-pane.tab-pane.fade{role: "tabpanel", aria: { labelledby: "friends-sent-tab" }}
+          %p.mb-2= "Total sent invitations listed: #{@invitations_sent.size}"
+          - if @invitations_sent.any?
+            .table-responsive.profiles-table-wrap
+              %table.table.table-sm.align-middle.profiles-table.mb-0
+                %thead
+                  %tr
+                    %th Name
+                    %th.text-end Actions
+                %tbody
+                  - @invitations_sent.each do |invitation_sent|
+                    %tr
+                      %td.fw-semibold= invitation_sent.invitee.profile&.name || invitation_sent.invitee.email
+                      %td.text-end
+                        .d-inline-flex.gap-1.flex-wrap.justify-content-end
+                          = link_to "Show", invitation_sent.invitee.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                          = link_to "Cancel", profile_cancel_friend_path(@profile, id: invitation_sent.id, tab: "sent"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
+          - else
+            %p.text-muted.mb-0 No invitations sent.
+
+        #friends-declined-pane.tab-pane.fade{role: "tabpanel", aria: { labelledby: "friends-declined-tab" }}
+          %p.mb-2= "Total declined invitations listed: #{@invitations_declined.size}"
+          - if @invitations_declined.any?
+            .table-responsive.profiles-table-wrap
+              %table.table.table-sm.align-middle.profiles-table.mb-0
+                %thead
+                  %tr
+                    %th Name
+                    %th Status
+                    %th.text-end Actions
+                %tbody
+                  - @invitations_declined.each do |relation|
+                    - other_user = relation.inviter_id == @profile.user.id ? relation.invitee : relation.inviter
+                    - other_profile = other_user.profile
+                    - you_declined = relation.invitee_id == @profile.user.id
+                    %tr
+                      %td.fw-semibold= other_profile&.name || other_user.email
+                      %td
+                        - if you_declined
+                          %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted You declined
+                        - else
+                          %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted Declined by them
+                      %td.text-end
+                        .d-inline-flex.gap-1.flex-wrap.justify-content-end
+                          - if other_profile.present?
+                            = link_to "Show", other_profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                          - if you_declined && other_profile.present?
+                            = link_to "Invite", profile_invite_friend_path(other_profile, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" }, onclick: "return window.confirm('You previously declined this invitation. Add this user back to friends?');"
+          - else
+            %p.text-muted.mb-0 No declined invitations.

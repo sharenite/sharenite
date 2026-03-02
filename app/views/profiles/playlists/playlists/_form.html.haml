@@ -1,11 +1,17 @@
 = form_for [@profile, @playlist] do |f|
-  = turbo_frame_tag :playlist_errors
+  = turbo_frame_tag :playlist_errors do
+    = render "playlist_errors"
+
   .mb-3
-    = f.label :name, {class: 'form-label'}
-    = f.text_field :name, {class: 'form-control', "aria-describedby" => "name_help"}
-    .form-text#name Name of the playlist.
-  .checkbox.mb-3
-    = f.check_box :public
-    = f.label :public
-    .form-text#public Playlist visible publicly
-  = f.submit
+    = f.label :name, class: "form-label"
+    = f.text_field :name, class: "form-control", aria: { describedby: "playlist_name_help" }
+    .form-text#playlist_name_help Name of the playlist.
+
+  .form-check.mb-3
+    = f.check_box :public, class: "form-check-input"
+    = f.label :public, class: "form-check-label"
+    .form-text Playlist visible publicly.
+
+  .d-flex.flex-wrap.gap-2.mt-3
+    = f.submit "Save playlist", class: "btn btn-primary"
+    = link_to "Back to playlists", profile_playlists_path(@profile), class: "profiles-action-pill", data: { turbo_frame: "_top" }

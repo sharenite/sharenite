@@ -1,5 +1,5 @@
-%h1 Edit playlist item '#{@playlist_item.order}'
-= render "form", playlist_item: @playlist_item
-%br/
-%div
-  = link_to "Back to playlist", profile_playlist_path(@playlist)
+%h1.mb-3= "Edit playlist item ##{@playlist_item.order}"
+
+.card.profiles-section-card.profile-form-card
+  .card-body
+    = render "form", playlist_item: @playlist_item

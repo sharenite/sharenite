@@ -4,7 +4,11 @@
 
 import { application } from "./application"
 import ChoiceController from "./choice_controller"
+import FriendsTabsController from "./friends_tabs_controller"
+import PlaylistSortController from "./playlist_sort_controller"
 import SearchFormController from "./search_form_controller"
 
 application.register("choice", ChoiceController)
+application.register("friends-tabs", FriendsTabsController)
+application.register("playlist-sort", PlaylistSortController)
 application.register("search-form", SearchFormController)

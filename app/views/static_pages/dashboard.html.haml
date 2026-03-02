@@ -1,3 +1,95 @@
-%h1 Dashboard
-%p
-  = "Some nice stats will be here in the future, but for now go to #{link_to 'Games', profile_games_path(current_user.profile)} tab.".html_safe
+%h1.mb-3 Dashboard
+- profile_url_value = profile_url(@profile)
+
+.profiles-show-header.card.profiles-section-card.mb-3
+  .card-body
+    .d-flex.flex-wrap.align-items-start.justify-content-between.gap-3
+      .d-flex.align-items-start.gap-3.min-w-0
+        .profiles-show-avatar
+          %i.bi.bi-person-circle
+        .min-w-0
+          %h2.h3.mb-1.text-break= @profile.name
+          .d-flex.flex-wrap.gap-2
+            %span.profiles-show-badge
+              Privacy:
+              %strong.ms-1= @profile.privacy.humanize
+            - if @profile.vanity_url.present?
+              %span.profiles-show-badge
+                Vanity:
+                %strong.ms-1= @profile.vanity_url
+      .d-flex.flex-wrap.gap-2
+        = link_to "Show profile", profile_path(@profile), class: "profiles-action-pill profiles-action-pill-primary"
+        = link_to "Edit profile", edit_profile_path(@profile), class: "profiles-action-pill"
+        = link_to "Account settings", edit_user_registration_path, class: "profiles-action-pill"
+
+.row.g-3.mb-3
+  .col-12.col-md-6.col-xl-3
+    .card.profiles-section-card.h-100
+      .card-body
+        .profiles-stat-label Games
+        .profiles-stat-value= @dashboard_stats[:games_total]
+        .small.text-muted.mt-1
+          = "#{@dashboard_stats[:games_favorites]} favorites, #{@dashboard_stats[:games_installed]} installed"
+  .col-12.col-md-6.col-xl-3
+    .card.profiles-section-card.h-100
+      .card-body
+        .profiles-stat-label Played Games
+        .profiles-stat-value= @dashboard_stats[:games_played]
+        .small.text-muted.mt-1 Games with last activity
+  .col-12.col-md-6.col-xl-3
+    .card.profiles-section-card.h-100
+      .card-body
+        .profiles-stat-label Playlists
+        .profiles-stat-value= @dashboard_stats[:playlists_total]
+        .small.text-muted.mt-1 Your personal playlists
+  .col-12.col-md-6.col-xl-3
+    .card.profiles-section-card.h-100
+      .card-body
+        .profiles-stat-label Friends
+        .profiles-stat-value= @dashboard_stats[:friends_total]
+        .small.text-muted.mt-1
+          = "#{@dashboard_stats[:invites_received]} received, #{@dashboard_stats[:invites_sent]} sent"
+
+.row.g-3.mb-3
+  .col-12
+    .card.profiles-section-card
+      .card-body
+        %h2.h5.mb-3 Profile URL
+        %p.text-muted.small.mb-2 Share this link:
+        .profiles-url-box.text-break= profile_url_value
+        .small.text-muted.mt-2 Works for public and friendly profiles.
+
+.row.g-3
+  .col-12.col-xl-7
+    .card.profiles-section-card.h-100
+      .card-body
+        .d-flex.align-items-center.justify-content-between.gap-2.mb-2
+          %h2.h5.mb-0 Recent activity
+          = link_to "Open games", profile_games_path(@profile), class: "profiles-action-pill profiles-action-pill-sm"
+        - if @recent_games.any?
+          .table-responsive.profiles-table-wrap
+            %table.table.table-sm.align-middle.profiles-table.mb-0
+              %thead
+                %tr
+                  %th Name
+                  %th Last activity
+                  %th.text-end
+              %tbody
+                - @recent_games.each do |game|
+                  %tr
+                    %td.fw-semibold= game.name
+                    %td= time_ago_in_words(game.last_activity) + " ago"
+                    %td.text-end
+                      = link_to "Show", profile_game_path(@profile, game), class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm"
+        - else
+          %p.text-muted.mb-0 No recent activity yet.
+
+  .col-12.col-xl-5
+    .card.profiles-section-card.h-100
+      .card-body
+        %h2.h5.mb-3 Quick navigation
+        .d-flex.flex-wrap.gap-2
+          = link_to "Games", profile_games_path(@profile), class: "profiles-action-pill"
+          = link_to "Friends", profile_friends_path(@profile, tab: "friends"), class: "profiles-action-pill"
+          = link_to "Playlists", profile_playlists_path(@profile), class: "profiles-action-pill"
+          = link_to "Profiles", profiles_path, class: "profiles-action-pill"

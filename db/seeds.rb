@@ -275,7 +275,151 @@ if Rails.env.development?
     platforms["Steam Deck"]
   ]
 
+  profile_seed_count = 70
+  profile_seed_count.times do |index|
+    sequence = index + 1
+    seeded_email = format("profile-seed-%03d@sharenite.local", sequence)
+    seeded_user = User.find_or_initialize_by(email: seeded_email)
+    if seeded_user.new_record?
+      seeded_user.password = "Test123$"
+      seeded_user.password_confirmation = "Test123$"
+      seeded_user.confirmed_at = Time.current
+      seeded_user.save!
+    elsif seeded_user.confirmed_at.nil?
+      seeded_user.update!(confirmed_at: Time.current)
+    end
+
+    seeded_profile = seeded_user.profile || Profile.create!(user: seeded_user)
+    seeded_profile.update!(
+      name: format("Profile Seed %03d", sequence),
+      privacy: (sequence % 11).zero? ? :private : :public,
+      vanity_url: format("profile-seed-%03d", sequence)
+    )
+
+    seeded_games_count = sequence % 19
+    seeded_games_count.times do |game_index|
+      game_title = format("Profile Seed %03d Game %02d", sequence, game_index + 1)
+      seeded_game = Game.find_or_initialize_by(user: seeded_user, name: game_title)
+      seeded_game.assign_attributes(
+        description: "Profile pagination seed game #{game_index + 1}.",
+        notes: "",
+        source: nil,
+        completion_status: nil,
+        favorite: false,
+        is_installed: (game_index % 2).zero?,
+        is_custom_game: false,
+        hidden: false,
+        added: (game_index + 1).days.ago,
+        modified: game_index.days.ago,
+        last_activity: (game_index % 3).zero? ? (game_index + 2).days.ago : nil,
+        play_count: game_index,
+        playtime: (game_index + 1) * 300,
+        release_date: Date.new(2021, 1, 1) + game_index.days,
+        sorting_name: game_title,
+        version: "1.#{game_index}",
+        user_score: nil,
+        community_score: nil,
+        critic_score: nil,
+        game_id: format("seed-profile-%03d-game-%02d", sequence, game_index + 1),
+        plugin_id: seeded_game.plugin_id || SecureRandom.uuid
+      )
+      seeded_game.save!
+    end
+
+    seeded_user.games.where("name LIKE ?", format("Profile Seed %03d Game %%", sequence))
+               .order(:name)
+               .offset(seeded_games_count)
+               .destroy_all
+  end
+
+  accepted_friend_count = 40
+  accepted_friend_count.times do |index|
+    seeded_profile_slug = format("profile-seed-%03d", index + 1)
+    friend_user = Profile.find_by!(slug: seeded_profile_slug).user
+
+    relation = if index.even?
+                 Friend.find_or_initialize_by(inviter: demo_user, invitee: friend_user)
+               else
+                 Friend.find_or_initialize_by(inviter: friend_user, invitee: demo_user)
+               end
+    relation.status = :accepted
+    relation.save!
+  end
+
+  pending_received_count = 10
+  pending_received_count.times do |index|
+    seeded_profile_slug = format("profile-seed-%03d", accepted_friend_count + index + 1)
+    inviter_user = Profile.find_by!(slug: seeded_profile_slug).user
+    relation = Friend.find_or_initialize_by(inviter: inviter_user, invitee: demo_user)
+    relation.status = :invited
+    relation.save!
+  end
+
+  pending_sent_count = 5
+  pending_sent_count.times do |index|
+    seeded_profile_slug = format("profile-seed-%03d", accepted_friend_count + pending_received_count + index + 1)
+    invitee_user = Profile.find_by!(slug: seeded_profile_slug).user
+    relation = Friend.find_or_initialize_by(inviter: demo_user, invitee: invitee_user)
+    relation.status = :invited
+    relation.save!
+  end
+
+  declined_received_count = 4
+  declined_received_count.times do |index|
+    seeded_profile_slug = format(
+      "profile-seed-%03d",
+      accepted_friend_count + pending_received_count + pending_sent_count + index + 1
+    )
+    inviter_user = Profile.find_by!(slug: seeded_profile_slug).user
+    relation = Friend.find_or_initialize_by(inviter: inviter_user, invitee: demo_user)
+    relation.status = :declined
+    relation.save!
+  end
+
+  declined_sent_count = 4
+  declined_sent_count.times do |index|
+    seeded_profile_slug = format(
+      "profile-seed-%03d",
+      accepted_friend_count + pending_received_count + pending_sent_count + declined_received_count + index + 1
+    )
+    invitee_user = Profile.find_by!(slug: seeded_profile_slug).user
+    relation = Friend.find_or_initialize_by(inviter: demo_user, invitee: invitee_user)
+    relation.status = :declined
+    relation.save!
+  end
+
+  playlist_caches = 40.times.map do |index|
+    igdb_id = 95_000 + index
+    IgdbCache.find_or_create_by!(igdb_id:) do |record|
+      record.name = format("Playlist Cache Seed %03d", index + 1)
+    end
+  end
+
+  playlist_seed_count = 65
+  playlist_seed_count.times do |index|
+    sequence = index + 1
+    playlist = Playlist.find_or_initialize_by(user: demo_user, name: format("Pagination Playlist %03d", sequence))
+    playlist.public = (sequence % 3) != 0
+    playlist.save!
+
+    items_count = sequence % 12
+    playlist.playlist_items.destroy_all
+    items_count.times do |item_index|
+      playlist.playlist_items.create!(
+        order: item_index + 1,
+        igdb_cache: playlist_caches[(index + item_index) % playlist_caches.length]
+      )
+    end
+  end
+
   puts "Seeded demo data: #{demo_user.email} / password: Test123$"
+  puts "Public profiles seeded: #{Profile.privacy_public.count}"
+  puts "Demo friends accepted: #{demo_user.friends.count}"
+  puts "Demo pending invitations received: #{demo_user.pending_inviters.count}"
+  puts "Demo pending invitations sent: #{demo_user.pending_invitees.count}"
+  puts "Demo declined invitations received (you declined): #{demo_user.declined_friendlies.count}"
+  puts "Demo declined invitations sent (they declined): #{demo_user.declined_friends.count}"
+  puts "Demo playlists seeded: #{demo_user.playlists.count}"
   puts "Games seeded: #{demo_user.games.count}"
   puts "Games with no status: #{demo_user.games.where(completion_status_id: nil).count}"
   puts "Games with no source: #{demo_user.games.where(source_id: nil).count}"

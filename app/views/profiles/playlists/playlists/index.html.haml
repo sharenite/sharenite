@@ -1,28 +1,76 @@
 %h1 Playlists
-%p This is experimental and not completed yet
-%p= link_to "New", new_profile_playlist_path
-%br/
-%h2 Listing playlists
-%ul.list-group.list-group-flush
-  %li.list-group-item{id: "header"}
-    .row
-      .col-3.col-sm-4.col-md-6
-        %strong
-          NAME
-      .col-3
-        %strong
-          GAMES
-  - @playlists.each do |playlist|
-    %li.list-group-item
-      .row
-        .col-3.col-sm-4.col-md-6
-          = playlist.name
-        .col-3.col-sm-2.col-md-3
-          = playlist.playlist_items.count
-        .col-2.col-sm-2.col-md-1
-          = link_to 'Show', profile_playlist_path(@profile, playlist), {class: "btn btn-link p-0"}
-        .col-2.col-sm-1.col-md-1
-          = link_to 'Edit', edit_profile_playlist_path(@profile, playlist), {class: "btn btn-link p-0"}
-        .col-2.col-sm-1.col-md-1
-          = button_to "Delete", profile_playlist_path(@profile, playlist), {class: "btn btn-link p-0", method: :delete, data: {turbo_confirm: "Are you sure?"}}
-%br/
+%p.text-muted.mb-2 This is experimental and still in progress.
+%p.mb-3= link_to "New playlist", new_profile_playlist_path, class: "btn btn-primary"
+
+.profiles-search-form.mb-3
+  = form_with url: profile_playlists_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "playlists_list", turbo_action: "replace" } do |form|
+    .row.g-2
+      .col-12.col-md-6
+        = form.label :search_name, "Search name", class: "form-label mb-1 small text-muted"
+        = form.text_field :search_name, value: params[:search_name], class: "form-control", placeholder: "Playlist name...", data: { action: "input->search-form#search" }
+      .col-6.col-md-3
+        = form.label :games_from, "Games from", class: "form-label mb-1 small text-muted"
+        = form.number_field :games_from, value: params[:games_from], min: 0, class: "form-control", placeholder: "0", data: { action: "input->search-form#search" }
+      .col-6.col-md-3
+        = form.label :games_to, "Games to", class: "form-label mb-1 small text-muted"
+        = form.number_field :games_to, value: params[:games_to], min: 0, class: "form-control", placeholder: "No max", data: { action: "input->search-form#search" }
+      .col-12.d-flex.justify-content-end.gap-2
+        = link_to "Reset", profile_playlists_path(@profile), class: "btn btn-outline-secondary"
+        = form.submit "Apply", class: "btn btn-primary"
+
+= turbo_frame_tag "playlists_list" do
+  .d-flex.align-items-center.justify-content-end.mb-2
+    = paginate @playlists, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
+
+  %p.mb-2 Total playlists listed: #{@playlists.total_count}
+
+  .profiles-list-desktop.d-none.d-md-block
+    .table-responsive.profiles-table-wrap
+      %table.table.table-hover.align-middle.profiles-table.mb-0
+        %thead
+          %tr
+            %th Name
+            %th Games
+            %th Public
+            %th.text-end Actions
+        %tbody
+          - if @playlists.any?
+            - @playlists.each do |playlist|
+              - items_count = playlist.read_attribute(:items_count).to_i
+              %tr
+                %td.fw-semibold= playlist.name
+                %td= items_count
+                %td= playlist.public? ? "Yes" : "No"
+                %td.text-end
+                  .d-inline-flex.gap-2
+                    = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                    = link_to "Edit", edit_profile_playlist_path(@profile, playlist), class: "profiles-action-pill", data: { turbo_frame: "_top" }
+                    = button_to "Delete", profile_playlist_path(@profile, playlist), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
+          - else
+            %tr
+              %td.text-muted{colspan: 4} No playlists match current filters.
+
+  .profiles-list-mobile.d-md-none
+    .row.g-2
+      - if @playlists.any?
+        - @playlists.each do |playlist|
+          - items_count = playlist.read_attribute(:items_count).to_i
+          .col-12
+            .card.profiles-mobile-card
+              .card-body.py-2.px-3
+                .d-flex.justify-content-between.align-items-start.gap-2
+                  .min-w-0
+                    .fw-semibold.text-break= playlist.name
+                    .small.text-muted
+                      = "Games: #{items_count}"
+                      = " | Public: #{playlist.public? ? 'Yes' : 'No'}"
+                  .d-inline-flex.gap-1.flex-wrap.flex-shrink-0.justify-content-end
+                    = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                    = link_to "Edit", edit_profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                    = button_to "Delete", profile_playlist_path(@profile, playlist), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
+      - else
+        .col-12
+          .text-muted No playlists match current filters.
+
+  .d-flex.align-items-center.justify-content-end.mt-3
+    = paginate @playlists, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
