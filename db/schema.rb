@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_02_143100) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_02_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -312,6 +312,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_02_143100) do
     t.string "slug"
     t.enum "privacy", default: "private", enum_type: "profile_privacy"
     t.string "vanity_url"
+    t.enum "game_library_privacy", default: "private", null: false, enum_type: "profile_privacy"
     t.index ["privacy", "name"], name: "index_profiles_on_privacy_and_name"
     t.index ["slug"], name: "index_profiles_on_slug", unique: true
     t.index ["user_id"], name: "index_profiles_on_user_id"
@@ -374,6 +375,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_02_143100) do
     t.datetime "finished_processing_at"
     t.integer "waiting_time"
     t.integer "processing_time"
+    t.bigint "payload_size_bytes", default: 0, null: false
+    t.integer "payload_chunks", default: 1, null: false
+    t.integer "payload_chunk_index", default: 0, null: false
+    t.text "error_message"
     t.index ["created_at", "status"], name: "index_sync_jobs_on_created_at_and_status"
     t.index ["created_at"], name: "index_sync_jobs_on_created_at"
     t.index ["user_id"], name: "index_sync_jobs_on_user_id"

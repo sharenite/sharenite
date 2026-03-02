@@ -8,9 +8,10 @@ class Profile < ApplicationRecord
   belongs_to :user
 
   enum privacy: { private: "private", public: "public", friendly: "friendly" }, _prefix: :privacy
+  enum game_library_privacy: { private: "private", public: "public", friendly: "friendly" }, _prefix: :game_library_privacy
 
   def self.ransackable_attributes(_auth_object = nil)
-    ["created_at", "id", "name", "privacy", "slug", "updated_at", "user_id", "vanity_url"]
+    ["created_at", "game_library_privacy", "id", "name", "privacy", "slug", "updated_at", "user_id", "vanity_url"]
   end
 
 def self.ransackable_associations(_auth_object = nil)

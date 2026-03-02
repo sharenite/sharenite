@@ -29,6 +29,8 @@ module Profiles
     }.freeze
 
     before_action :game, only: %i[show edit update destroy]
+    before_action :check_game_library_access_profile, only: %i[index show]
+    skip_before_action :check_general_access_profile, only: %i[index show]
 
     def index
       set_games
@@ -66,6 +68,30 @@ module Profiles
     end
 
     private
+
+    def check_game_library_access_profile
+      set_profile
+      return if profile_own?
+      return if @profile.game_library_privacy_public?
+      return if @profile.game_library_privacy_friendly? && game_library_friend?
+
+      redirect_to_profiles_with_notice
+    rescue ActiveRecord::RecordNotFound
+      redirect_to_profiles_with_notice
+    end
+
+    def game_library_friend?
+      return false unless current_user
+
+      Friend.where(status: :accepted).exists?(
+        ["(inviter_id = :current_user_id AND invitee_id = :profile_user_id) OR " \
+         "(invitee_id = :current_user_id AND inviter_id = :profile_user_id)",
+         {
+           current_user_id: current_user.id,
+           profile_user_id: @profile.user_id
+         }]
+      )
+    end
 
     def set_sync_jobs
       @sync_jobs = @profile.user.sync_jobs.active.order(:created_at) if !@current_user.nil? && @profile == @current_user.profile

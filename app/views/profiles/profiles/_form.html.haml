@@ -18,6 +18,11 @@
       = f.select :privacy, Profile.privacies.keys.map { |w| [w.humanize, w] }, {}, { class: "form-select", "aria-describedby" => "privacy_help" }
       .form-text#privacy_help Private: hidden. Public: visible to everyone. Friendly: share profile URL and allow invites.
 
+    .col-12
+      = f.label :game_library_privacy, class: "form-label"
+      = f.select :game_library_privacy, Profile.game_library_privacies.keys.map { |w| [w.humanize, w] }, {}, { class: "form-select", "aria-describedby" => "game_library_privacy_help" }
+      .form-text#game_library_privacy_help Controls who can see your games library page.
+
   .d-flex.flex-wrap.justify-content-end.gap-2.mt-3
     = link_to "Back", profile_path(@profile), class: "btn btn-outline-secondary"
     = f.submit "Save profile", class: "btn btn-primary"

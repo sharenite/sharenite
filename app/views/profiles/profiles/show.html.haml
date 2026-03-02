@@ -19,6 +19,9 @@
             %span.profiles-show-badge
               Privacy:
               %strong.ms-1= @profile.privacy.humanize
+            %span.profiles-show-badge
+              Games privacy:
+              %strong.ms-1= @profile.game_library_privacy.humanize
             - if @profile.vanity_url.present?
               %span.profiles-show-badge
                 Vanity:
@@ -74,6 +77,9 @@
 
           %dt.col-5.col-md-4.text-muted Privacy
           %dd.col-7.col-md-8= @profile.privacy.humanize
+
+          %dt.col-5.col-md-4.text-muted Games privacy
+          %dd.col-7.col-md-8= @profile.game_library_privacy.humanize
 
           %dt.col-5.col-md-4.text-muted Member since
           %dd.col-7.col-md-8= time_ago_in_words(@profile.created_at) + " ago"

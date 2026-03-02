@@ -73,7 +73,7 @@ module Profiles
     end
 
     def profile_params
-      params.require(:profile).permit(:name, :privacy, :vanity_url)
+      params.require(:profile).permit(:name, :privacy, :game_library_privacy, :vanity_url)
     end
 
     def set_profile
