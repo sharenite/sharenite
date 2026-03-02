@@ -5,12 +5,7 @@
 - pending_received_count = is_own_profile ? current_user.pending_inviters.count : 0
 - profile_url_value = profile_url(@profile)
 - invite_tab = @friendship_state&.to_sym == :you_declined ? "friends" : "sent"
-- invite_data = if @friendship_state&.to_sym == :you_declined
-                  { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" }
-                else
-                  { turbo_frame: "_top", turbo_prefetch: false }
-                end
-- invite_onclick = @friendship_state&.to_sym == :you_declined ? "return window.confirm('You previously declined this invitation. Add this user back to friends?');" : nil
+- invite_data = @friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
 
 .profiles-show-header.card.profiles-section-card.mb-3
   .card-body
@@ -40,7 +35,7 @@
           - elsif @friendship_state.present? && @friendship_state.to_sym != :you_declined
             %span{class: profile_friendship_state_class(@friendship_state)}= profile_friendship_state_label(@friendship_state)
           - else
-            = link_to "Invite", profile_invite_friend_path(@profile, tab: invite_tab), class: "profiles-action-pill", data: invite_data, onclick: invite_onclick
+            = link_to "Invite", profile_invite_friend_path(@profile, tab: invite_tab), class: "profiles-action-pill", data: invite_data
         = link_to "Back", profiles_path, class: "profiles-action-pill"
 
 .row.g-3.mb-3

@@ -65,7 +65,10 @@ module Profiles
         PlaylistItem.reorder_for_playlist!(@playlist, params[:ordered_ids])
         render json: { ok: true }
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        Rails.logger.error(
+          "Failed to reorder playlist items for playlist #{@playlist&.id}: #{e.class}: #{e.message}"
+        )
+        render json: { error: "Unable to reorder playlist items." }, status: :unprocessable_entity
       end
 
       private

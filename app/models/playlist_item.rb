@@ -5,7 +5,9 @@ class PlaylistItem < ApplicationRecord
   belongs_to :playlist
   belongs_to :igdb_cache
   validates :order, presence: true
-  after_commit :normalize_playlist_orders!, on: %i[create update destroy]
+  after_commit :normalize_playlist_orders_after_create, on: :create
+  after_commit :normalize_playlist_orders_after_update, on: :update
+  after_commit :normalize_playlist_orders_after_destroy, on: :destroy
 
   def self.ransackable_attributes(_auth_object = nil)
     ["id", "playlist_id", "igdb_cache_id", "order", "created_at", "updated_at"]
@@ -24,7 +26,7 @@ class PlaylistItem < ApplicationRecord
 
   def self.reorder_for_playlist!(playlist, ordered_ids)
     scope = where(playlist_id: playlist.id)
-    existing_ids = scope.pluck(:id).map(&:to_s)
+    existing_ids = scope.order(:order, :created_at, :id).pluck(:id).map(&:to_s)
     return if existing_ids.empty?
 
     requested = Array(ordered_ids).map(&:to_s)
@@ -61,16 +63,28 @@ class PlaylistItem < ApplicationRecord
 
   # rubocop:disable Rails/SkipsModelValidations
   def self.apply_order!(scope, ordered_ids)
-    scope.where(id: ordered_ids).update_all("\"order\" = \"order\" + 100000")
-    ordered_ids.each_with_index do |id, index|
-      scope.where(id:).update_all(order: index + 1)
+    transaction do
+      scope.where(id: ordered_ids).update_all("\"order\" = \"order\" + 100000")
+      ordered_ids.each_with_index do |id, index|
+        scope.where(id:).update_all(order: index + 1)
+      end
     end
   end
   # rubocop:enable Rails/SkipsModelValidations
 
   private
 
-  def normalize_playlist_orders!
+  def normalize_playlist_orders_after_create
+    self.class.normalize_for_playlist_id!(playlist_id)
+  end
+
+  def normalize_playlist_orders_after_update
+    return unless saved_change_to_order? || saved_change_to_playlist_id?
+
+    self.class.normalize_for_playlist_id!(playlist_id)
+  end
+
+  def normalize_playlist_orders_after_destroy
     self.class.normalize_for_playlist_id!(playlist_id)
   end
 end

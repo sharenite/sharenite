@@ -23,7 +23,7 @@ export default class extends Controller {
     const targetRow = event.currentTarget.closest("[data-playlist-sort-target='row']")
     if (!this.draggedRow || targetRow === this.draggedRow) return
 
-    const midpoint = targetRow.getBoundingClientRect().top + (targetRow.offsetHeight / 2)
+    const midpoint = targetRow.getBoundingClientRect().top + targetRow.offsetHeight / 2
     const insertAfter = event.clientY > midpoint
 
     if (insertAfter) {
@@ -55,17 +55,24 @@ export default class extends Controller {
     const orderedIds = this.rowTargets.map((row) => row.dataset.playlistItemId)
     const token = document.querySelector("meta[name='csrf-token']")?.content
 
-    const response = await fetch(this.urlValue, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-CSRF-Token": token
-      },
-      body: JSON.stringify({ ordered_ids: orderedIds })
-    })
+    try {
+      const response = await fetch(this.urlValue, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify({ ordered_ids: orderedIds }),
+      })
 
-    if (!response.ok) {
+      const contentType = response.headers.get("content-type") || ""
+      const expectsJson = contentType.includes("application/json")
+      if (!response.ok || response.redirected || !expectsJson) {
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error("Failed to persist playlist order:", error)
       window.location.reload()
     }
   }

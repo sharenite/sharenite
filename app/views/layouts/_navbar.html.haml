@@ -16,7 +16,7 @@
             %li
               = link_to 'Games', profile_games_path(current_user.profile), class: nav_link_class.call(profile_games_path(current_user.profile))
             %li
-              = link_to profile_friends_path(current_user.profile, tab: "friends"), class: nav_link_class.call(profile_friends_path(current_user.profile)) do
+              = link_to profile_friends_path(current_user.profile, tab: "friends"), class: nav_link_class.call(profile_friends_path(current_user.profile, tab: "friends")) do
                 %span Friends
                 - if pending_friend_invites_count.to_i.positive?
                   %span.badge.rounded-pill.text-bg-danger.ms-1.align-middle

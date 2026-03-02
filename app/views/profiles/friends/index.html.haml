@@ -27,8 +27,8 @@
             type: "button",
             role: "tab",
             data: { bs_toggle: "tab", bs_target: "#friends-pane" },
-            "data-friends-tabs-target" => "tabButton",
-            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            "data-friends-tabs-target": "tabButton",
+            "data-action": "shown.bs.tab->friends-tabs#remember",
             aria: { controls: "friends-pane", selected: "true" }
           }
             Friends
@@ -39,8 +39,8 @@
             type: "button",
             role: "tab",
             data: { bs_toggle: "tab", bs_target: "#friends-received-pane" },
-            "data-friends-tabs-target" => "tabButton",
-            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            "data-friends-tabs-target": "tabButton",
+            "data-action": "shown.bs.tab->friends-tabs#remember",
             aria: { controls: "friends-received-pane", selected: "false" }
           }
             Received
@@ -51,8 +51,8 @@
             type: "button",
             role: "tab",
             data: { bs_toggle: "tab", bs_target: "#friends-sent-pane" },
-            "data-friends-tabs-target" => "tabButton",
-            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            "data-friends-tabs-target": "tabButton",
+            "data-action": "shown.bs.tab->friends-tabs#remember",
             aria: { controls: "friends-sent-pane", selected: "false" }
           }
             Sent
@@ -63,19 +63,19 @@
             type: "button",
             role: "tab",
             data: { bs_toggle: "tab", bs_target: "#friends-declined-pane" },
-            "data-friends-tabs-target" => "tabButton",
-            "data-action" => "shown.bs.tab->friends-tabs#remember",
+            "data-friends-tabs-target": "tabButton",
+            "data-action": "shown.bs.tab->friends-tabs#remember",
             aria: { controls: "friends-declined-pane", selected: "false" }
           }
             Declined
             %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_declined.size
 
       .tab-content
-        #friends-pane.tab-pane.fade.show.active{role: "tabpanel", aria: { labelledby: "friends-tab" }}
+        .tab-pane.fade.show.active#friends-pane{role: "tabpanel", aria: { labelledby: "friends-tab" }}
           .d-flex.align-items-center.justify-content-end.mb-2
             = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
 
-          %p.mb-2= "Total friends listed: #{@friends.total_count}"
+          %p.mb-2 Total friends listed: #{@friends.total_count}
 
           .profiles-list-desktop.d-none.d-md-block
             .table-responsive.profiles-table-wrap
@@ -111,7 +111,7 @@
                         .d-flex.justify-content-between.align-items-start.gap-2
                           .min-w-0
                             .fw-semibold.text-break= friend.name
-                            .small.text-muted= "Games: #{games_count}"
+                            .small.text-muted Games: #{games_count}
                           .d-inline-flex.gap-1.flex-shrink-0
                             = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
                             = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
@@ -122,8 +122,8 @@
           .d-flex.align-items-center.justify-content-end.mt-3
             = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
 
-        #friends-received-pane.tab-pane.fade{role: "tabpanel", aria: { labelledby: "friends-received-tab" }}
-          %p.mb-2= "Total received invitations listed: #{@invitations_received.size}"
+        .tab-pane.fade#friends-received-pane{role: "tabpanel", aria: { labelledby: "friends-received-tab" }}
+          %p.mb-2 Total received invitations listed: #{@invitations_received.size}
           - if @invitations_received.any?
             .table-responsive.profiles-table-wrap
               %table.table.table-sm.align-middle.profiles-table.mb-0
@@ -143,8 +143,8 @@
           - else
             %p.text-muted.mb-0 No invitations received.
 
-        #friends-sent-pane.tab-pane.fade{role: "tabpanel", aria: { labelledby: "friends-sent-tab" }}
-          %p.mb-2= "Total sent invitations listed: #{@invitations_sent.size}"
+        .tab-pane.fade#friends-sent-pane{role: "tabpanel", aria: { labelledby: "friends-sent-tab" }}
+          %p.mb-2 Total sent invitations listed: #{@invitations_sent.size}
           - if @invitations_sent.any?
             .table-responsive.profiles-table-wrap
               %table.table.table-sm.align-middle.profiles-table.mb-0
@@ -163,8 +163,8 @@
           - else
             %p.text-muted.mb-0 No invitations sent.
 
-        #friends-declined-pane.tab-pane.fade{role: "tabpanel", aria: { labelledby: "friends-declined-tab" }}
-          %p.mb-2= "Total declined invitations listed: #{@invitations_declined.size}"
+        .tab-pane.fade#friends-declined-pane{role: "tabpanel", aria: { labelledby: "friends-declined-tab" }}
+          %p.mb-2 Total declined invitations listed: #{@invitations_declined.size}
           - if @invitations_declined.any?
             .table-responsive.profiles-table-wrap
               %table.table.table-sm.align-middle.profiles-table.mb-0
@@ -190,6 +190,6 @@
                           - if other_profile.present?
                             = link_to "Show", other_profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
                           - if you_declined && other_profile.present?
-                            = link_to "Invite", profile_invite_friend_path(other_profile, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" }, onclick: "return window.confirm('You previously declined this invitation. Add this user back to friends?');"
+                            = link_to "Invite", profile_invite_friend_path(other_profile, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" }
           - else
             %p.text-muted.mb-0 No declined invitations.
