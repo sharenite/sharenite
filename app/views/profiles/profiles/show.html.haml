@@ -6,6 +6,7 @@
 - profile_url_value = profile_url(@profile)
 - invite_tab = @friendship_state&.to_sym == :you_declined ? "friends" : "sent"
 - invite_data = @friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
+- can_view_games = is_own_profile || @profile.game_library_privacy_public? || (@profile.game_library_privacy_friendly? && @friendship_state&.to_sym == :friends)
 
 .profiles-show-header.card.profiles-section-card.mb-3
   .card-body
@@ -27,7 +28,8 @@
                 Vanity:
                 %strong.ms-1= @profile.vanity_url
       .d-flex.flex-wrap.gap-2
-        = link_to "Games", profile_games_path(@profile), class: "profiles-action-pill profiles-action-pill-primary"
+        - if can_view_games
+          = link_to "Games", profile_games_path(@profile), class: "profiles-action-pill profiles-action-pill-primary"
         - if is_own_profile
           = link_to "Edit profile", edit_profile_path(@profile), class: "profiles-action-pill"
           = link_to "Friends", profile_friends_path(@profile, tab: "friends"), class: "profiles-action-pill"

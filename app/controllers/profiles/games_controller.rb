@@ -82,7 +82,7 @@ module Profiles
       return if @profile.game_library_privacy_public?
       return if @profile.game_library_privacy_friendly? && game_library_friend?
 
-      redirect_to_profiles_with_notice
+      redirect_to_profile_when_game_library_hidden
     rescue ActiveRecord::RecordNotFound
       redirect_to_profiles_with_notice
     end
@@ -264,6 +264,20 @@ module Profiles
       Date.iso8601(value)
     rescue ArgumentError
       nil
+    end
+
+    def redirect_to_profile_when_game_library_hidden
+      if profile_visible_to_current_user?
+        # rubocop:disable Rails/I18nLocaleTexts
+        redirect_to profile_path(@profile), notice: "This profile's games are private."
+        # rubocop:enable Rails/I18nLocaleTexts
+      else
+        redirect_to_profiles_with_notice
+      end
+    end
+
+    def profile_visible_to_current_user?
+      profile_own? || @profile.privacy_public? || (@profile.privacy_friendly? && profile_friend?)
     end
 
     def igdb_cache_update_requested?

@@ -60,12 +60,14 @@
                     - if @friends.any?
                       - @friends.each do |friend|
                         - games_count = friend.read_attribute(:games_count).to_i
+                        - can_view_games = friend.game_library_privacy_public? || friend.game_library_privacy_friendly?
                         %tr
                           %td.fw-semibold= friend.name
                           %td= games_count
                           %td.text-end
                             .d-inline-flex.gap-2
-                              = link_to "Games", profile_games_path(friend), class: "profiles-action-pill", data: { turbo_frame: "_top" }
+                              - if can_view_games
+                                = link_to "Games", profile_games_path(friend), class: "profiles-action-pill", data: { turbo_frame: "_top" }
                               = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
                     - else
                       %tr
@@ -76,6 +78,7 @@
                 - if @friends.any?
                   - @friends.each do |friend|
                     - games_count = friend.read_attribute(:games_count).to_i
+                    - can_view_games = friend.game_library_privacy_public? || friend.game_library_privacy_friendly?
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3
@@ -84,7 +87,8 @@
                               .fw-semibold.text-break= friend.name
                               .small.text-muted Games: #{games_count}
                             .d-inline-flex.gap-1.flex-shrink-0
-                              = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                              - if can_view_games
+                                = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
                               = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                 - else
                   .col-12
