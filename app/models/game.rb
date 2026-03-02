@@ -5,7 +5,7 @@ class Game < ApplicationRecord
   include SearchCop
   self.implicit_order_column = "created_at"
 
-  belongs_to :user
+  belongs_to :user, counter_cache: true
   belongs_to :completion_status, optional: true
   belongs_to :source, optional: true
   belongs_to :igdb_cache, optional: true

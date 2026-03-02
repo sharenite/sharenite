@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2023_08_28_223215) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_02_143100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -143,6 +143,8 @@ ActiveRecord::Schema[7.1].define(version: 2023_08_28_223215) do
     t.index ["invitee_id"], name: "index_friends_on_invitee_id"
     t.index ["inviter_id", "invitee_id"], name: "index_friends_on_inviter_id_and_invitee_id", unique: true
     t.index ["inviter_id"], name: "index_friends_on_inviter_id"
+    t.index ["status", "invitee_id"], name: "index_friends_on_status_and_invitee_id"
+    t.index ["status", "inviter_id"], name: "index_friends_on_status_and_inviter_id"
   end
 
   create_table "games", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -192,9 +194,12 @@ ActiveRecord::Schema[7.1].define(version: 2023_08_28_223215) do
     t.datetime "recent_activity"
     t.uuid "igdb_cache_id"
     t.index ["completion_status_id"], name: "index_games_on_completion_status_id"
+    t.index ["created_at"], name: "index_games_on_created_at"
     t.index ["igdb_cache_id"], name: "index_games_on_igdb_cache_id"
+    t.index ["last_activity"], name: "index_games_on_last_activity"
     t.index ["playnite_id", "user_id"], name: "index_games_on_playnite_id_and_user_id", unique: true
     t.index ["source_id"], name: "index_games_on_source_id"
+    t.index ["user_id", "last_activity"], name: "index_games_on_user_id_and_last_activity"
     t.index ["user_id", "playnite_id"], name: "index_games_on_user_id_and_playnite_id", unique: true
     t.index ["user_id"], name: "index_games_on_user_id"
   end
@@ -307,6 +312,7 @@ ActiveRecord::Schema[7.1].define(version: 2023_08_28_223215) do
     t.string "slug"
     t.enum "privacy", default: "private", enum_type: "profile_privacy"
     t.string "vanity_url"
+    t.index ["privacy", "name"], name: "index_profiles_on_privacy_and_name"
     t.index ["slug"], name: "index_profiles_on_slug", unique: true
     t.index ["user_id"], name: "index_profiles_on_user_id"
     t.index ["vanity_url"], name: "index_profiles_on_vanity_url", unique: true
@@ -368,6 +374,8 @@ ActiveRecord::Schema[7.1].define(version: 2023_08_28_223215) do
     t.datetime "finished_processing_at"
     t.integer "waiting_time"
     t.integer "processing_time"
+    t.index ["created_at", "status"], name: "index_sync_jobs_on_created_at_and_status"
+    t.index ["created_at"], name: "index_sync_jobs_on_created_at"
     t.index ["user_id"], name: "index_sync_jobs_on_user_id"
   end
 
@@ -398,8 +406,12 @@ ActiveRecord::Schema[7.1].define(version: 2023_08_28_223215) do
     t.string "unconfirmed_email"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "games_count", default: 0, null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
+    t.index ["confirmed_at"], name: "index_users_on_confirmed_at"
+    t.index ["created_at"], name: "index_users_on_created_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["last_sign_in_at"], name: "index_users_on_last_sign_in_at"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
