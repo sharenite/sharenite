@@ -28,8 +28,8 @@ module Profiles
       "status_desc" => "(SELECT LOWER(completion_statuses.name) FROM completion_statuses WHERE completion_statuses.id = games.completion_status_id) DESC NULLS LAST, LOWER(games.name) ASC"
     }.freeze
 
-    before_action :game, only: %i[show edit update destroy]
     before_action :check_game_library_access_profile, only: %i[index show]
+    before_action :game, only: %i[show edit update destroy]
     skip_before_action :check_general_access_profile, only: %i[index show]
 
     def index
@@ -83,14 +83,7 @@ module Profiles
     def game_library_friend?
       return false unless current_user
 
-      Friend.where(status: :accepted).exists?(
-        ["(inviter_id = :current_user_id AND invitee_id = :profile_user_id) OR " \
-         "(invitee_id = :current_user_id AND inviter_id = :profile_user_id)",
-         {
-           current_user_id: current_user.id,
-           profile_user_id: @profile.user_id
-         }]
-      )
+      accepted_friendship_with_profile_user?
     end
 
     def set_sync_jobs
@@ -98,8 +91,11 @@ module Profiles
     end
 
     def game
+      set_profile if @profile.blank?
       @game = @profile.user.games.find_by(id: params[:id])
       @game ||= redirect_to_games_with_notice # defined in app controller
+    rescue ActiveRecord::RecordNotFound
+      redirect_to_games_with_notice
     end
 
     def filter_games

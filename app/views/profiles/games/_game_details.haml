@@ -16,12 +16,13 @@
 - install_size_label = game.install_size.present? ? number_to_human_size(game.install_size) : "N/A"
 - last_size_scan_label = game.last_size_scan_date ? "#{time_ago_in_words(game.last_size_scan_date)} ago" : "N/A"
 - recent_activity_label = game.recent_activity ? "#{time_ago_in_words(game.recent_activity)} ago" : "N/A"
+- own_profile = @profile == current_user&.profile
 
 .game-details
   .game-details__header.mb-3
     .d-flex.flex-wrap.align-items-center.gap-2.gap-md-3
       %h1.game-details__title.mb-0
-        - if game.playnite_id && game.is_installed && @profile == current_user&.profile
+        - if game.playnite_id && game.is_installed && own_profile
           = link_to "playnite://playnite/start/#{game.playnite_id}", class: "game-details__play", title: "Play" do
             %i.bi.bi-play-fill
         = game.name
@@ -184,39 +185,40 @@
               - else
                 N/A
 
-  .accordion.game-details__accordion.mt-3#gameTechnicalDetails
-    .accordion-item
-      %h2.accordion-header#gameTechnicalHeading
-        %button.accordion-button.collapsed{type: "button", data: { bs_toggle: "collapse", bs_target: "#gameTechnicalCollapse" }, aria: { expanded: "false", controls: "gameTechnicalCollapse" }}
-          Technical Details
-      .accordion-collapse.collapse#gameTechnicalCollapse{aria: { labelledby: "gameTechnicalHeading" }, data: { bs_parent: "#gameTechnicalDetails" }}
-        .accordion-body
-          %dl.game-details__list
-            %dt Game ID
-            %dd= game.game_id || "N/A"
-            %dt Playnite ID
-            %dd= game.playnite_id || "N/A"
-            %dt Plugin ID
-            %dd= game.plugin_id || "N/A"
-            %dt Sorting name
-            %dd= game.sorting_name || "N/A"
-            %dt Hidden
-            %dd= game.hidden ? "Yes" : "No"
-            %dt Include library plugin action
-            %dd= game.include_library_plugin_action ? "Yes" : "No"
-            %dt Install directory
-            %dd= game.install_directory || "N/A"
-            %dt Manual
-            %dd= game.manual || "N/A"
-            %dt Game started script
-            %dd= game.game_started_script || "N/A"
-            %dt Pre script
-            %dd= game.pre_script || "N/A"
-            %dt Post script
-            %dd= game.post_script || "N/A"
-            %dt Use global game started script
-            %dd= game.use_global_game_started_script ? "Yes" : "No"
-            %dt Use global pre script
-            %dd= game.use_global_pre_script ? "Yes" : "No"
-            %dt Use global post script
-            %dd= game.use_global_post_script ? "Yes" : "No"
+  - if own_profile
+    .accordion.game-details__accordion.mt-3#gameTechnicalDetails
+      .accordion-item
+        %h2.accordion-header#gameTechnicalHeading
+          %button.accordion-button.collapsed{type: "button", data: { bs_toggle: "collapse", bs_target: "#gameTechnicalCollapse" }, aria: { expanded: "false", controls: "gameTechnicalCollapse" }}
+            Technical Details
+        .accordion-collapse.collapse#gameTechnicalCollapse{aria: { labelledby: "gameTechnicalHeading" }, data: { bs_parent: "#gameTechnicalDetails" }}
+          .accordion-body
+            %dl.game-details__list
+              %dt Game ID
+              %dd= game.game_id || "N/A"
+              %dt Playnite ID
+              %dd= game.playnite_id || "N/A"
+              %dt Plugin ID
+              %dd= game.plugin_id || "N/A"
+              %dt Sorting name
+              %dd= game.sorting_name || "N/A"
+              %dt Hidden
+              %dd= game.hidden ? "Yes" : "No"
+              %dt Include library plugin action
+              %dd= game.include_library_plugin_action ? "Yes" : "No"
+              %dt Install directory
+              %dd= game.install_directory || "N/A"
+              %dt Manual
+              %dd= game.manual || "N/A"
+              %dt Game started script
+              %dd= game.game_started_script || "N/A"
+              %dt Pre script
+              %dd= game.pre_script || "N/A"
+              %dt Post script
+              %dd= game.post_script || "N/A"
+              %dt Use global game started script
+              %dd= game.use_global_game_started_script ? "Yes" : "No"
+              %dt Use global pre script
+              %dd= game.use_global_pre_script ? "Yes" : "No"
+              %dt Use global post script
+              %dd= game.use_global_post_script ? "Yes" : "No"
