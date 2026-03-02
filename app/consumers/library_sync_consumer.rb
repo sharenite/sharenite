@@ -58,7 +58,7 @@ class LibrarySyncConsumer < ApplicationConsumer
     rescue StandardError => e
       mark_sync_job_failed
       Appsignal.set_error(e)
-      raise e
+      raise
     end
   end
 
@@ -72,7 +72,6 @@ class LibrarySyncConsumer < ApplicationConsumer
 
   def failed_sync_attributes(finished_processing_at)
     return {
-      started_processing_at: finished_processing_at,
       finished_processing_at:,
       waiting_time: finished_processing_at - @sync_job.created_at,
       processing_time: 0

@@ -1,13 +1,13 @@
-- unless @sync_jobs.nil? || @sync_jobs.count.zero?
+- if @sync_jobs&.any?
   .alert.alert-primary
-    = "There's a synchronisation still being processed:"
+    = "There's a synchronization still being processed:"
     .br
     - @sync_jobs.each do |sync_job|
       = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
       .br
-- unless @failed_sync_jobs.nil? || @failed_sync_jobs.count.zero?
+- if @failed_sync_jobs&.any?
   .alert.alert-danger
-    = "Some recent synchronisations failed:"
+    = "Some recent synchronizations failed:"
     .br
     - @failed_sync_jobs.each do |sync_job|
       = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
