@@ -5,8 +5,8 @@ module Profiles
   module Playlists
     # Profiles playlist_items controller
     class PlaylistItemsController < BaseController
+      before_action :check_current_user_playlist, only: %i[new create edit update destroy reorder]
       before_action :playlist_item, only: %i[edit update destroy]
-      before_action :check_current_user_playlist, only: :reorder
 
       def new
         order = (@playlist.playlist_items&.order(:order)&.last&.order || 0) + 1
