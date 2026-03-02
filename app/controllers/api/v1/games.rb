@@ -82,8 +82,14 @@ module API
           Rails.logger.debug { "[syncjob] type=#{type} user_id=#{current_user.id} payload_size_mb=#{(payload_size.to_f / 1024 / 1024).round(2)}" }
 
           return [games] if payload_size <= MAX_SYNCJOB_PAYLOAD_BYTES
+          if type == "full"
+            error!(
+              "Full library sync payload exceeds #{MAX_SYNCJOB_PAYLOAD_BYTES} bytes. Please reduce sync payload size or increase server limit.",
+              413
+            )
+          end
 
-          games.each_slice(MAX_SYNCJOB_GAMES_PER_JOB).to_a
+          chunk_by_count_and_bytes(type, games)
         end
 
         def sync_type_for_chunk(type, chunk_index)
@@ -143,7 +149,44 @@ module API
           )
         rescue StandardError => e
           job&.update(status: :failed, error_message: e.full_message(highlight: false))
-          raise e
+          raise
+        end
+
+        def chunk_by_count_and_bytes(type, games)
+          chunks = []
+          current_chunk = []
+          current_chunk_bytes = 2 # JSON array brackets: []
+          games.each do |game|
+            game_json = game.to_json
+            game_bytes = json_entry_size(current_chunk, game_json)
+            current_chunk, current_chunk_bytes = roll_chunk_if_needed(chunks, current_chunk, current_chunk_bytes, game_bytes)
+            validate_single_game_payload_size!(type, game_json)
+            current_chunk << game
+            current_chunk_bytes += game_bytes
+          end
+          chunks << current_chunk if current_chunk.any?
+          chunks
+        end
+
+        def roll_chunk_if_needed(chunks, current_chunk, current_chunk_bytes, game_bytes)
+          return [current_chunk, current_chunk_bytes] unless current_chunk.any? && chunk_limit_reached?(current_chunk, current_chunk_bytes, game_bytes)
+
+          chunks << current_chunk
+          [[], 2]
+        end
+
+        def chunk_limit_reached?(chunk, chunk_bytes, next_game_bytes)
+          chunk.size >= MAX_SYNCJOB_GAMES_PER_JOB || (chunk_bytes + next_game_bytes > MAX_SYNCJOB_PAYLOAD_BYTES)
+        end
+
+        def json_entry_size(current_chunk, game_json)
+          game_json.bytesize + (current_chunk.empty? ? 0 : 1) # comma separator
+        end
+
+        def validate_single_game_payload_size!(type, game_json)
+          return unless game_json.bytesize + 2 > MAX_SYNCJOB_PAYLOAD_BYTES
+
+          error!("A single game payload is too large for #{type} sync (#{MAX_SYNCJOB_PAYLOAD_BYTES} bytes limit).", 413)
         end
       end
     end
