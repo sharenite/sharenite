@@ -4,7 +4,11 @@
 class PlaylistItem < ApplicationRecord
   belongs_to :playlist
   belongs_to :igdb_cache
+
+  validates :igdb_cache_id, uniqueness: { scope: :playlist_id }
   validates :order, presence: true
+  validates :order, uniqueness: { scope: :playlist_id }
+
   after_commit :normalize_playlist_orders_after_create, on: :create
   after_commit :normalize_playlist_orders_after_update, on: :update
   after_commit :normalize_playlist_orders_after_destroy, on: :destroy

@@ -4,6 +4,7 @@
 module Profiles
   module Playlists
     # Profiles playlist_items controller
+    # rubocop:disable Metrics/ClassLength
     class PlaylistItemsController < BaseController
       before_action :check_current_user_playlist, only: %i[new create edit update destroy reorder]
       before_action :playlist_item, only: %i[edit update destroy]
@@ -18,7 +19,7 @@ module Profiles
         @igdb_cache = @playlist_item.igdb_cache || @playlist_item.build_igdb_cache
       end
 
-      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/BlockLength
       def create
         igdb_id = params.dig(:playlist_item, :igdb_cache, :igdb_id)
         igdb_cache = nil
@@ -27,12 +28,21 @@ module Profiles
         next_order = (@playlist.playlist_items.maximum(:order) || 0) + 1
         @playlist_item = @playlist.playlist_items.new(order: next_order, igdb_cache:)
         respond_to do |format|
+          if igdb_id.present? && igdb_cache.nil?
+            add_igdb_not_found_error(@playlist_item, igdb_id)
+            format.turbo_stream { render turbo_stream: turbo_stream.replace("playlist_item_errors", partial: "playlist_item_errors") }
+            next
+          end
+
           if @playlist_item.save
             PlaylistItem.move_to_position!(@playlist, @playlist_item.id, desired_position) if desired_position.present?
             format.turbo_stream { redirect_to profile_playlist_path(@profile, @playlist) }
           else
             format.turbo_stream { render turbo_stream: turbo_stream.replace("playlist_item_errors", partial: "playlist_item_errors") }
           end
+        rescue ActiveRecord::RecordNotUnique
+          @playlist_item.errors.add(:base, "This game or order already exists in this playlist.")
+          format.turbo_stream { render turbo_stream: turbo_stream.replace("playlist_item_errors", partial: "playlist_item_errors") }
         end
       end
 
@@ -42,15 +52,24 @@ module Profiles
         igdb_cache = IgdbCache.get_by_igdb_id(igdb_id) if igdb_id.present?
         desired_position = parse_position(playlist_item_params[:order])
         respond_to do |format|
+          if igdb_id.present? && igdb_cache.nil?
+            add_igdb_not_found_error(@playlist_item, igdb_id)
+            format.turbo_stream { render turbo_stream: turbo_stream.replace("playlist_item_errors", partial: "playlist_item_errors") }
+            next
+          end
+
           if @playlist_item.update(igdb_cache:)
             PlaylistItem.move_to_position!(@playlist, @playlist_item.id, desired_position) if desired_position.present?
             format.turbo_stream { redirect_to profile_playlist_path(@profile, @playlist) }
           else
             format.turbo_stream { render turbo_stream: turbo_stream.replace("playlist_item_errors", partial: "playlist_item_errors") }
           end
+        rescue ActiveRecord::RecordNotUnique
+          @playlist_item.errors.add(:base, "This game or order already exists in this playlist.")
+          format.turbo_stream { render turbo_stream: turbo_stream.replace("playlist_item_errors", partial: "playlist_item_errors") }
         end
       end
-      # rubocop:enable all
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/BlockLength
 
       def destroy
         @playlist_item.destroy!
@@ -95,6 +114,10 @@ module Profiles
         parsed.positive? ? parsed : nil
       rescue ArgumentError, TypeError
         nil
+      end
+
+      def add_igdb_not_found_error(record, igdb_id)
+        record.errors.add(:base, "IGDB entry was not found for ID #{igdb_id}.")
       end
 
       def redirect_to_playlist_with_notice

@@ -49,11 +49,17 @@ module Profiles
       @igdb_cache = @game.igdb_cache || @game.build_igdb_cache
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/BlockLength
     def update
       should_update_igdb_cache = igdb_cache_update_requested?
       igdb_cache = resolved_igdb_cache_from_params if should_update_igdb_cache
       respond_to do |format|
-        updated = should_update_igdb_cache ? @game.update(igdb_cache:) : true
+        if should_update_igdb_cache && igdb_cache_not_found?(igdb_cache)
+          add_igdb_not_found_error(@game, params.dig(:game, :igdb_cache, :igdb_id))
+          updated = false
+        else
+          updated = should_update_igdb_cache ? @game.update(igdb_cache:) : true
+        end
         if updated
           format.turbo_stream { redirect_to profile_game_path(@profile, @game) }
         else
@@ -61,6 +67,7 @@ module Profiles
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/BlockLength
 
     def destroy
     end
@@ -243,6 +250,14 @@ module Profiles
       return nil if igdb_id.blank?
 
       IgdbCache.get_by_igdb_id(igdb_id)
+    end
+
+    def igdb_cache_not_found?(igdb_cache)
+      params.dig(:game, :igdb_cache, :igdb_id).present? && igdb_cache.nil?
+    end
+
+    def add_igdb_not_found_error(record, igdb_id)
+      record.errors.add(:base, "IGDB entry was not found for ID #{igdb_id}.")
     end
 
     def set_games
