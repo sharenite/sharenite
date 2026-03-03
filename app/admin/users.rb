@@ -60,9 +60,6 @@ ActiveAdmin.register User do
   index do
     id_column
     column :email
-    column :deleting do |user|
-      status_tag(user.deleting? ? "yes" : "no", class: user.deleting? ? "warning" : "ok")
-    end
     column :deletion_requested_at
     column :games_count do |user|
       games_total = user[:games_count]
