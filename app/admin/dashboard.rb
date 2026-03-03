@@ -155,8 +155,26 @@ ActiveAdmin.register_page "Dashboard" do
             row("Sync-only") { number.call(metrics[:users_sync_only_30d]) }
             row("Users with sign-in but 0 sync jobs") { number.call(metrics[:users_with_sign_in_no_sync_30d]) }
             row("Users with sync jobs but 0 games added") { number.call(metrics[:users_with_sync_no_games_added_30d]) }
-            row("Median signup -> first sync (days)") { metrics[:median_signup_to_first_sync_days] || "N/A" }
-            row("Median first sync -> first game added (days)") { metrics[:median_first_sync_to_first_game_days] || "N/A" }
+            row("Median signup -> first sync (days)") do
+              value = metrics[:median_signup_to_first_sync_days]
+              sample_size = metrics[:signup_to_first_sync_sample_size].to_i
+              value.present? ? "#{value} (n=#{number.call(sample_size)})" : "N/A (n=0)"
+            end
+            row("Median signup -> first sync <=1d (days)") do
+              value = metrics[:median_signup_to_first_sync_under_1d_days]
+              sample_size = metrics[:signup_to_first_sync_under_1d_sample_size].to_i
+              value.present? ? "#{value} (n=#{number.call(sample_size)})" : "N/A (n=0)"
+            end
+            row("Median first sync -> first game added (days)") do
+              value = metrics[:median_first_sync_to_first_game_days]
+              sample_size = metrics[:first_sync_to_first_game_sample_size].to_i
+              value.present? ? "#{value} (n=#{number.call(sample_size)})" : "N/A (n=0)"
+            end
+            row("Median first sync -> first game <=1d (days)") do
+              value = metrics[:median_first_sync_to_first_game_under_1d_days]
+              sample_size = metrics[:first_sync_to_first_game_under_1d_sample_size].to_i
+              value.present? ? "#{value} (n=#{number.call(sample_size)})" : "N/A (n=0)"
+            end
           end
           para "Useful to compare auth activity, sync activity, and actual game engagement."
         end

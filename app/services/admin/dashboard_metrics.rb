@@ -28,7 +28,7 @@ module Admin
 
     def cache_key
       [
-        "admin/dashboard_metrics/v5",
+        "admin/dashboard_metrics/v6",
         as_of.to_i / CACHE_TTL
       ]
     end
@@ -125,8 +125,13 @@ module Admin
                                           GROUP BY user_id
                                         ) first_sync ON first_sync.user_id = users.id
                                       SQL
+                                      .where("first_sync.first_sync_at >= users.created_at")
                                       .pluck(Arel.sql("EXTRACT(EPOCH FROM (first_sync.first_sync_at - users.created_at)) / 86400.0"))
       median_signup_to_first_sync_days = median(signup_to_first_sync_days)&.round(2)
+      signup_to_first_sync_sample_size = signup_to_first_sync_days.size
+      signup_to_first_sync_under_1d_days = signup_to_first_sync_days.select { |days| days.to_f <= 1.0 }
+      median_signup_to_first_sync_under_1d_days = median(signup_to_first_sync_under_1d_days)&.round(2)
+      signup_to_first_sync_under_1d_sample_size = signup_to_first_sync_under_1d_days.size
 
       first_sync_to_first_game_days = User.joins(<<~SQL.squish)
                                   INNER JOIN (
@@ -141,8 +146,13 @@ module Admin
                                   ) first_game ON first_game.user_id = users.id
                                 SQL
                                   .where("first_sync.first_sync_at >= ? AND first_sync.first_sync_at <= ?", window_30_days.begin, window_30_days.end)
+                                  .where("first_game.first_game_at >= first_sync.first_sync_at")
                                   .pluck(Arel.sql("EXTRACT(EPOCH FROM (first_game.first_game_at - first_sync.first_sync_at)) / 86400.0"))
       median_first_sync_to_first_game_days = median(first_sync_to_first_game_days)&.round(2)
+      first_sync_to_first_game_sample_size = first_sync_to_first_game_days.size
+      first_sync_to_first_game_under_1d_days = first_sync_to_first_game_days.select { |days| days.to_f <= 1.0 }
+      median_first_sync_to_first_game_under_1d_days = median(first_sync_to_first_game_under_1d_days)&.round(2)
+      first_sync_to_first_game_under_1d_sample_size = first_sync_to_first_game_under_1d_days.size
 
       {
         users_total:,
@@ -181,6 +191,12 @@ module Admin
         users_with_sync_no_games_added_30d:,
         median_signup_to_first_sync_days:,
         median_first_sync_to_first_game_days:,
+        signup_to_first_sync_sample_size:,
+        first_sync_to_first_game_sample_size:,
+        median_signup_to_first_sync_under_1d_days:,
+        median_first_sync_to_first_game_under_1d_days:,
+        signup_to_first_sync_under_1d_sample_size:,
+        first_sync_to_first_game_under_1d_sample_size:,
         new_users_synced_24h_30d:,
         new_users_synced_7d_30d:,
         new_users_sync_24h_rate_30d:,

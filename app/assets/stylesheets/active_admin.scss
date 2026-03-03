@@ -255,6 +255,30 @@ body.admin_stats {
     text-decoration: underline;
   }
 
+  .admin-mini-chart-wrap {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .admin-mini-chart-axis {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
+    padding: 2px 0 28px;
+  }
+
+  .admin-mini-chart-axis-label {
+    color: #55657d;
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: right;
+  }
+
   .admin-mini-chart {
     align-items: end;
     display: flex;

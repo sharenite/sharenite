@@ -22,6 +22,14 @@ ActiveAdmin.register_page "Stats" do
     number = ->(value) { helpers.number_with_delimiter(value) }
     human_size = ->(bytes) { helpers.number_to_human_size(bytes, precision: 2) }
     percent = ->(value) { format("%.1f%%", value.to_f) }
+    chart_value = lambda do |value|
+      numeric = value.to_f
+      if (numeric % 1).zero?
+        helpers.number_with_delimiter(numeric.to_i)
+      else
+        helpers.number_with_precision(numeric, precision: 2, strip_insignificant_zeros: true)
+      end
+    end
 
     trend_class = lambda do |change_text|
       return "is-neutral" unless change_text.start_with?("+", "-")
@@ -39,7 +47,8 @@ ActiveAdmin.register_page "Stats" do
       end
     end
 
-    render_chart = lambda do |title, points|
+    render_chart = lambda do |title, points, chart_type: :count|
+      percent_chart = chart_type == :percent
       label_step =
         if points.size > 120
           10
@@ -55,14 +64,39 @@ ActiveAdmin.register_page "Stats" do
           1
         end
       panel title do
-        max_value = [points.pluck(:value).max.to_i, 1].max
-        div class: "admin-mini-chart" do
-          points.each_with_index do |point, index|
-            height = ((point[:value].to_f / max_value) * 100).round
-            show_label = (index % label_step).zero? || index == points.size - 1
-            div class: "admin-mini-chart-col", title: "#{point[:label]}: #{point[:value]}" do
-              div "", class: "admin-mini-chart-bar", style: "height: #{[height, 2].max}px"
-              span point[:label], class: "admin-mini-chart-label #{show_label ? '' : 'is-hidden'}"
+        max_value = if percent_chart
+                      100.0
+                    else
+                      [points.pluck(:value).max.to_f, 1.0].max
+                    end
+        y_axis_top = max_value
+        y_axis_mid = (max_value / 2.0)
+        axis_label = lambda do |value|
+          rendered = chart_value.call(value)
+          percent_chart ? "#{rendered}%" : rendered
+        end
+
+        div class: "admin-mini-chart-wrap" do
+          div class: "admin-mini-chart-axis" do
+            span axis_label.call(y_axis_top), class: "admin-mini-chart-axis-label"
+            span axis_label.call(y_axis_mid), class: "admin-mini-chart-axis-label"
+            span axis_label.call(0), class: "admin-mini-chart-axis-label"
+          end
+
+          div class: "admin-mini-chart" do
+            points.each_with_index do |point, index|
+              point_value = point[:value]
+              formatted_value = chart_value.call(point_value)
+              tooltip_value = percent_chart ? "#{formatted_value}%" : formatted_value
+              height = ((point_value.to_f / max_value) * 100).round
+              show_label = (index % label_step).zero? || index == points.size - 1
+              div class: "admin-mini-chart-col" do
+                div "",
+                    class: "admin-mini-chart-bar",
+                    style: "height: #{[height, 2].max}px",
+                    title: "#{point[:label]}: #{tooltip_value}"
+                span point[:label], class: "admin-mini-chart-label #{show_label ? '' : 'is-hidden'}"
+              end
             end
           end
         end
@@ -113,7 +147,7 @@ ActiveAdmin.register_page "Stats" do
         render_chart.call("Sync Finished", metrics[:series][:sync_finished_events])
         render_chart.call("Sync Failed + Dead", metrics[:series][:sync_failed_events])
         render_chart.call("Sync Active Users", metrics[:series][:sync_active_users])
-        render_chart.call("User-to-sync conversion <=7d (%)", metrics[:series][:user_sync_conversion_7d])
+        render_chart.call("User-to-sync conversion <=7d (%)", metrics[:series][:user_sync_conversion_7d], chart_type: :percent)
         render_chart.call("Synced Games", metrics[:series][:sync_games])
         render_chart.call("Sync Payload (MB)", metrics[:series][:sync_payload_mb])
       end
