@@ -94,9 +94,34 @@ body.admin_stats {
     gap: 12px;
   }
 
+  .admin-sync-health-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .admin-sync-health-grid .attributes_table {
+    margin-bottom: 0;
+  }
+
+  .admin-sync-health-grid .attributes_table table th {
+    white-space: normal;
+    width: 58%;
+    word-break: break-word;
+  }
+
+  .admin-sync-health-grid .attributes_table table td {
+    white-space: normal;
+    width: 42%;
+  }
+
   @media (max-width: 1400px) {
     .admin-dashboard-panels {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-sync-health-grid {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -233,14 +258,14 @@ body.admin_stats {
   .admin-mini-chart {
     align-items: end;
     display: flex;
-    gap: 6px;
+    gap: 2px;
     min-height: 140px;
     overflow-x: auto;
-    padding-bottom: 6px;
+    padding-bottom: 28px;
   }
 
   .admin-mini-chart-col {
-    min-width: 44px;
+    min-width: 16px;
     text-align: center;
   }
 
@@ -254,9 +279,38 @@ body.admin_stats {
   .admin-mini-chart-label {
     color: #55657d;
     display: block;
-    font-size: 10px;
+    font-size: 9px;
     line-height: 1.2;
+    margin-top: 4px;
+    transform: rotate(-65deg);
+    transform-origin: top left;
     white-space: nowrap;
+  }
+
+  .admin-mini-chart-label.is-hidden {
+    visibility: hidden;
+  }
+
+  .admin-stats-charts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .admin-stats-charts .panel {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 1400px) {
+    .admin-stats-charts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .admin-stats-charts {
+      grid-template-columns: 1fr;
+    }
   }
 }
 

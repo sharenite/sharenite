@@ -28,6 +28,16 @@ ActiveAdmin.register_page "Dashboard" do
     sync_events_vs_prev_30d = percent_change.call(metrics[:sync_events_30d], metrics[:sync_events_prev_30d])
     sync_payload_vs_prev_30d = percent_change.call(metrics[:sync_payload_bytes_30d], metrics[:sync_payload_bytes_prev_30d])
     sync_games_vs_prev_30d = percent_change.call(metrics[:sync_games_30d], metrics[:sync_games_prev_30d])
+    oldest_deletion_age = if metrics[:oldest_deletion_requested_at].present?
+                            helpers.time_ago_in_words(metrics[:oldest_deletion_requested_at])
+                          else
+                            "N/A"
+                          end
+    oldest_queue_age = if metrics[:oldest_queued_sync_at].present?
+                         helpers.time_ago_in_words(metrics[:oldest_queued_sync_at])
+                       else
+                         "N/A"
+                       end
 
     div class: "admin-dashboard" do
       div class: "admin-dashboard-kpis" do
@@ -91,27 +101,47 @@ ActiveAdmin.register_page "Dashboard" do
             row("New users (30d)") { number.call(metrics[:users_new_30d]) }
             row("New users (prev 30d)") { number.call(metrics[:users_new_prev_30d]) }
             row("New users trend (30d vs prev 30d)") { users_vs_prev_30d }
+            row("New users first sync <=24h (30d)") { number.call(metrics[:new_users_synced_24h_30d]) }
+            row("New users first sync <=7d (30d)") { number.call(metrics[:new_users_synced_7d_30d]) }
+            row("User-to-sync conversion <=24h (30d)") { metrics[:new_users_sync_24h_rate_30d] }
+            row("User-to-sync conversion <=7d (30d)") { metrics[:new_users_sync_7d_rate_30d] }
             row("Confirmed users (30d)") { number.call(metrics[:users_confirmed_30d]) }
+            row("Users pending deletion") { number.call(metrics[:deleting_users_count]) }
+            row("Oldest deletion request age") { oldest_deletion_age }
           end
         end
 
         panel "Sync Jobs Health (30 days)" do
-          attributes_table_for :sync_jobs do
-            row("Finished") { number.call(metrics[:sync_finished_30d]) }
-            row("Failed") { number.call(metrics[:sync_failed_30d]) }
-            row("Dead") { number.call(metrics[:sync_dead_30d]) }
-            row("Running") { number.call(metrics[:sync_running_30d]) }
-            row("Success rate (finished/(finished+failed+dead))") { metrics[:sync_success_rate] }
-            row("Avg processing time (s)") { metrics[:sync_avg_processing_time] || "N/A" }
-            row("Chunked requests") { number.call(metrics[:chunked_sync_requests_30d]) }
-            row("Chunk jobs") { number.call(metrics[:chunked_sync_jobs_30d]) }
-            row("Avg chunks per chunked request") { metrics[:avg_chunks_per_request_30d] || "N/A" }
-            row("Max chunks in one request") { metrics[:max_chunks_per_request_30d] || "N/A" }
-            row("Total chunk payload (30d)") { helpers.number_to_human_size(metrics[:sync_payload_bytes_30d]) }
-            row("Payload size total (30d)") { human_size.call(metrics[:sync_payload_bytes_30d]) }
-            row("Payload size avg/job (30d)") { human_size.call(metrics[:sync_avg_payload_size_bytes]) }
-            row("Synced games total (30d)") { number.call(metrics[:sync_games_30d]) }
-            row("Synced games avg/job (30d)") { metrics[:sync_avg_games_per_job] || "N/A" }
+          div class: "admin-sync-health-grid" do
+            div do
+              attributes_table_for :sync_jobs_core do
+                row("Finished") { number.call(metrics[:sync_finished_30d]) }
+                row("Failed") { number.call(metrics[:sync_failed_30d]) }
+                row("Dead") { number.call(metrics[:sync_dead_30d]) }
+                row("Running") { number.call(metrics[:sync_running_30d]) }
+                row("Success rate") { metrics[:sync_success_rate] }
+                row("Avg processing time (s)") { metrics[:sync_avg_processing_time] || "N/A" }
+                row("p50 processing latency (s)") { metrics[:sync_processing_p50] || "N/A" }
+                row("p95 processing latency (s)") { metrics[:sync_processing_p95] || "N/A" }
+                row("Backlog (queued + running)") { number.call(metrics[:sync_backlog_count]) }
+                row("Oldest queued age") { oldest_queue_age }
+                row("Failed rate (24h)") { metrics[:sync_failed_rate_24h] }
+              end
+            end
+
+            div do
+              attributes_table_for :sync_jobs_payload do
+                row("Chunked requests") { number.call(metrics[:chunked_sync_requests_30d]) }
+                row("Chunk jobs") { number.call(metrics[:chunked_sync_jobs_30d]) }
+                row("Avg chunks per chunked request") { metrics[:avg_chunks_per_request_30d] || "N/A" }
+                row("Max chunks in one request") { metrics[:max_chunks_per_request_30d] || "N/A" }
+                row("Total chunk payload (30d)") { helpers.number_to_human_size(metrics[:sync_payload_bytes_30d]) }
+                row("Payload size total (30d)") { human_size.call(metrics[:sync_payload_bytes_30d]) }
+                row("Payload size avg/job (30d)") { human_size.call(metrics[:sync_avg_payload_size_bytes]) }
+                row("Synced games total (30d)") { number.call(metrics[:sync_games_30d]) }
+                row("Synced games avg/job (30d)") { metrics[:sync_avg_games_per_job] || "N/A" }
+              end
+            end
           end
         end
 
@@ -123,6 +153,10 @@ ActiveAdmin.register_page "Dashboard" do
             row("Active in both (sign-in + sync)") { number.call(metrics[:users_active_both_30d]) }
             row("Sign-in only") { number.call(metrics[:users_sign_in_only_30d]) }
             row("Sync-only") { number.call(metrics[:users_sync_only_30d]) }
+            row("Users with sign-in but 0 sync jobs") { number.call(metrics[:users_with_sign_in_no_sync_30d]) }
+            row("Users with sync jobs but 0 games added") { number.call(metrics[:users_with_sync_no_games_added_30d]) }
+            row("Median signup -> first sync (days)") { metrics[:median_signup_to_first_sync_days] || "N/A" }
+            row("Median first sync -> first game added (days)") { metrics[:median_first_sync_to_first_game_days] || "N/A" }
           end
           para "Useful to compare auth activity, sync activity, and actual game engagement."
         end

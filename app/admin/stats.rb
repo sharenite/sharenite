@@ -21,6 +21,7 @@ ActiveAdmin.register_page "Stats" do
     metrics = Admin::StatsMetrics.call(from:, to:, grouping:)
     number = ->(value) { helpers.number_with_delimiter(value) }
     human_size = ->(bytes) { helpers.number_to_human_size(bytes, precision: 2) }
+    percent = ->(value) { format("%.1f%%", value.to_f) }
 
     trend_class = lambda do |change_text|
       return "is-neutral" unless change_text.start_with?("+", "-")
@@ -39,14 +40,29 @@ ActiveAdmin.register_page "Stats" do
     end
 
     render_chart = lambda do |title, points|
+      label_step =
+        if points.size > 120
+          10
+        elsif points.size > 80
+          8
+        elsif points.size > 50
+          6
+        elsif points.size > 30
+          4
+        elsif points.size > 16
+          2
+        else
+          1
+        end
       panel title do
         max_value = [points.pluck(:value).max.to_i, 1].max
         div class: "admin-mini-chart" do
-          points.each do |point|
+          points.each_with_index do |point, index|
             height = ((point[:value].to_f / max_value) * 100).round
+            show_label = (index % label_step).zero? || index == points.size - 1
             div class: "admin-mini-chart-col", title: "#{point[:label]}: #{point[:value]}" do
               div "", class: "admin-mini-chart-bar", style: "height: #{[height, 2].max}px"
-              span point[:label], class: "admin-mini-chart-label"
+              span point[:label], class: "admin-mini-chart-label #{show_label ? '' : 'is-hidden'}"
             end
           end
         end
@@ -87,13 +103,20 @@ ActiveAdmin.register_page "Stats" do
         summary_card.call("Sync events (range)", metrics[:summary][:sync_events])
         summary_card.call("Synced games (range)", metrics[:summary][:sync_games])
         summary_card.call("Sync payload (range)", metrics[:summary][:sync_payload_bytes], human_size)
+        summary_card.call("User-to-sync <=7d", metrics[:summary][:user_sync_conversion_7d], percent)
       end
 
-      render_chart.call("Users Created", metrics[:series][:users])
-      render_chart.call("Games Added", metrics[:series][:games])
-      render_chart.call("Sync Events", metrics[:series][:sync_events])
-      render_chart.call("Synced Games", metrics[:series][:sync_games])
-      render_chart.call("Sync Payload (MB)", metrics[:series][:sync_payload_mb])
+      div class: "admin-stats-charts" do
+        render_chart.call("Users Created", metrics[:series][:users])
+        render_chart.call("Games Added", metrics[:series][:games])
+        render_chart.call("Sync Events", metrics[:series][:sync_events])
+        render_chart.call("Sync Finished", metrics[:series][:sync_finished_events])
+        render_chart.call("Sync Failed + Dead", metrics[:series][:sync_failed_events])
+        render_chart.call("Sync Active Users", metrics[:series][:sync_active_users])
+        render_chart.call("User-to-sync conversion <=7d (%)", metrics[:series][:user_sync_conversion_7d])
+        render_chart.call("Synced Games", metrics[:series][:sync_games])
+        render_chart.call("Sync Payload (MB)", metrics[:series][:sync_payload_mb])
+      end
     end
   end
 end
