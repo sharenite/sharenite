@@ -5,6 +5,7 @@
 class LibrarySyncConsumer < ApplicationConsumer
   MissingSyncPayloadError = Class.new(StandardError)
   InvalidSyncPayloadError = Class.new(StandardError)
+  SUCCESS_CLEANUP_FALLBACK_TTL = 24.hours
   SYNC_BATCH_READY_TIMEOUT_SECONDS = 10
   SYNC_BATCH_READY_POLL_SECONDS = 0.2
 
@@ -33,7 +34,7 @@ class LibrarySyncConsumer < ApplicationConsumer
     finished_processing_at = Time.current
     @sync_job.update(finished_processing_at:, processing_time: finished_processing_at - @sync_job.started_processing_at)
     @sync_job.status_finished!
-    expire_sync_payload
+    expire_sync_payload_safely
   end
 
   def consume
@@ -73,6 +74,23 @@ class LibrarySyncConsumer < ApplicationConsumer
     # rubocop:disable Style/GlobalVars
     $redis.del("syncjob:#{@sync_job.id}")
     # rubocop:enable Style/GlobalVars
+  end
+
+  def expire_sync_payload_safely
+    expire_sync_payload
+  rescue StandardError => e
+    apply_cleanup_fallback_ttl
+    Rails.logger.warn("Failed to expire sync payload for syncjob:#{@sync_job.id}: #{e.class} #{e.message}")
+    Appsignal.set_error(e)
+  end
+
+  def apply_cleanup_fallback_ttl
+    # rubocop:disable Style/GlobalVars
+    $redis.expire("syncjob:#{@sync_job.id}", SUCCESS_CLEANUP_FALLBACK_TTL.to_i)
+    # rubocop:enable Style/GlobalVars
+  rescue StandardError => e
+    Rails.logger.warn("Failed to apply fallback TTL for syncjob:#{@sync_job.id}: #{e.class} #{e.message}")
+    Appsignal.set_error(e)
   end
 
   def assign_sync_context(payload)

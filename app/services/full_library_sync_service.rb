@@ -16,20 +16,10 @@ class FullLibrarySyncService
   end
 
   def call
-    start_job
     synchronise_games
-    finish_job
   end
 
   private
-
-  def start_job
-    @sync_job.status_running!
-  end
-
-  def finish_job
-    @sync_job.status_finished!
-  end
 
   def synchronise_games
     @games.each do |playnite_game|
