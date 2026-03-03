@@ -6,7 +6,7 @@ class FullLibrarySyncService
   MissingFullSyncIdsError = Class.new(StandardError)
   InvalidFullSyncIdsError = Class.new(StandardError)
 
-m  def initialize(games, user, sync_job, sync_batch_id: nil, chunk_index: 0, total_chunks: 1)
+  def initialize(games, user, sync_job, sync_batch_id: nil, chunk_index: 0, total_chunks: 1)
     @games = games
     @user = user
     @sync_job = sync_job
