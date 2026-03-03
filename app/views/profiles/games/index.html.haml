@@ -3,14 +3,18 @@
     = "There's a synchronization still being processed:"
     .br
     - @sync_jobs.each do |sync_job|
-      = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
+      - chunk_info = sync_job.payload_chunks.to_i > 1 ? ", chunk #{sync_job.payload_chunk_index.to_i + 1}/#{sync_job.payload_chunks}" : ""
+      - size_info = sync_job.payload_size_bytes.present? ? ", payload #{number_to_human_size(sync_job.payload_size_bytes)}" : ""
+      = "Registered: #{sync_job.created_at}, status: #{sync_job.status}#{chunk_info}#{size_info}."
       .br
 - if @failed_sync_jobs&.any?
   .alert.alert-danger
     = "Some recent synchronizations failed:"
     .br
     - @failed_sync_jobs.each do |sync_job|
-      = "Registered: #{sync_job.created_at}, status: #{sync_job.status}."
+      - chunk_info = sync_job.payload_chunks.to_i > 1 ? ", chunk #{sync_job.payload_chunk_index.to_i + 1}/#{sync_job.payload_chunks}" : ""
+      - size_info = sync_job.payload_size_bytes.present? ? ", payload #{number_to_human_size(sync_job.payload_size_bytes)}" : ""
+      = "Registered: #{sync_job.created_at}, status: #{sync_job.status}#{chunk_info}#{size_info}."
       .br
     = "Please retry synchronization from the plugin."
 .row

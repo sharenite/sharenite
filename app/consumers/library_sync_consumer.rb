@@ -1,14 +1,18 @@
 # frozen_string_literal: true
 
 # Example consumer that prints messages payloads
+# rubocop:disable Metrics/ClassLength
 class LibrarySyncConsumer < ApplicationConsumer
   MissingSyncPayloadError = Class.new(StandardError)
   InvalidSyncPayloadError = Class.new(StandardError)
+  SYNC_BATCH_READY_TIMEOUT_SECONDS = 10
+  SYNC_BATCH_READY_POLL_SECONDS = 0.2
 
   def variables(payload)
     assign_sync_context(payload)
-    load_sync_payload!
     assign_payload_metadata(payload)
+    ensure_sync_batch_ready!
+    load_sync_payload!
   rescue JSON::ParserError => e
     raise InvalidSyncPayloadError, "Invalid Redis payload for syncjob:#{@sync_job.id}: #{e.message}"
   end
@@ -106,6 +110,32 @@ class LibrarySyncConsumer < ApplicationConsumer
     end
   end
 
+  def ensure_sync_batch_ready!
+    return if @sync_batch_id.blank?
+
+    deadline = Time.current + SYNC_BATCH_READY_TIMEOUT_SECONDS
+    loop do
+      status = sync_batch_status
+      return if status.blank? || status == "ready"
+      raise InvalidSyncPayloadError, "Sync batch #{@sync_batch_id} failed during enqueue." if status == "failed"
+      break if Time.current >= deadline
+
+      sleep(SYNC_BATCH_READY_POLL_SECONDS)
+    end
+
+    raise InvalidSyncPayloadError, "Sync batch #{@sync_batch_id} was not marked ready before processing."
+  end
+
+  def sync_batch_status
+    # rubocop:disable Style/GlobalVars
+    $redis.get(sync_batch_status_redis_key)
+    # rubocop:enable Style/GlobalVars
+  end
+
+  def sync_batch_status_redis_key(sync_batch_id)
+    "sync_batch_status:#{sync_batch_id}"
+  end
+
   def full_sync_service
     FullLibrarySyncService.new(
       @games,
@@ -154,3 +184,4 @@ class LibrarySyncConsumer < ApplicationConsumer
   # def shutdown
   # end
 end
+# rubocop:enable Metrics/ClassLength

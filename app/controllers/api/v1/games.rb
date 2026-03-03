@@ -9,6 +9,7 @@ module API
 
       SYNCJOB_CHUNK_GAMES_PER_JOB = ENV.fetch("SYNCJOB_CHUNK_GAMES_PER_JOB", ENV.fetch("SYNCJOB_MAX_GAMES_PER_JOB", 1_000)).to_i
       FULL_SYNC_IDS_REDIS_TTL = 24.hours
+      SYNC_BATCH_STATUS_REDIS_TTL = 24.hours
 
       resource :games do
         desc "Return all games"
@@ -60,10 +61,18 @@ module API
 
       helpers do
         def enqueue_sync_jobs!(type:, base_job_name:, games:)
-          sync_batch_id = prepare_full_sync_batch_id(type, games)
+          sync_batch_id = prepare_sync_batch!(type, games)
           chunked_games = chunk_sync_payload(type, games)
+          enqueued_jobs = enqueue_chunked_jobs(type, base_job_name, sync_batch_id, chunked_games)
+          mark_sync_batch_status(sync_batch_id, "ready")
+        rescue StandardError => e
+          handle_chunk_enqueue_failure(sync_batch_id, enqueued_jobs, e)
+          raise
+        end
+
+        def enqueue_chunked_jobs(type, base_job_name, sync_batch_id, chunked_games)
           total_chunks = chunked_games.size
-          chunked_games.each_with_index do |chunk_games, chunk_index|
+          chunked_games.each_with_index.map do |chunk_games, chunk_index|
             enqueue_chunk_with_recovery(
               chunk_games:,
               metadata: {
@@ -77,11 +86,18 @@ module API
           end
         end
 
-        def prepare_full_sync_batch_id(type, games)
-          return nil unless type == "full"
+        def handle_chunk_enqueue_failure(sync_batch_id, enqueued_jobs, error)
+          return if sync_batch_id.blank?
 
+          mark_sync_batch_status(sync_batch_id, "failed")
+          mark_enqueued_jobs_failed(enqueued_jobs, error)
+          clear_full_sync_ids(sync_batch_id)
+        end
+
+        def prepare_sync_batch!(type, games)
           sync_batch_id = SecureRandom.uuid
-          persist_full_sync_ids(sync_batch_id, games)
+          mark_sync_batch_status(sync_batch_id, "publishing")
+          persist_full_sync_ids(sync_batch_id, games) if type == "full"
           sync_batch_id
         end
 
@@ -94,6 +110,16 @@ module API
 
         def full_sync_ids_redis_key(sync_batch_id)
           "full_sync_ids:#{sync_batch_id}"
+        end
+
+        def sync_batch_status_redis_key(sync_batch_id)
+          "sync_batch_status:#{sync_batch_id}"
+        end
+
+        def mark_sync_batch_status(sync_batch_id, status)
+          # rubocop:disable Style/GlobalVars
+          $redis.set(sync_batch_status_redis_key(sync_batch_id), status, ex: SYNC_BATCH_STATUS_REDIS_TTL.to_i)
+          # rubocop:enable Style/GlobalVars
         end
 
         def chunk_sync_payload(type, games)
@@ -153,15 +179,28 @@ module API
           job = enqueue_single_sync_job!(
             type: metadata[:type],
             chunk_games:,
-            metadata: {
-              base_job_name: metadata[:base_job_name],
-              total_chunks: metadata[:total_chunks],
-              chunk_index: metadata[:chunk_index]
-            }
+            metadata:
           )
         rescue StandardError => e
           job&.update(status: :failed, error_message: e.full_message(highlight: false))
           raise
+        end
+
+        def mark_enqueued_jobs_failed(enqueued_jobs, error)
+          return if enqueued_jobs.blank?
+
+          enqueued_jobs.compact.each do |job|
+            job.update(status: :failed, error_message: "Chunk enqueue failed: #{error.message}")
+            # rubocop:disable Style/GlobalVars
+            $redis.expire("syncjob:#{job.id}", 1)
+            # rubocop:enable Style/GlobalVars
+          end
+        end
+
+        def clear_full_sync_ids(sync_batch_id)
+          # rubocop:disable Style/GlobalVars
+          $redis.del(full_sync_ids_redis_key(sync_batch_id))
+          # rubocop:enable Style/GlobalVars
         end
 
       end

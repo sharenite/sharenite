@@ -3,7 +3,10 @@
 # Job that performs a full library sync asynchornously
 # rubocop:disable Metrics:ClassLength
 class FullLibrarySyncService
-  def initialize(games, user, sync_job, sync_batch_id: nil, chunk_index: 0, total_chunks: 1)
+  MissingFullSyncIdsError = Class.new(StandardError)
+  InvalidFullSyncIdsError = Class.new(StandardError)
+
+m  def initialize(games, user, sync_job, sync_batch_id: nil, chunk_index: 0, total_chunks: 1)
     @games = games
     @user = user
     @sync_job = sync_job
@@ -107,11 +110,20 @@ class FullLibrarySyncService
     # rubocop:disable Style/GlobalVars
     raw_ids = $redis.get(full_sync_ids_redis_key)
     # rubocop:enable Style/GlobalVars
-    return @games.pluck("id") if raw_ids.blank?
+    raise MissingFullSyncIdsError, "Missing Redis full sync IDs for batch #{@sync_batch_id}" if raw_ids.blank?
 
-    JSON.parse(raw_ids)
-  rescue JSON::ParserError
-    @games.pluck("id")
+    parsed_ids = JSON.parse(raw_ids)
+    raise InvalidFullSyncIdsError, "Invalid full sync IDs payload for batch #{@sync_batch_id}: expected Array" unless parsed_ids.is_a?(Array)
+
+    current_chunk_ids = @games.pluck("id")
+    unless current_chunk_ids.all? { |id| parsed_ids.include?(id) }
+      raise InvalidFullSyncIdsError,
+            "Full sync IDs for batch #{@sync_batch_id} do not include all current chunk IDs"
+    end
+
+    parsed_ids
+  rescue JSON::ParserError => e
+    raise InvalidFullSyncIdsError, "Invalid JSON for full sync IDs batch #{@sync_batch_id}: #{e.message}"
   end
 
   def clear_full_sync_ids
