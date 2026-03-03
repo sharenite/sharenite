@@ -15,6 +15,7 @@ module Users
 
       User.transaction do
         user.lock!
+        user.skip_reconfirmation! if user.respond_to?(:skip_reconfirmation!)
 
         if user.deleting?
           user.update!(
