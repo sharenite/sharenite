@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_03_203000) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_03_231500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -396,6 +396,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_03_203000) do
     t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
+  create_table "user_deletion_events", force: :cascade do |t|
+    t.integer "status", default: 0, null: false
+    t.datetime "requested_at", null: false
+    t.datetime "job_started_at"
+    t.datetime "job_succeeded_at"
+    t.datetime "job_failed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "scheduled_by_admin", default: false, null: false
+    t.uuid "scheduled_by_admin_user_id"
+    t.string "scheduled_by_admin_email"
+    t.index ["job_succeeded_at"], name: "index_user_deletion_events_on_job_succeeded_at"
+    t.index ["requested_at"], name: "index_user_deletion_events_on_requested_at"
+    t.index ["scheduled_by_admin"], name: "index_user_deletion_events_on_scheduled_by_admin"
+    t.index ["scheduled_by_admin_email"], name: "index_user_deletion_events_on_scheduled_by_admin_email"
+    t.index ["scheduled_by_admin_user_id"], name: "index_user_deletion_events_on_scheduled_by_admin_user_id"
+    t.index ["status"], name: "index_user_deletion_events_on_status"
+  end
+
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -470,4 +489,5 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_03_203000) do
   add_foreign_key "sources", "users"
   add_foreign_key "sync_jobs", "users"
   add_foreign_key "tags", "users"
+  add_foreign_key "user_deletion_events", "admin_users", column: "scheduled_by_admin_user_id", on_delete: :nullify
 end

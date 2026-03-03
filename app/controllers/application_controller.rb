@@ -2,7 +2,19 @@
 
 # Main application controller
 class ApplicationController < ActionController::Base
-  http_basic_authenticate_with name: Rails.application.credentials.http_basic.user, password: Rails.application.credentials.http_basic.password, if: -> { Rails.env.staging? }
+  http_basic_user = ENV["HTTP_BASIC_USER"].presence
+  http_basic_password = ENV["HTTP_BASIC_PASSWORD"].presence
+  if Rails.env.staging? && (http_basic_user.blank? || http_basic_password.blank?)
+    begin
+      http_basic_user ||= Rails.application.credentials.dig(:http_basic, :user).presence
+      http_basic_password ||= Rails.application.credentials.dig(:http_basic, :password).presence
+    rescue ActiveSupport::MessageEncryptor::InvalidMessage
+      # Keep basic auth disabled when credentials cannot be decrypted.
+    end
+  end
+  if Rails.env.staging? && http_basic_user.present? && http_basic_password.present?
+    http_basic_authenticate_with name: http_basic_user, password: http_basic_password
+  end
   class_attribute :missing_recaptcha_keys_warning_logged, instance_writer: false, default: false
 
   before_action :redirect_www_to_canonical_host

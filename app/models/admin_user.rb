@@ -11,4 +11,8 @@ class AdminUser < ApplicationRecord
   def self.ransackable_attributes(_auth_object = nil)
     ["created_at", "email", "encrypted_password", "id", "remember_created_at", "reset_password_sent_at", "reset_password_token", "updated_at"]
   end
+
+  def self.ransackable_associations(_auth_object = nil)
+    []
+  end
 end

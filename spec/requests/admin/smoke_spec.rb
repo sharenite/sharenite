@@ -10,14 +10,14 @@ RSpec.describe "Admin smoke", type: :request do
   let!(:invitee) { create(:user, email: "friend-filter@sharenite.local") }
 
   let!(:profile) do
-    create(
-      :profile,
-      user: owner,
-      name: "Demo Filter Profile",
-      vanity_url: "demo-filter-profile",
-      privacy: :public,
-      game_library_privacy: :friendly
-    )
+    owner.profile.tap do |existing_profile|
+      existing_profile.update!(
+        name: "Demo Filter Profile",
+        vanity_url: "demo-filter-profile",
+        privacy: :public,
+        game_library_privacy: :friendly
+      )
+    end
   end
 
   let!(:completion_status) { create(:completion_status, user: owner, name: "Completed") }
@@ -52,6 +52,7 @@ RSpec.describe "Admin smoke", type: :request do
   let!(:igdb_cache) { create(:igdb_cache, name: "Demo IGDB") }
   let!(:playlist_item) { create(:playlist_item, playlist: playlist, igdb_cache: igdb_cache, order: 1) }
   let!(:delete_candidate) { create(:user, email: "delete-candidate@sharenite.local") }
+  let!(:user_deletion_event) { UserDeletionEvent.create!(requested_at: 1.day.ago, status: :requested) }
 
   let!(:sync_job) do
     attributes = {
@@ -89,6 +90,7 @@ RSpec.describe "Admin smoke", type: :request do
       "/admin/stats",
       "/admin/admin_users",
       "/admin/users",
+      "/admin/user_deletion_events",
       "/admin/profiles",
       "/admin/friends",
       "/admin/games",
@@ -123,6 +125,7 @@ RSpec.describe "Admin smoke", type: :request do
     requests = {
       "/admin/admin_users" => { q: { email_cont: admin_user.email, sign_in_count_eq: "0" } },
       "/admin/users" => { q: { email_cont: owner.email, games_count_gteq: "0", games_count_lteq: "999" } },
+      "/admin/user_deletion_events" => { q: { status_eq: "requested" } },
       "/admin/profiles" => { q: { name_cont: "Demo", vanity_url_cont: "demo", privacy_eq: "public", game_library_privacy_eq: "friendly", user_email_cont: owner.email } },
       "/admin/friends" => { q: { inviter_email_cont: owner.email, invitee_email_cont: invitee.email, status_eq: "Any" } },
       "/admin/games" => { q: { name_cont: game.name, user_email_cont: owner.email } },
@@ -227,13 +230,19 @@ RSpec.describe "Admin smoke", type: :request do
   end
 
   it "schedules user deletion and preserves filter return path" do
-    delete "/admin/users/#{delete_candidate.id}", params: { return_to: "/admin/users?q%5Bemail_cont%5D=delete-candidate" }
+    expect do
+      delete "/admin/users/#{delete_candidate.id}", params: { return_to: "/admin/users?q%5Bemail_cont%5D=delete-candidate" }
+    end.to change(UserDeletionEvent, :count).by(1)
 
     expect(response).to redirect_to("/admin/users?q%5Bemail_cont%5D=delete-candidate")
 
     delete_candidate.reload
+    latest_event = UserDeletionEvent.order(:created_at).last
     expect(delete_candidate.deleting).to be(true)
     expect(delete_candidate.deletion_requested_at).to be_present
     expect(delete_candidate.email).to eq("#{delete_candidate.id}@sharenite.link")
+    expect(latest_event.scheduled_by_admin).to be(true)
+    expect(latest_event.scheduled_by_admin_user_id).to eq(admin_user.id)
+    expect(latest_event.scheduled_by_admin_email).to eq(admin_user.email)
   end
 end

@@ -2,6 +2,10 @@
 FactoryBot.define do
   factory :profile do
     name { "MyString" }
-    user { nil }
+    user do
+      create(:user).tap do |new_user|
+        new_user.profile.destroy!
+      end
+    end
   end
 end

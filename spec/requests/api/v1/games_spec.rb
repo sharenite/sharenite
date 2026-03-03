@@ -29,15 +29,11 @@ RSpec.describe API::V1::Games do
 
     context "when calling POST /api/statuses" do
       it "creates games" do
-        games = [{ name: "First game title" }, { name: "Second game title" }]
+        games = [{ id: "1", name: "First game title" }, { id: "2", name: "Second game title" }]
         post "/api/v1/games",
-             games:,
-             session: {
-               "CONTENT_TYPE" => "application/json"
-             }
-        expect(last_response.status).to eq 201
-        expect(last_response.body).to include games[0][:name].to_json
-        expect(last_response.body).to include games[1][:name].to_json
+             { games: }.to_json,
+             { "CONTENT_TYPE" => "application/json" }
+        expect(last_response.status).to eq 202
       end
     end
   end

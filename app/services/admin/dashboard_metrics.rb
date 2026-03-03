@@ -28,7 +28,7 @@ module Admin
 
     def cache_key
       [
-        "admin/dashboard_metrics/v6",
+        "admin/dashboard_metrics/v7",
         as_of.to_i / CACHE_TTL
       ]
     end
@@ -93,6 +93,11 @@ module Admin
       deleting_users_scope = User.where(deleting: true)
       deleting_users_count = deleting_users_scope.count
       oldest_deletion_requested_at = deleting_users_scope.minimum(:deletion_requested_at)
+      deleted_users_30d_scope = UserDeletionEvent.succeeded.where(job_succeeded_at: window_30_days)
+      deleted_users_30d = deleted_users_30d_scope.count
+      deletion_job_durations_30d = deleted_users_30d_scope.where.not(job_started_at: nil)
+                                                           .pluck(Arel.sql("EXTRACT(EPOCH FROM (job_succeeded_at - job_started_at))"))
+      median_deletion_job_seconds_30d = median(deletion_job_durations_30d)&.round(2)
 
       sync_backlog_scope = SyncJob.where(status: %w[queued running])
       sync_backlog_count = sync_backlog_scope.count
@@ -182,6 +187,8 @@ module Admin
         sync_avg_games_per_job: sync_metrics[:sync_avg_games_per_job],
         deleting_users_count:,
         oldest_deletion_requested_at:,
+        deleted_users_30d:,
+        median_deletion_job_seconds_30d:,
         sync_backlog_count:,
         oldest_queued_sync_at:,
         sync_failed_rate_24h:,

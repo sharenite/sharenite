@@ -10,7 +10,7 @@ ActiveAdmin.register User do
     before_action :normalize_user_password_params, only: %i[create update]
 
     def destroy
-      scheduled_now = Users::ScheduleDeletion.call(resource)
+      scheduled_now = Users::ScheduleDeletion.call(resource, scheduled_by_admin_user: current_admin_user)
       message = scheduled_now ? "User deletion has been scheduled." : "User deletion is already in progress."
       redirect_to(safe_return_to_or_collection, notice: message)
     end

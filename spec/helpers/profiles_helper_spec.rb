@@ -1,16 +1,27 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-# Specs in this file have access to a helper object that includes
-# the ProfilesHelper. For example:
-#
-# describe ProfilesHelper do
-#   describe "string concat" do
-#     it "concats two strings with spaces" do
-#       expect(helper.concat_strings("this","that")).to eq("this that")
-#     end
-#   end
-# end
 RSpec.describe ProfilesHelper do
-  pending "add some examples to (or delete) #{__FILE__}"
+  describe "#profile_friendship_state_label" do
+    it "returns a human-readable label for known states" do
+      expect(helper.profile_friendship_state_label(:friends)).to eq("Friends")
+      expect(helper.profile_friendship_state_label("invite_received")).to eq("Invite received")
+    end
+
+    it "returns nil for unknown states" do
+      expect(helper.profile_friendship_state_label(:unknown)).to be_nil
+    end
+  end
+
+  describe "#profile_friendship_state_class" do
+    it "returns expected class names for known states" do
+      expect(helper.profile_friendship_state_class(:friends)).to eq("profiles-info-pill profiles-info-pill-success")
+      expect(helper.profile_friendship_state_class(:invite_sent)).to eq("profiles-info-pill profiles-info-pill-info")
+      expect(helper.profile_friendship_state_class(:you_declined)).to eq("profiles-info-pill profiles-info-pill-muted")
+    end
+
+    it "returns default class for unknown states" do
+      expect(helper.profile_friendship_state_class(:unknown)).to eq("profiles-info-pill")
+    end
+  end
 end

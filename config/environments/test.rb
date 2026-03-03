@@ -10,6 +10,9 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # Avoid credentials decryption dependency when booting tests.
+  config.secret_key_base = ENV.fetch("SECRET_KEY_BASE", "test-secret-key-base")
+
   # Turn false under Spring and add config.action_view.cache_template_loading = true.
   config.cache_classes = true
 

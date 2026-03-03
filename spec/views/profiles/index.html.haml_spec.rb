@@ -1,23 +1,21 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-RSpec.describe "profiles/index" do
+RSpec.describe "profiles/profiles/index" do
   before do
-    assign(:profiles, [
-      Profile.create!(
-        name: "Name",
-        user: nil
-      ),
-      Profile.create!(
-        name: "Name",
-        user: nil
-      )
-    ])
+    profile_one = create(:user).profile.tap { |profile| profile.update!(name: "Name", privacy: :public) }
+    profile_two = create(:user).profile.tap { |profile| profile.update!(name: "Name", privacy: :public) }
+
+    assign(:profiles, Profile.where(id: [profile_one.id, profile_two.id]).page(1))
+    assign(:friendship_states_by_user_id, {})
+    assign(:current_user_id, nil)
+    assign(:current_profile_slug, nil)
+
+    allow(view).to receive(:paginate).and_return("")
   end
 
   it "renders a list of profiles" do
     render
-    assert_select "tr>td", text: "Name".to_s, count: 2
-    assert_select "tr>td", text: nil.to_s, count: 2
+    assert_select "table tbody tr td", text: "Name".to_s, count: 2
   end
 end

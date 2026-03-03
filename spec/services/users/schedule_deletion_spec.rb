@@ -18,9 +18,13 @@ RSpec.describe Users::ScheduleDeletion do
   it "flags user, rewrites email and enqueues async deletion" do
     user = create(:user, email: "delete-me@sharenite.local")
 
-    expect do
-      described_class.call(user)
-    end.to have_enqueued_job(UserDeletionJob).with(user.id)
+    expect { described_class.call(user) }.to change(UserDeletionEvent, :count).by(1)
+
+    deletion_event = UserDeletionEvent.order(:created_at).last
+    deletion_job = enqueued_jobs.find { |job| job[:job] == UserDeletionJob }
+
+    expect(deletion_job).to be_present
+    expect(deletion_job[:args]).to eq([user.id, deletion_event.id])
 
     user.reload
     expect(user.deleting).to be(true)
@@ -29,6 +33,11 @@ RSpec.describe Users::ScheduleDeletion do
     expect(user.unconfirmed_email).to be_nil
     expect(user.reset_password_token).to be_nil
     expect(user.confirmation_token).to be_nil
+    expect(deletion_event.status).to eq("requested")
+    expect(deletion_event.requested_at).to be_present
+    expect(deletion_event.scheduled_by_admin).to be(false)
+    expect(deletion_event.scheduled_by_admin_user_id).to be_nil
+    expect(deletion_event.scheduled_by_admin_email).to be_nil
   end
 
   it "does not enqueue again for an already flagged user" do
@@ -37,7 +46,9 @@ RSpec.describe Users::ScheduleDeletion do
 
     expect do
       described_class.call(user)
-    end.not_to have_enqueued_job(UserDeletionJob)
+    end.not_to change(UserDeletionEvent, :count)
+
+    expect(enqueued_jobs).to be_empty
 
     user.reload
     expect(user.email).to eq("#{user.id}@sharenite.link")

@@ -2,16 +2,19 @@
 require "rails_helper"
 
 # rubocop:disable RSpec/InstanceVariable
-RSpec.describe "profiles/edit" do
-  before { @profile = assign(:profile, Profile.create!(name: "MyString", user: nil)) }
+RSpec.describe "profiles/profiles/edit" do
+  before do
+    user = create(:user)
+    @profile = assign(:profile, user.profile.tap { |profile| profile.update!(name: "MyString") })
+  end
 
   it "renders the edit profile form" do
     render
 
     assert_select "form[action=?][method=?]", profile_path(@profile), "post" do
       assert_select "input[name=?]", "profile[name]"
-
-      assert_select "input[name=?]", "profile[user_id]"
+      assert_select "input[name=?]", "profile[vanity_url]"
+      assert_select "select[name=?]", "profile[privacy]"
     end
   end
 end

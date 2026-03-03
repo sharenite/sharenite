@@ -106,8 +106,9 @@ ActiveAdmin.register_page "Dashboard" do
             row("User-to-sync conversion <=24h (30d)") { metrics[:new_users_sync_24h_rate_30d] }
             row("User-to-sync conversion <=7d (30d)") { metrics[:new_users_sync_7d_rate_30d] }
             row("Confirmed users (30d)") { number.call(metrics[:users_confirmed_30d]) }
-            row("Users pending deletion") { number.call(metrics[:deleting_users_count]) }
             row("Oldest deletion request age") { oldest_deletion_age }
+            row("Deleted users (30d)") { number.call(metrics[:deleted_users_30d]) }
+            row("Median deletion job time (s)") { metrics[:median_deletion_job_seconds_30d] || "N/A" }
           end
         end
 

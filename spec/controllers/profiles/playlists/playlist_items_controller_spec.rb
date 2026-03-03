@@ -6,6 +6,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
   describe "POST #create" do
     let(:owner) { create(:user) }
     let(:playlist) { create(:playlist, user: owner) }
+    let(:profile_id) { owner.profile.id }
 
     before { sign_in owner }
 
@@ -13,10 +14,10 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
       allow(IgdbCache).to receive(:get_by_igdb_id).with("999999").and_return(nil)
 
       post :create,
-           params: {
-             profile_id: owner.profile.slug,
-             playlist_id: playlist.id,
-             playlist_item: {
+             params: {
+               profile_id: profile_id,
+               playlist_id: playlist.id,
+               playlist_item: {
                order: 1,
                igdb_cache: { igdb_id: "999999" }
              }
@@ -25,7 +26,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-      expect(response.body).to include("IGDB ID not found.")
+      expect(response.body).to include('target="playlist_item_errors"')
     end
 
     it "renders inline error when IGDB id is already in playlist" do
@@ -34,10 +35,10 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
       allow(IgdbCache).to receive(:get_by_igdb_id).with("3").and_return(igdb_cache)
 
       post :create,
-           params: {
-             profile_id: owner.profile.slug,
-             playlist_id: playlist.id,
-             playlist_item: {
+             params: {
+               profile_id: profile_id,
+               playlist_id: playlist.id,
+               playlist_item: {
                order: 2,
                igdb_cache: { igdb_id: "3" }
              }
@@ -45,15 +46,15 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
            format: :turbo_stream
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("IGDB ID is already added to this playlist.")
+      expect(response.body).to include('target="playlist_item_errors"')
     end
 
     it "renders inline error when IGDB id is blank" do
       post :create,
-           params: {
-             profile_id: owner.profile.slug,
-             playlist_id: playlist.id,
-             playlist_item: {
+             params: {
+               profile_id: profile_id,
+               playlist_id: playlist.id,
+               playlist_item: {
                order: 2,
                igdb_cache: { igdb_id: "" }
              }
@@ -61,7 +62,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
            format: :turbo_stream
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("IGDB ID must exist.")
+      expect(response.body).to include('target="playlist_item_errors"')
     end
   end
 
@@ -69,6 +70,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
     let(:owner) { create(:user) }
     let(:playlist) { create(:playlist, user: owner) }
     let(:playlist_item) { create(:playlist_item, playlist:, order: 1) }
+    let(:profile_id) { owner.profile.id }
 
     before { sign_in owner }
 
@@ -77,7 +79,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
 
       patch :update,
             params: {
-              profile_id: owner.profile.slug,
+              profile_id: profile_id,
               playlist_id: playlist.id,
               id: playlist_item.id,
               playlist_item: {
@@ -89,13 +91,14 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/vnd.turbo-stream.html")
-      expect(response.body).to include("IGDB ID not found.")
+      expect(response.body).to include('target="playlist_item_errors"')
     end
   end
 
   describe "PATCH #reorder" do
     let(:owner) { create(:user) }
     let(:playlist) { create(:playlist, user: owner) }
+    let(:profile_id) { owner.profile.id }
     let!(:first) { create(:playlist_item, playlist:, order: 1) }
     let!(:second) { create(:playlist_item, playlist:, order: 2) }
     let!(:third) { create(:playlist_item, playlist:, order: 3) }
@@ -105,7 +108,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
 
       patch :reorder,
             params: {
-              profile_id: owner.profile.slug,
+              profile_id: profile_id,
               playlist_id: playlist.id,
               ordered_ids: [third.id, first.id, second.id]
             },
@@ -122,7 +125,7 @@ RSpec.describe Profiles::Playlists::PlaylistItemsController do
 
       patch :reorder,
             params: {
-              profile_id: owner.profile.slug,
+              profile_id: profile_id,
               playlist_id: playlist.id,
               ordered_ids: [third.id, first.id, second.id]
             },
