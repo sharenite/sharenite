@@ -67,7 +67,6 @@ class LibrarySyncConsumer < ApplicationConsumer
 
     @sync_job.update(attributes)
     @sync_job.status_failed!
-    expire_sync_payload
   end
 
   def expire_sync_payload

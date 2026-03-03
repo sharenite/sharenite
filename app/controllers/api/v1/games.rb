@@ -8,6 +8,7 @@ module API
       include API::V1::Defaults
 
       SYNCJOB_CHUNK_GAMES_PER_JOB = ENV.fetch("SYNCJOB_CHUNK_GAMES_PER_JOB", ENV.fetch("SYNCJOB_MAX_GAMES_PER_JOB", 1_000)).to_i
+      SYNCJOB_PAYLOAD_REDIS_TTL = 24.hours
       FULL_SYNC_IDS_REDIS_TTL = 24.hours
       SYNC_BATCH_STATUS_REDIS_TTL = 24.hours
 
@@ -46,7 +47,7 @@ module API
           error! "Method not implemented, check back later"
           job = current_user.sync_jobs.create(name: "GameSyncJob")
           # rubocop:disable Style/GlobalVars
-          $redis.set("syncjob:#{job.id}", params[:game].to_json)
+          $redis.set("syncjob:#{job.id}", params[:game].to_json, ex: SYNCJOB_PAYLOAD_REDIS_TTL.to_i)
           # rubocop:enable Style/GlobalVars
           Karafka.producer.produce_sync(
             topic: "library.sync",
@@ -155,7 +156,7 @@ module API
 
         def persist_sync_payload(job, payload_json)
           # rubocop:disable Style/GlobalVars
-          $redis.set("syncjob:#{job.id}", payload_json)
+          $redis.set("syncjob:#{job.id}", payload_json, ex: SYNCJOB_PAYLOAD_REDIS_TTL.to_i)
           # rubocop:enable Style/GlobalVars
         end
 
@@ -191,9 +192,6 @@ module API
 
           enqueued_jobs.compact.each do |job|
             job.update(status: :failed, error_message: "Chunk enqueue failed: #{error.message}")
-            # rubocop:disable Style/GlobalVars
-            $redis.expire("syncjob:#{job.id}", 1)
-            # rubocop:enable Style/GlobalVars
           end
         end
 
