@@ -18,13 +18,13 @@ ActiveAdmin.register SyncJob do
   member_action :mark_dead, method: :put do
     unless mark_dead_state!(resource)
       # rubocop:disable Rails/I18nLocaleTexts
-      redirect_to resource_path(resource), alert: "Could not mark SyncJob as dead."
+      redirect_back fallback_location: collection_path(scope: params[:scope]), alert: "Could not mark SyncJob as dead."
       # rubocop:enable Rails/I18nLocaleTexts
       next
     end
 
     # rubocop:disable Rails/I18nLocaleTexts
-    redirect_to collection_path, notice: "SyncJob was marked as dead."
+    redirect_back fallback_location: collection_path(scope: params[:scope]), notice: "SyncJob was marked as dead."
     # rubocop:enable Rails/I18nLocaleTexts
   end
 
@@ -71,7 +71,7 @@ ActiveAdmin.register SyncJob do
     redirect_to resource_path(resource), notice: "SyncJob was re-queued to library.sync."
     # rubocop:enable Rails/I18nLocaleTexts
   rescue StandardError => e
-    redirect_to resource_path(resource), alert: "Retry failed: #{e.message}"
+    redirect_back fallback_location: collection_path(scope: params[:scope]), alert: "Retry failed: #{e.message}"
   end
 
   action_item :mark_dead, only: :show do
@@ -91,7 +91,7 @@ ActiveAdmin.register SyncJob do
     skipped = 0
     failed = 0
 
-    batch_action_collection.find(ids).each do |sync_job|
+    selected_sync_jobs(ids).each do |sync_job|
       if sync_job.status_dead? || sync_job.status_finished?
         skipped += 1
         next
@@ -104,7 +104,7 @@ ActiveAdmin.register SyncJob do
       end
     end
 
-    redirect_to collection_path, notice: "Marked #{marked} SyncJob(s) as dead. Skipped #{skipped}. Failed #{failed}."
+    redirect_back fallback_location: collection_path(scope: params[:scope]), notice: "Marked #{marked} SyncJob(s) as dead. Skipped #{skipped}. Failed #{failed}."
   end
 
   batch_action :retry_from_dead do |ids|
@@ -112,7 +112,7 @@ ActiveAdmin.register SyncJob do
     skipped = 0
     failed = 0
 
-    batch_action_collection.find(ids).each do |sync_job|
+    selected_sync_jobs(ids).each do |sync_job|
       unless sync_job.status_dead?
         skipped += 1
         next
@@ -144,7 +144,7 @@ ActiveAdmin.register SyncJob do
       failed += 1
     end
 
-    redirect_to collection_path, notice: "Retried #{retried} dead SyncJob(s). Skipped #{skipped}. Failed #{failed}."
+    redirect_back fallback_location: collection_path(scope: params[:scope]), notice: "Retried #{retried} dead SyncJob(s). Skipped #{skipped}. Failed #{failed}."
   end
 
   batch_action :destroy do |ids|
@@ -152,7 +152,7 @@ ActiveAdmin.register SyncJob do
     skipped = 0
     failed = 0
 
-    batch_action_collection.find(ids).each do |sync_job|
+    selected_sync_jobs(ids).each do |sync_job|
       unless sync_job.status_dead?
         skipped += 1
         next
@@ -166,18 +166,17 @@ ActiveAdmin.register SyncJob do
       failed += 1
     end
 
-    redirect_to collection_path, notice: "Deleted #{deleted} dead SyncJob(s). Skipped #{skipped} non-dead job(s). Failed #{failed}."
+    redirect_back fallback_location: collection_path(scope: params[:scope]), notice: "Deleted #{deleted} dead SyncJob(s). Skipped #{skipped} non-dead job(s). Failed #{failed}."
   end
 
   controller do
     def destroy
-      # rubocop:disable Rails/I18nLocaleTexts
-      return redirect_to(resource_path(resource), alert: "Only dead SyncJobs can be deleted.") unless resource.status_dead?
-      # rubocop:enable Rails/I18nLocaleTexts
+      return redirect_non_dead_delete unless resource.status_dead?
 
       expire_syncjob_redis_keys(resource.id)
       publish_dead_tombstone(resource.user_id)
-      super
+      resource.destroy!
+      redirect_destroy_success
     end
 
     private
@@ -295,6 +294,11 @@ ActiveAdmin.register SyncJob do
       2_678_400
     end
 
+    def selected_sync_jobs(ids)
+      # Do not use `.find(ids)` here: in scoped views records can disappear between selection and submit.
+      batch_action_collection.where(id: ids)
+    end
+
     def publish_dead_tombstone(user_id)
       Karafka.producer.produce_sync(
         topic: "dead.messages",
@@ -304,6 +308,18 @@ ActiveAdmin.register SyncJob do
       )
     rescue StandardError
       nil
+    end
+
+    def redirect_non_dead_delete
+      # rubocop:disable Rails/I18nLocaleTexts
+      redirect_back fallback_location: collection_path(scope: params[:scope]), alert: "Only dead SyncJobs can be deleted."
+      # rubocop:enable Rails/I18nLocaleTexts
+    end
+
+    def redirect_destroy_success
+      # rubocop:disable Rails/I18nLocaleTexts
+      redirect_back fallback_location: collection_path(scope: params[:scope]), notice: "SyncJob was deleted."
+      # rubocop:enable Rails/I18nLocaleTexts
     end
   end
 
@@ -322,10 +338,12 @@ ActiveAdmin.register SyncJob do
       Time.at(sync_job.processing_time).utc.strftime("%H:%M:%S") unless sync_job.processing_time.nil?
     end
     actions defaults: false do |sync_job|
-      item "View", resource_path(sync_job)
-      item "Dead", mark_dead_admin_sync_job_path(sync_job), method: :put unless sync_job.status_dead? || sync_job.status_finished?
-      item "Retry", retry_from_dead_admin_sync_job_path(sync_job), method: :put if sync_job.status_dead?
-      item "Delete", resource_path(sync_job), method: :delete if sync_job.status_dead?
+      links = []
+      links << link_to("View", resource_path(sync_job))
+      links << link_to("Dead", mark_dead_admin_sync_job_path(sync_job), method: :put) unless sync_job.status_dead? || sync_job.status_finished?
+      links << link_to("Retry", retry_from_dead_admin_sync_job_path(sync_job), method: :put) if sync_job.status_dead?
+      links << link_to("Delete", resource_path(sync_job), method: :delete) if sync_job.status_dead?
+      span safe_join(links, " | ".html_safe)
     end
   end
 
