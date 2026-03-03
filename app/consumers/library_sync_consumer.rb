@@ -128,7 +128,7 @@ class LibrarySyncConsumer < ApplicationConsumer
 
   def sync_batch_status
     # rubocop:disable Style/GlobalVars
-    $redis.get(sync_batch_status_redis_key)
+    $redis.get(sync_batch_status_redis_key(@sync_batch_id))
     # rubocop:enable Style/GlobalVars
   end
 
