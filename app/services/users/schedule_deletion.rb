@@ -11,23 +11,33 @@ module Users
     end
 
     def call
-      return if user.deleting?
+      enqueued = false
 
       User.transaction do
         user.lock!
-        return if user.deleting?
 
-        user.update!(
-          deleting: true,
-          deletion_requested_at: Time.current,
-          email: user.deletion_placeholder_email,
-          unconfirmed_email: nil,
-          reset_password_token: nil,
-          confirmation_token: nil
-        )
+        if user.deleting?
+          user.update!(
+            email: user.deletion_placeholder_email,
+            unconfirmed_email: nil,
+            reset_password_token: nil,
+            confirmation_token: nil
+          )
+        else
+          user.update!(
+            deleting: true,
+            deletion_requested_at: Time.current,
+            email: user.deletion_placeholder_email,
+            unconfirmed_email: nil,
+            reset_password_token: nil,
+            confirmation_token: nil
+          )
+          enqueued = true
+        end
       end
 
-      UserDeletionJob.perform_later(user.id)
+      UserDeletionJob.perform_later(user.id) if enqueued
+      enqueued
     end
 
     private

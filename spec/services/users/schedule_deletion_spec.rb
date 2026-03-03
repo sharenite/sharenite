@@ -32,11 +32,14 @@ RSpec.describe Users::ScheduleDeletion do
   end
 
   it "does not enqueue again for an already flagged user" do
-    user = create(:user)
-    user.update!(deleting: true, deletion_requested_at: Time.current, email: "#{user.id}@sharenite.link")
+    user = create(:user, email: "legacy-flagged@sharenite.local")
+    user.update!(deleting: true, deletion_requested_at: Time.current)
 
     expect do
       described_class.call(user)
     end.not_to have_enqueued_job(UserDeletionJob)
+
+    user.reload
+    expect(user.email).to eq("#{user.id}@sharenite.link")
   end
 end
