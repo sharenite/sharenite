@@ -63,6 +63,11 @@ ActiveAdmin.register_page "Dashboard" do
           div number.call(metrics[:sync_events_30d]), class: "admin-kpi-value"
           span sync_events_vs_prev_30d, class: "admin-kpi-trend #{trend_class.call(sync_events_vs_prev_30d)}"
         end
+        div class: "admin-kpi-card" do
+          div "Chunked sync requests (30d)", class: "admin-kpi-label"
+          div number.call(metrics[:chunked_sync_requests_30d]), class: "admin-kpi-value"
+          div "Chunk jobs: #{number.call(metrics[:chunked_sync_jobs_30d])}", class: "admin-kpi-meta"
+        end
       end
 
       columns do
@@ -88,6 +93,11 @@ ActiveAdmin.register_page "Dashboard" do
               row("Running") { number.call(metrics[:sync_running_30d]) }
               row("Success rate (finished/(finished+failed+dead))") { metrics[:sync_success_rate] }
               row("Avg processing time (s)") { metrics[:sync_avg_processing_time] || "N/A" }
+              row("Chunked requests") { number.call(metrics[:chunked_sync_requests_30d]) }
+              row("Chunk jobs") { number.call(metrics[:chunked_sync_jobs_30d]) }
+              row("Avg chunks per chunked request") { metrics[:avg_chunks_per_request_30d] || "N/A" }
+              row("Max chunks in one request") { metrics[:max_chunks_per_request_30d] || "N/A" }
+              row("Total chunk payload (30d)") { helpers.number_to_human_size(metrics[:sync_payload_bytes_30d]) }
             end
           end
         end

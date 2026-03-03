@@ -28,7 +28,7 @@ module Admin
 
     def cache_key
       [
-        "admin/dashboard_metrics/v3",
+        "admin/dashboard_metrics/v4",
         as_of.to_i / CACHE_TTL
       ]
     end
@@ -45,26 +45,11 @@ module Admin
           Arel.sql(range_count_sql("last_sign_in_at", window_30_days))
         ).map(&:to_i)
 
-      sync_jobs_30d = SyncJob.where(created_at: window_30_days)
-      sync_jobs_prev_30d = SyncJob.where(created_at: previous_30_days)
-      sync_status_counts_30d = sync_jobs_30d.group(:status).count
-      sync_events_30d = sync_status_counts_30d.values.sum
-      sync_active_users_30d = sync_jobs_30d.select(:user_id).distinct.count
-      sync_finished_30d = sync_status_counts_30d.fetch("finished", 0)
-      sync_failed_30d = sync_status_counts_30d.fetch("failed", 0)
-      sync_dead_30d = sync_status_counts_30d.fetch("dead", 0)
-      sync_running_30d = sync_status_counts_30d.fetch("running", 0)
-      sync_events_prev_30d = sync_jobs_prev_30d.group(:status).count.values.sum
-      sync_avg_processing_time = sync_jobs_30d.where.not(processing_time: nil).average(:processing_time)&.round(2)
-      sync_terminal_count = sync_finished_30d + sync_failed_30d + sync_dead_30d
-      sync_success_rate = if sync_terminal_count.zero?
-                            "N/A"
-                          else
-                            "#{((sync_finished_30d.to_f / sync_terminal_count) * 100).round(1)}%"
-                          end
+      sync_metrics = build_sync_metrics
+      sync_jobs_30d = sync_metrics[:sync_jobs_30d]
 
       users_active_both_30d = User.where(id: sync_jobs_30d.select(:user_id).distinct, last_sign_in_at: window_30_days).count
-      users_sync_only_30d = [sync_active_users_30d - users_active_both_30d, 0].max
+      users_sync_only_30d = [sync_metrics[:sync_active_users_30d] - users_active_both_30d, 0].max
       users_sign_in_only_30d = [users_active_sign_in_30d - users_active_both_30d, 0].max
 
       games_total, games_new_30d, games_new_prev_30d, games_with_recent_activity, games_installed, games_favorite, games_with_notes =
@@ -103,15 +88,20 @@ module Admin
         users_confirmed_total:,
         users_confirmed_30d:,
         users_active_sign_in_30d:,
-        sync_events_30d:,
-        sync_events_prev_30d:,
-        sync_active_users_30d:,
-        sync_finished_30d:,
-        sync_failed_30d:,
-        sync_dead_30d:,
-        sync_running_30d:,
-        sync_avg_processing_time:,
-        sync_success_rate:,
+        sync_events_30d: sync_metrics[:sync_events_30d],
+        sync_events_prev_30d: sync_metrics[:sync_events_prev_30d],
+        sync_active_users_30d: sync_metrics[:sync_active_users_30d],
+        sync_finished_30d: sync_metrics[:sync_finished_30d],
+        sync_failed_30d: sync_metrics[:sync_failed_30d],
+        sync_dead_30d: sync_metrics[:sync_dead_30d],
+        sync_running_30d: sync_metrics[:sync_running_30d],
+        sync_avg_processing_time: sync_metrics[:sync_avg_processing_time],
+        sync_success_rate: sync_metrics[:sync_success_rate],
+        chunked_sync_jobs_30d: sync_metrics[:chunked_sync_jobs_30d],
+        chunked_sync_requests_30d: sync_metrics[:chunked_sync_requests_30d],
+        avg_chunks_per_request_30d: sync_metrics[:avg_chunks_per_request_30d],
+        max_chunks_per_request_30d: sync_metrics[:max_chunks_per_request_30d],
+        sync_payload_bytes_30d: sync_metrics[:sync_payload_bytes_30d],
         users_active_both_30d:,
         users_sync_only_30d:,
         users_sign_in_only_30d:,
@@ -128,6 +118,44 @@ module Admin
       }
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def build_sync_metrics
+      sync_jobs_30d = SyncJob.where(created_at: window_30_days)
+      sync_jobs_prev_30d = SyncJob.where(created_at: previous_30_days)
+      sync_status_counts_30d = sync_jobs_30d.group(:status).count
+      sync_finished_30d = sync_status_counts_30d.fetch("finished", 0)
+      sync_failed_30d = sync_status_counts_30d.fetch("failed", 0)
+      sync_dead_30d = sync_status_counts_30d.fetch("dead", 0)
+      sync_running_30d = sync_status_counts_30d.fetch("running", 0)
+      chunked_requests_scope = sync_jobs_30d.where(payload_chunk_index: 0).where("COALESCE(payload_chunks, 1) > 1")
+
+      {
+        sync_jobs_30d:,
+        sync_events_30d: sync_status_counts_30d.values.sum,
+        sync_events_prev_30d: sync_jobs_prev_30d.group(:status).count.values.sum,
+        sync_active_users_30d: sync_jobs_30d.select(:user_id).distinct.count,
+        sync_finished_30d:,
+        sync_failed_30d:,
+        sync_dead_30d:,
+        sync_running_30d:,
+        sync_avg_processing_time: sync_jobs_30d.where.not(processing_time: nil).average(:processing_time)&.round(2),
+        sync_success_rate: sync_success_rate(sync_finished_30d, sync_failed_30d, sync_dead_30d),
+        chunked_sync_jobs_30d: sync_jobs_30d.where("COALESCE(payload_chunks, 1) > 1").count,
+        chunked_sync_requests_30d: chunked_requests_scope.count,
+        avg_chunks_per_request_30d: chunked_requests_scope.average(:payload_chunks)&.to_f&.round(2),
+        max_chunks_per_request_30d: chunked_requests_scope.maximum(:payload_chunks)&.to_i,
+        sync_payload_bytes_30d: sync_jobs_30d.where.not(payload_size_bytes: nil).sum(:payload_size_bytes).to_i
+      }
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+    def sync_success_rate(sync_finished_30d, sync_failed_30d, sync_dead_30d)
+      sync_terminal_count = sync_finished_30d + sync_failed_30d + sync_dead_30d
+      return "N/A" if sync_terminal_count.zero?
+
+      "#{((sync_finished_30d.to_f / sync_terminal_count) * 100).round(1)}%"
+    end
 
     def range_count_sql(column_name, range)
       from = ActiveRecord::Base.connection.quote(range.begin)
