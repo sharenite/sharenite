@@ -71,7 +71,7 @@ class LibrarySyncConsumer < ApplicationConsumer
 
   def expire_sync_payload
     # rubocop:disable Style/GlobalVars
-    $redis.expire("syncjob:#{@sync_job.id}", 1)
+    $redis.del("syncjob:#{@sync_job.id}")
     # rubocop:enable Style/GlobalVars
   end
 
