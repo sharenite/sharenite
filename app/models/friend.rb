@@ -2,6 +2,8 @@
 
 # Represents a friendship invitation/relationship between two users.
 class Friend < ApplicationRecord
+  attr_accessor :inviter_query, :invitee_query
+
   belongs_to :invitee, class_name: 'User', inverse_of: :inviters
   belongs_to :inviter, class_name: 'User', inverse_of: :invitees
 

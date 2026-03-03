@@ -26,7 +26,9 @@ module Admin
         series: {
           users: grouped_counts(User, :created_at),
           games: grouped_counts(Game, :created_at),
-          sync_events: grouped_counts(SyncJob, :created_at)
+          sync_events: grouped_counts(SyncJob, :created_at),
+          sync_games: sync_games_series,
+          sync_payload_mb: grouped_sums(SyncJob, :created_at, :payload_size_bytes, scale: 1.megabyte.to_f)
         }
       }
     end
@@ -39,7 +41,9 @@ module Admin
       {
         users: period_comparison(User, :created_at),
         games: period_comparison(Game, :created_at),
-        sync_events: period_comparison(SyncJob, :created_at)
+        sync_events: period_comparison(SyncJob, :created_at),
+        sync_games: sync_games_summary,
+        sync_payload_bytes: period_sum_comparison(SyncJob, :created_at, :payload_size_bytes)
       }
     end
 
@@ -69,6 +73,20 @@ module Admin
 
       fill_missing_points(data).map do |time, value|
         { time:, label: time.strftime(label_format), value: }
+      end
+    end
+
+    def grouped_sums(model, column, sum_column, scale: 1.0)
+      trunc = "date_trunc('#{grouping}', #{column})"
+      data = model.where(column => from..to)
+                  .group(Arel.sql(trunc))
+                  .order(Arel.sql(trunc))
+                  .sum(sum_column)
+
+      fill_missing_points(data).map do |time, value|
+        scaled_value = (value.to_f / scale)
+        scaled_value = scaled_value.round(2) if scale != 1.0
+        { time:, label: time.strftime(label_format), value: scaled_value }
       end
     end
 
@@ -116,6 +134,38 @@ module Admin
         current.zero? ? "0.0%" : "+100.0%"
       else
         format("%+.1f%%", ((current - previous).to_f / previous * 100))
+      end
+    end
+
+    def period_sum_comparison(model, column, sum_column)
+      current = model.where(column => from..to).sum(sum_column).to_i
+      previous = model.where(column => previous_range).sum(sum_column).to_i
+      {
+        current:,
+        previous:,
+        change: percent_change(current, previous)
+      }
+    end
+
+    def sync_games_summary
+      return zero_comparison unless SyncJob.columns_hash.key?("games_count")
+
+      period_sum_comparison(SyncJob, :created_at, :games_count)
+    end
+
+    def sync_games_series
+      return zero_series unless SyncJob.columns_hash.key?("games_count")
+
+      grouped_sums(SyncJob, :created_at, :games_count)
+    end
+
+    def zero_comparison
+      { current: 0, previous: 0, change: "0.0%" }
+    end
+
+    def zero_series
+      fill_missing_points({}).map do |time, _|
+        { time:, label: time.strftime(label_format), value: 0 }
       end
     end
   end

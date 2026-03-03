@@ -2,6 +2,8 @@
 
 # Game model
 class Playlist < ApplicationRecord
+  attr_accessor :user_query
+
   belongs_to :user
   has_many :playlist_items, dependent: :destroy
 
@@ -12,6 +14,6 @@ class Playlist < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    ["playlist_items"]
+    ["playlist_items", "user"]
   end
 end

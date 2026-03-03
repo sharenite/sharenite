@@ -412,6 +412,48 @@ if Rails.env.development?
     end
   end
 
+  sync_job_seed_prefix = "Seed Finished Sync Job"
+  demo_user.sync_jobs.where("name LIKE ?", "#{sync_job_seed_prefix} %").delete_all
+
+  rng = Random.new(20_260_303)
+  sync_job_base_names = %w[FullLibrarySyncJob PartialLibrarySyncJob DeleteGamesSyncJob GameSyncJob]
+  sync_job_seed_count = 220
+  sync_job_seed_count.times do |index|
+    base_job_name = sync_job_base_names.sample(random: rng)
+    games_count = rng.rand(1..420)
+    waiting_time = rng.rand(1..180)
+    processing_time = rng.rand(8..1_400)
+    payload_chunks = base_job_name == "GameSyncJob" ? 1 : [1, 1, 1, 2, 2, 3, 4].sample(random: rng)
+    payload_chunk_index = payload_chunks == 1 ? 0 : rng.rand(0...payload_chunks)
+    payload_size_bytes = (games_count * rng.rand(700..4_800)) + rng.rand(5_000..220_000)
+    created_at = rng.rand(140).days.ago + rng.rand(0..86_399).seconds
+    started_processing_at = created_at + waiting_time.seconds
+    finished_processing_at = started_processing_at + processing_time.seconds
+
+    sync_job_name = if payload_chunks == 1
+                      base_job_name
+                    else
+                      "#{base_job_name} (chunk #{payload_chunk_index + 1}/#{payload_chunks})"
+                    end
+
+    attributes = {
+      name: sync_job_name,
+      status: :finished,
+      created_at:,
+      updated_at: finished_processing_at,
+      started_processing_at:,
+      finished_processing_at:,
+      waiting_time:,
+      processing_time:,
+      payload_size_bytes:,
+      payload_chunks:,
+      payload_chunk_index:
+    }
+    attributes[:games_count] = games_count if SyncJob.columns_hash.key?("games_count")
+
+    demo_user.sync_jobs.create!(attributes)
+  end
+
   puts "Seeded demo data: #{demo_user.email} / password: Test123$"
   puts "Public profiles seeded: #{Profile.privacy_public.count}"
   puts "Demo friends accepted: #{demo_user.friends.count}"
@@ -420,6 +462,7 @@ if Rails.env.development?
   puts "Demo declined invitations received (you declined): #{demo_user.declined_friendlies.count}"
   puts "Demo declined invitations sent (they declined): #{demo_user.declined_friends.count}"
   puts "Demo playlists seeded: #{demo_user.playlists.count}"
+  puts "Demo finished sync jobs seeded: #{demo_user.sync_jobs.where(status: :finished).count}"
   puts "Games seeded: #{demo_user.games.count}"
   puts "Games with no status: #{demo_user.games.where(completion_status_id: nil).count}"
   puts "Games with no source: #{demo_user.games.where(source_id: nil).count}"

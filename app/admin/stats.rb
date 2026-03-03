@@ -20,6 +20,7 @@ ActiveAdmin.register_page "Stats" do
     grouping = params[:group_by].presence || default_group
     metrics = Admin::StatsMetrics.call(from:, to:, grouping:)
     number = ->(value) { helpers.number_with_delimiter(value) }
+    human_size = ->(bytes) { helpers.number_to_human_size(bytes, precision: 2) }
 
     trend_class = lambda do |change_text|
       return "is-neutral" unless change_text.start_with?("+", "-")
@@ -28,11 +29,11 @@ ActiveAdmin.register_page "Stats" do
       "is-down"
     end
 
-    summary_card = lambda do |label, values|
+    summary_card = lambda do |label, values, formatter = number|
       div class: "admin-kpi-card" do
         div label, class: "admin-kpi-label"
-        div number.call(values[:current]), class: "admin-kpi-value"
-        div "Prev range: #{number.call(values[:previous])}", class: "admin-kpi-meta"
+        div formatter.call(values[:current]), class: "admin-kpi-value"
+        div "Prev range: #{formatter.call(values[:previous])}", class: "admin-kpi-meta"
         span values[:change], class: "admin-kpi-trend #{trend_class.call(values[:change])}"
       end
     end
@@ -74,7 +75,7 @@ ActiveAdmin.register_page "Stats" do
             end
             div class: "admin-stats-filter-actions" do
               button "Apply", type: "submit", class: "button"
-              text_node(link_to("Reset", admin_stats_path, class: "button"))
+              text_node(link_to("Clear", admin_stats_path, class: "admin-stats-clear-link"))
             end
           end
         end
@@ -84,11 +85,15 @@ ActiveAdmin.register_page "Stats" do
         summary_card.call("Users (range)", metrics[:summary][:users])
         summary_card.call("Games (range)", metrics[:summary][:games])
         summary_card.call("Sync events (range)", metrics[:summary][:sync_events])
+        summary_card.call("Synced games (range)", metrics[:summary][:sync_games])
+        summary_card.call("Sync payload (range)", metrics[:summary][:sync_payload_bytes], human_size)
       end
 
       render_chart.call("Users Created", metrics[:series][:users])
       render_chart.call("Games Added", metrics[:series][:games])
       render_chart.call("Sync Events", metrics[:series][:sync_events])
+      render_chart.call("Synced Games", metrics[:series][:sync_games])
+      render_chart.call("Sync Payload (MB)", metrics[:series][:sync_payload_mb])
     end
   end
 end

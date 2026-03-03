@@ -4,6 +4,8 @@ ActiveAdmin.register Rom do
   config.sort_order = "created_at_desc"
   menu parent: "Games", priority: 6
 
+  actions :all, except: %i[new create edit update]
+
   belongs_to :game, optional: true
   includes :game
 

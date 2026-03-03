@@ -4,6 +4,8 @@ ActiveAdmin.register Game do
   config.sort_order = "created_at_desc"
   menu priority: 3
 
+  actions :all, except: %i[new create edit update]
+
   belongs_to :user, optional: true
   includes :user
 
@@ -31,5 +33,8 @@ ActiveAdmin.register Game do
     actions
   end
 
+  filter :name
   filter :user_email, as: :string
+  filter :created_at
+  filter :updated_at
 end

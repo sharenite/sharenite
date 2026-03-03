@@ -27,7 +27,9 @@ class SyncJob < ApplicationRecord
   scope :recent_failures, -> { where(status: %i[failed dead]).order(created_at: :desc) }
 
   def self.ransackable_attributes(_auth_object = nil)
-    RANSACKABLE_ATTRIBUTES
+    attributes = RANSACKABLE_ATTRIBUTES.dup
+    attributes << "games_count" if columns_hash.key?("games_count")
+    attributes
   end
 
   def self.ransackable_associations(_auth_object = nil)

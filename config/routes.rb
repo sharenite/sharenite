@@ -35,6 +35,9 @@ Rails.application.routes.draw do
     registrations: 'users/registrations'
   }
   devise_for :admin_users, ActiveAdmin::Devise.config
+  namespace :admin do
+    get "filter_autocomplete", to: "filter_autocomplete#index"
+  end
   ActiveAdmin.routes(self)
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
 

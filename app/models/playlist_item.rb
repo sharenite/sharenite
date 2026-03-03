@@ -2,6 +2,8 @@
 
 # Game model
 class PlaylistItem < ApplicationRecord
+  attr_accessor :playlist_query, :igdb_id, :igdb_name_preview
+
   belongs_to :playlist
   belongs_to :igdb_cache
 
@@ -21,7 +23,7 @@ class PlaylistItem < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    ["playlist, igdb_caches"]
+    ["playlist", "igdb_cache"]
   end
 
   def self.add_by_igdb_id(playlist_id, igdb_id)

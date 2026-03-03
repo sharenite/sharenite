@@ -2,7 +2,10 @@
 
 ActiveAdmin.register SyncJob do
   config.sort_order = "created_at_desc"
+  config.filters = false
   menu priority: 5
+
+  actions :all, except: %i[new create edit update]
 
   belongs_to :user, optional: true
   includes :user
@@ -14,6 +17,73 @@ ActiveAdmin.register SyncJob do
   scope :status_failed
   scope :status_finished
   scope :status_dead
+
+  collection_action :user_options, method: :get do
+    query = params[:q].to_s.strip
+    users = User.order(:email)
+    if query.present?
+      sanitized_query = ActiveRecord::Base.sanitize_sql_like(query)
+      users = users.where("users.email ILIKE ?", "%#{sanitized_query}%")
+    else
+      users = users.none
+    end
+    users = users.limit(20)
+
+    render json: users.map { |user| { id: user.id, label: user.email } }
+  end
+
+  controller do
+    helper_method :selected_sync_job_user
+    helper_method :sync_job_name_options
+    before_action :normalize_sync_job_filters, only: :index
+
+    def selected_sync_job_user
+      user_id = params.dig(:q, :user_id_eq).presence
+      return if user_id.blank?
+
+      @selected_sync_job_user ||= User.find_by(id: user_id)
+    end
+
+    def sync_job_name_options
+      canonical_names = %w[FullLibrarySyncJob PartialLibrarySyncJob DeleteGamesSyncJob GameSyncJob]
+
+      discovered_names = SyncJob.where.not(name: [nil, ""])
+                               .distinct
+                               .order(:name)
+                               .limit(400)
+                               .pluck(:name)
+                               .map { |name| name.sub(/\s*\(chunk \d+\/\d+\)\z/, "").strip }
+                               .reject(&:blank?)
+
+      (canonical_names + discovered_names).uniq.sort
+    end
+
+    private
+
+    def normalize_sync_job_filters
+      params[:q] = ActionController::Parameters.new unless params[:q].is_a?(ActionController::Parameters) || params[:q].is_a?(Hash)
+
+      params[:q].delete(:status_eq)
+      params[:q].delete("status_eq")
+      if params.dig(:q, :name_start).to_s == "Any" || params.dig(:q, "name_start").to_s == "Any"
+        params[:q][:name_start] = ""
+        params[:q]["name_start"] = ""
+      end
+
+      user_id = params.dig(:q, :user_id_eq).presence
+      user_query = params[:user_query].to_s.strip
+
+      if user_id.present?
+        params[:q].delete(:user_email_cont)
+        params[:q].delete("user_email_cont")
+      elsif user_query.present?
+        params[:q][:user_email_cont] = user_query
+      else
+        params[:q].delete(:user_email_cont)
+        params[:q].delete("user_email_cont")
+      end
+    end
+  end
 
   member_action :mark_dead, method: :put do
     unless mark_dead_state!(resource)
@@ -328,9 +398,13 @@ ActiveAdmin.register SyncJob do
     id_column
     column :user
     column :name
+    column :games_count if SyncJob.columns_hash.key?("games_count")
     column :status
     column :created_at
     column :updated_at
+    column :payload_size_bytes
+    column :payload_chunks
+    column :payload_chunk_index
     column :waiting_time do |sync_job|
       Time.at(sync_job.waiting_time).utc.strftime("%H:%M:%S") unless sync_job.waiting_time.nil?
     end
@@ -347,6 +421,78 @@ ActiveAdmin.register SyncJob do
     end
   end
 
-  filter :user_email, as: :string
-  filter :status, as: :select, collection: SyncJob.statuses
+  sidebar "Filters", only: :index do
+    q = params.fetch(:q, {})
+    selected_user = selected_sync_job_user
+    selected_user_label = selected_user&.email || params[:user_query].to_s
+
+    form action: collection_path, method: :get, class: "admin-custom-filter-form" do
+      input type: "hidden", name: "scope", value: params[:scope] if params[:scope].present?
+
+      div class: "filter_form_field" do
+        label "User email"
+        input type: "text",
+              id: "sync-job-user-query",
+              name: "user_query",
+              value: selected_user_label,
+              placeholder: "Type to search users",
+              autocomplete: "off",
+              "data-autocomplete-url": user_options_admin_sync_jobs_path,
+              "data-hidden-id-target": "sync-job-user-id"
+        input type: "hidden", id: "sync-job-user-id", name: "q[user_id_eq]", value: q[:user_id_eq].to_s
+      end
+
+      div class: "filter_form_field" do
+        label "Name"
+        select name: "q[name_start]" do
+          text_node(%(<option value=""#{' selected="selected"' if q[:name_start].blank?}>Any</option>).html_safe)
+          sync_job_name_options.each do |name_option|
+            option name_option, value: name_option, selected: (q[:name_start].to_s == name_option)
+          end
+        end
+      end
+
+      if SyncJob.columns_hash.key?("games_count")
+        div class: "filter_form_field filter_range_pair" do
+          label "Games count"
+          div class: "range_inputs" do
+            input type: "number", min: "0", name: "q[games_count_gteq]", value: q[:games_count_gteq].to_s, placeholder: "From"
+            input type: "number", min: "0", name: "q[games_count_lteq]", value: q[:games_count_lteq].to_s, placeholder: "To"
+          end
+        end
+      end
+
+      div class: "filter_form_field filter_range_pair" do
+        label "Waiting time (s)"
+        div class: "range_inputs" do
+          input type: "number", min: "0", name: "q[waiting_time_gteq]", value: q[:waiting_time_gteq].to_s, placeholder: "From"
+          input type: "number", min: "0", name: "q[waiting_time_lteq]", value: q[:waiting_time_lteq].to_s, placeholder: "To"
+        end
+      end
+
+      div class: "filter_form_field filter_range_pair" do
+        label "Processing time (s)"
+        div class: "range_inputs" do
+          input type: "number", min: "0", name: "q[processing_time_gteq]", value: q[:processing_time_gteq].to_s, placeholder: "From"
+          input type: "number", min: "0", name: "q[processing_time_lteq]", value: q[:processing_time_lteq].to_s, placeholder: "To"
+        end
+      end
+
+      div class: "filter_form_field filter_range_pair" do
+        label "Created"
+        div class: "range_inputs" do
+          input type: "text", class: "datepicker", name: "q[created_at_gteq]", value: q[:created_at_gteq].to_s, placeholder: "From"
+          input type: "text", class: "datepicker", name: "q[created_at_lteq_end_of_day]", value: q[:created_at_lteq_end_of_day].to_s, placeholder: "To"
+        end
+      end
+
+      div class: "buttons" do
+        button "Apply", type: "submit"
+        span do
+          text_node " "
+          a "Clear", href: collection_path
+        end
+      end
+    end
+  end
 end

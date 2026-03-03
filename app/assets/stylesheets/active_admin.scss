@@ -158,14 +158,54 @@ body.admin_stats {
 
   .admin-stats-filter-grid input,
   .admin-stats-filter-grid select {
+    border: 1px solid #b8c2cf;
+    border-radius: 8px;
+    color: #22324a;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 40px;
+    padding: 8px 10px;
     box-sizing: border-box;
     width: 100%;
+  }
+
+  .admin-stats-filter-grid select {
+    background-color: #fff;
+    background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
+    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-repeat: no-repeat;
+    background-size: 6px 6px, 6px 6px;
+    padding-right: 34px;
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   .admin-stats-filter-actions {
     align-items: center;
     display: flex;
     gap: 8px;
+  }
+
+  .admin-stats-filter-actions .button,
+  .admin-stats-filter-actions button {
+    border: 1px solid #b8c2cf;
+    border-radius: 8px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  .admin-stats-filter-actions .admin-stats-clear-link {
+    color: #2a5f94;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .admin-stats-filter-actions .admin-stats-clear-link:hover {
+    text-decoration: underline;
   }
 
   .admin-mini-chart {
@@ -195,5 +235,351 @@ body.admin_stats {
     font-size: 10px;
     line-height: 1.2;
     white-space: nowrap;
+  }
+}
+
+body.admin_sync_jobs {
+  .sync-jobs-filter-form .filter_form_field {
+    position: relative;
+  }
+
+  .sync-jobs-filter-form .filter_form_field {
+    margin-bottom: 10px;
+  }
+
+  .sync-jobs-filter-form .filter_form_field label {
+    color: #55657d;
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .sync-jobs-filter-form .filter_form_field input,
+  .sync-jobs-filter-form .filter_form_field select {
+    border: 1px solid #b8c2cf;
+    box-sizing: border-box;
+    border-radius: 8px;
+    color: #22324a;
+    font-size: 14px;
+    line-height: 1.25;
+    min-height: 40px;
+    padding: 8px 10px;
+    width: 100%;
+  }
+
+  .sync-jobs-filter-form .filter_form_field select {
+    background-color: #fff;
+    background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
+    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-repeat: no-repeat;
+    background-size: 6px 6px, 6px 6px;
+    padding-right: 34px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .sync-jobs-filter-form .buttons {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
+  .sync-jobs-filter-form .filter_range_pair .range_inputs {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sync-jobs-filter-form .filter_range_pair .range_inputs input {
+    width: 100%;
+  }
+
+  .sync-jobs-filter-form .filter_range_pair .range_inputs > * {
+    min-width: 0;
+  }
+
+  .sync-job-user-autocomplete-menu {
+    background: #fff;
+    border: 1px solid #c5cfdb;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(16, 24, 40, 0.12);
+    max-height: 220px;
+    overflow-y: auto;
+    position: fixed;
+    z-index: 2000;
+  }
+
+  .sync-job-user-autocomplete-item {
+    background: transparent;
+    border: 0;
+    color: #22324a;
+    cursor: pointer;
+    display: block;
+    font-size: 14px;
+    padding: 8px 10px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .sync-job-user-autocomplete-item:hover,
+  .sync-job-user-autocomplete-item:focus {
+    background: #eef4ff;
+    outline: none;
+  }
+}
+
+body.active_admin {
+  #sidebar form.filter_form .filter_form_field select,
+  #sidebar form.filter_form .filter_form_field input[type="text"],
+  #sidebar form.filter_form .filter_form_field input[type="search"],
+  #sidebar form.filter_form .filter_form_field input[type="email"],
+  #sidebar form.filter_form .filter_form_field input[type="number"],
+  #sidebar form.filter_form .filter_form_field input[type="date"],
+  #sidebar form.filter_form .filter_form_field textarea,
+  #sidebar .admin-custom-filter-form .filter_form_field select,
+  #sidebar .admin-custom-filter-form .filter_form_field input[type="text"],
+  #sidebar .admin-custom-filter-form .filter_form_field input[type="search"],
+  #sidebar .admin-custom-filter-form .filter_form_field input[type="email"],
+  #sidebar .admin-custom-filter-form .filter_form_field input[type="number"],
+  #sidebar .admin-custom-filter-form .filter_form_field input[type="date"],
+  #sidebar .admin-custom-filter-form .filter_form_field textarea {
+    border: 1px solid #b8c2cf;
+    border-radius: 8px;
+    box-sizing: border-box;
+    color: #22324a;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+
+  #sidebar form.filter_form .filter_form_field select,
+  #sidebar .admin-custom-filter-form .filter_form_field select {
+    background-color: #fff;
+    background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
+    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-repeat: no-repeat;
+    background-size: 6px 6px, 6px 6px;
+    padding-right: 34px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  #sidebar form.filter_form .filter_form_field label,
+  #sidebar .admin-custom-filter-form .filter_form_field label {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 700;
+  }
+
+  #sidebar .admin-custom-filter-form .filter_form_field {
+    margin-bottom: 10px;
+  }
+
+  #sidebar .admin-custom-filter-form .filter_form_field:not(.filter_range_pair) input[type="text"],
+  #sidebar .admin-custom-filter-form .filter_form_field:not(.filter_range_pair) input[type="search"],
+  #sidebar .admin-custom-filter-form .filter_form_field:not(.filter_range_pair) input[type="email"],
+  #sidebar .admin-custom-filter-form .filter_form_field:not(.filter_range_pair) input[type="number"],
+  #sidebar .admin-custom-filter-form .filter_form_field:not(.filter_range_pair) select {
+    display: block;
+    width: 100%;
+  }
+
+  #sidebar .admin-custom-filter-form .buttons {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
+  #sidebar .admin-custom-filter-form .filter_range_pair .range_inputs {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+  }
+
+  #sidebar .admin-custom-filter-form .filter_range_pair .range_inputs > * {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #sidebar form.filter_form .filter_form_field.select_and_search.admin-autocomplete-field > select,
+  #sidebar form.filter_form .filter_form_field.select_and_search.admin-autocomplete-field > .seperator {
+    display: none;
+  }
+
+  #sidebar form.filter_form .filter_form_field.select_and_search.admin-autocomplete-field input[type="text"],
+  #sidebar form.filter_form .filter_form_field.select_and_search.admin-autocomplete-field input[type="search"],
+  #sidebar form.filter_form .filter_form_field.select_and_search.admin-autocomplete-field input[type="email"] {
+    margin-left: 0;
+    width: 100% !important;
+  }
+
+  #sidebar form.filter_form .filter_form_field.select_and_search:not(.admin-autocomplete-field) > select,
+  #sidebar form.filter_form .filter_form_field.select_and_search:not(.admin-autocomplete-field) > input[type="text"],
+  #sidebar form.filter_form .filter_form_field.select_and_search:not(.admin-autocomplete-field) > input[type="search"],
+  #sidebar form.filter_form .filter_form_field.select_and_search:not(.admin-autocomplete-field) > input[type="email"] {
+    display: inline-block;
+    width: calc(50% - 5px);
+  }
+
+  #sidebar form.filter_form .filter_form_field.filter_date_range > input[type="text"],
+  #sidebar form.filter_form .filter_form_field.filter_date_range > input[type="search"],
+  #sidebar form.filter_form .filter_form_field.filter_date_range > input[type="email"] {
+    display: inline-block;
+    width: calc(50% - 5px);
+  }
+
+  .admin-filter-autocomplete-menu {
+    background: #fff;
+    border: 1px solid #c5cfdb;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(16, 24, 40, 0.12);
+    max-height: 220px;
+    overflow-y: auto;
+    position: fixed;
+    z-index: 2000;
+  }
+
+  .admin-filter-autocomplete-item {
+    background: transparent;
+    border: 0;
+    color: #22324a;
+    cursor: pointer;
+    display: block;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 10px;
+    text-align: left;
+    text-shadow: none;
+    width: 100%;
+  }
+
+  .admin-filter-autocomplete-item:hover,
+  .admin-filter-autocomplete-item:focus {
+    background: #eef4ff;
+    outline: none;
+  }
+}
+
+body.admin_sync_jobs {
+  .sync-job-user-autocomplete-item {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 500;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+  }
+}
+
+body.active_admin {
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li {
+    clear: both;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > label,
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > legend.label {
+    float: none;
+    text-align: left;
+    width: auto;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > .label + .input,
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > .input,
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > .inline-errors,
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > p.inline-errors,
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > p.inline-hints {
+    margin-left: 0;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs {
+    background: #fff;
+    border: 1px solid #d7deea;
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li {
+    margin-bottom: 10px;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > label,
+  #main_content_wrapper form.formtastic fieldset.inputs > ol > li > legend.label label {
+    color: #55657d;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs input[type="text"],
+  #main_content_wrapper form.formtastic fieldset.inputs input[type="search"],
+  #main_content_wrapper form.formtastic fieldset.inputs input[type="email"],
+  #main_content_wrapper form.formtastic fieldset.inputs input[type="number"],
+  #main_content_wrapper form.formtastic fieldset.inputs input[type="date"],
+  #main_content_wrapper form.formtastic fieldset.inputs input[type="url"],
+  #main_content_wrapper form.formtastic fieldset.inputs input[type="password"],
+  #main_content_wrapper form.formtastic fieldset.inputs textarea,
+  #main_content_wrapper form.formtastic fieldset.inputs select {
+    border: 1px solid #b8c2cf;
+    border-radius: 8px;
+    box-sizing: border-box;
+    color: #22324a;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs select {
+    background-color: #fff;
+    background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
+    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-repeat: no-repeat;
+    background-size: 6px 6px, 6px 6px;
+    padding-right: 34px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs .input input[type="text"],
+  #main_content_wrapper form.formtastic fieldset.inputs .input input[type="search"],
+  #main_content_wrapper form.formtastic fieldset.inputs .input input[type="email"],
+  #main_content_wrapper form.formtastic fieldset.inputs .input input[type="number"],
+  #main_content_wrapper form.formtastic fieldset.inputs .input input[type="date"],
+  #main_content_wrapper form.formtastic fieldset.inputs .input input[type="url"],
+  #main_content_wrapper form.formtastic fieldset.inputs .input input[type="password"],
+  #main_content_wrapper form.formtastic fieldset.inputs .input textarea,
+  #main_content_wrapper form.formtastic fieldset.inputs .input select {
+    width: 100%;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs li.date_select .fragments-group select,
+  #main_content_wrapper form.formtastic fieldset.inputs li.datetime_select .fragments-group select,
+  #main_content_wrapper form.formtastic fieldset.inputs li.time_select .fragments-group select {
+    min-height: 32px;
+    width: auto;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.inputs li.date_select .fragments-group,
+  #main_content_wrapper form.formtastic fieldset.inputs li.datetime_select .fragments-group,
+  #main_content_wrapper form.formtastic fieldset.inputs li.time_select .fragments-group {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  #main_content_wrapper form.formtastic fieldset.actions {
+    background: transparent;
+    border: 0;
+    margin-top: 10px;
+    padding-left: 0;
   }
 }

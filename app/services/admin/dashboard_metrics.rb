@@ -102,6 +102,11 @@ module Admin
         avg_chunks_per_request_30d: sync_metrics[:avg_chunks_per_request_30d],
         max_chunks_per_request_30d: sync_metrics[:max_chunks_per_request_30d],
         sync_payload_bytes_30d: sync_metrics[:sync_payload_bytes_30d],
+        sync_payload_bytes_prev_30d: sync_metrics[:sync_payload_bytes_prev_30d],
+        sync_avg_payload_size_bytes: sync_metrics[:sync_avg_payload_size_bytes],
+        sync_games_30d: sync_metrics[:sync_games_30d],
+        sync_games_prev_30d: sync_metrics[:sync_games_prev_30d],
+        sync_avg_games_per_job: sync_metrics[:sync_avg_games_per_job],
         users_active_both_30d:,
         users_sync_only_30d:,
         users_sign_in_only_30d:,
@@ -129,6 +134,19 @@ module Admin
       sync_dead_30d = sync_status_counts_30d.fetch("dead", 0)
       sync_running_30d = sync_status_counts_30d.fetch("running", 0)
       chunked_requests_scope = sync_jobs_30d.where(payload_chunk_index: 0).where("COALESCE(payload_chunks, 1) > 1")
+      sync_payload_bytes_30d = sync_jobs_30d.where.not(payload_size_bytes: nil).sum(:payload_size_bytes).to_i
+      sync_payload_bytes_prev_30d = sync_jobs_prev_30d.where.not(payload_size_bytes: nil).sum(:payload_size_bytes).to_i
+      sync_avg_payload_size_bytes = sync_jobs_30d.where.not(payload_size_bytes: nil).average(:payload_size_bytes)&.to_f&.round || 0
+
+      if SyncJob.columns_hash.key?("games_count")
+        sync_games_30d = sync_jobs_30d.where.not(games_count: nil).sum(:games_count).to_i
+        sync_games_prev_30d = sync_jobs_prev_30d.where.not(games_count: nil).sum(:games_count).to_i
+        sync_avg_games_per_job = sync_jobs_30d.where.not(games_count: nil).average(:games_count)&.to_f&.round(2)
+      else
+        sync_games_30d = 0
+        sync_games_prev_30d = 0
+        sync_avg_games_per_job = nil
+      end
 
       {
         sync_jobs_30d:,
@@ -145,7 +163,12 @@ module Admin
         chunked_sync_requests_30d: chunked_requests_scope.count,
         avg_chunks_per_request_30d: chunked_requests_scope.average(:payload_chunks)&.to_f&.round(2),
         max_chunks_per_request_30d: chunked_requests_scope.maximum(:payload_chunks)&.to_i,
-        sync_payload_bytes_30d: sync_jobs_30d.where.not(payload_size_bytes: nil).sum(:payload_size_bytes).to_i
+        sync_payload_bytes_30d:,
+        sync_payload_bytes_prev_30d:,
+        sync_avg_payload_size_bytes:,
+        sync_games_30d:,
+        sync_games_prev_30d:,
+        sync_avg_games_per_job:
       }
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength

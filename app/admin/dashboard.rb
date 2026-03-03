@@ -21,10 +21,13 @@ ActiveAdmin.register_page "Dashboard" do
       "is-down"
     end
     number = ->(value) { helpers.number_with_delimiter(value) }
+    human_size = ->(bytes) { helpers.number_to_human_size(bytes, precision: 2) }
 
     users_vs_prev_30d = percent_change.call(metrics[:users_new_30d], metrics[:users_new_prev_30d])
     games_vs_prev_30d = percent_change.call(metrics[:games_new_30d], metrics[:games_new_prev_30d])
     sync_events_vs_prev_30d = percent_change.call(metrics[:sync_events_30d], metrics[:sync_events_prev_30d])
+    sync_payload_vs_prev_30d = percent_change.call(metrics[:sync_payload_bytes_30d], metrics[:sync_payload_bytes_prev_30d])
+    sync_games_vs_prev_30d = percent_change.call(metrics[:sync_games_30d], metrics[:sync_games_prev_30d])
 
     div class: "admin-dashboard" do
       div class: "admin-dashboard-kpis" do
@@ -68,6 +71,16 @@ ActiveAdmin.register_page "Dashboard" do
           div number.call(metrics[:chunked_sync_requests_30d]), class: "admin-kpi-value"
           div "Chunk jobs: #{number.call(metrics[:chunked_sync_jobs_30d])}", class: "admin-kpi-meta"
         end
+        div class: "admin-kpi-card" do
+          div "Sync payload (30d)", class: "admin-kpi-label"
+          div human_size.call(metrics[:sync_payload_bytes_30d]), class: "admin-kpi-value"
+          span sync_payload_vs_prev_30d, class: "admin-kpi-trend #{trend_class.call(sync_payload_vs_prev_30d)}"
+        end
+        div class: "admin-kpi-card" do
+          div "Synced games (30d)", class: "admin-kpi-label"
+          div number.call(metrics[:sync_games_30d]), class: "admin-kpi-value"
+          span sync_games_vs_prev_30d, class: "admin-kpi-trend #{trend_class.call(sync_games_vs_prev_30d)}"
+        end
       end
 
       columns do
@@ -98,6 +111,10 @@ ActiveAdmin.register_page "Dashboard" do
               row("Avg chunks per chunked request") { metrics[:avg_chunks_per_request_30d] || "N/A" }
               row("Max chunks in one request") { metrics[:max_chunks_per_request_30d] || "N/A" }
               row("Total chunk payload (30d)") { helpers.number_to_human_size(metrics[:sync_payload_bytes_30d]) }
+              row("Payload size total (30d)") { human_size.call(metrics[:sync_payload_bytes_30d]) }
+              row("Payload size avg/job (30d)") { human_size.call(metrics[:sync_avg_payload_size_bytes]) }
+              row("Synced games total (30d)") { number.call(metrics[:sync_games_30d]) }
+              row("Synced games avg/job (30d)") { metrics[:sync_avg_games_per_job] || "N/A" }
             end
           end
         end

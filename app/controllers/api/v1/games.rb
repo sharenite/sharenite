@@ -44,7 +44,12 @@ module API
         desc "Update game"
         put ":id" do
           error! "Method not implemented, check back later"
-          job = current_user.sync_jobs.create(name: "GameSyncJob")
+          job_attributes = { name: "GameSyncJob" }
+          if SyncJob.columns_hash.key?("games_count")
+            single_payload = params[:game]
+            job_attributes[:games_count] = single_payload.is_a?(Array) ? single_payload.size : single_payload.present?.to_i
+          end
+          job = current_user.sync_jobs.create(job_attributes)
           # rubocop:disable Style/GlobalVars
           $redis.set("syncjob:#{job.id}", params[:game].to_json)
           # rubocop:enable Style/GlobalVars
@@ -132,25 +137,32 @@ module API
         def sync_job_name(base_job_name, total_chunks, chunk_index)
           return base_job_name if total_chunks <= 1
 
-          "#{base_job_name}(chunk #{chunk_index + 1}/#{total_chunks})"
+          "#{base_job_name} (chunk #{chunk_index + 1}/#{total_chunks})"
         end
 
         def enqueue_single_sync_job!(type:, chunk_games:, metadata:)
           payload_json = chunk_games.to_json
-          job = create_sync_job(metadata:, payload_size: payload_json.bytesize)
+          job = create_sync_job(
+            metadata:,
+            payload_size: payload_json.bytesize,
+            games_count: chunk_games.size
+          )
 
           persist_sync_payload(job, payload_json)
           publish_sync_job(job, type, metadata)
           job
         end
 
-        def create_sync_job(metadata:, payload_size:)
-          current_user.sync_jobs.create!(
+        def create_sync_job(metadata:, payload_size:, games_count:)
+          job_attributes = {
             name: sync_job_name(metadata[:base_job_name], metadata[:total_chunks], metadata[:chunk_index]),
             payload_size_bytes: payload_size,
             payload_chunks: metadata[:total_chunks],
             payload_chunk_index: metadata[:chunk_index]
-          )
+          }
+          job_attributes[:games_count] = games_count if SyncJob.columns_hash.key?("games_count")
+
+          current_user.sync_jobs.create!(job_attributes)
         end
 
         def persist_sync_payload(job, payload_json)

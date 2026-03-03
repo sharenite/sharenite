@@ -4,6 +4,8 @@ ActiveAdmin.register Developer do
   config.sort_order = "created_at_desc"
   menu parent: "Games", priority: 8
 
+  actions :all, except: %i[new create edit update]
+
   belongs_to :user, optional: true
   includes :user
 
