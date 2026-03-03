@@ -88,6 +88,24 @@ body.admin_stats {
     color: #4f5f78;
   }
 
+  .admin-dashboard-panels {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (max-width: 1400px) {
+    .admin-dashboard-panels {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .admin-dashboard-panels {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .columns .panel {
     border-radius: 12px;
     border: 1px solid #d7deea;
@@ -173,9 +191,13 @@ body.admin_stats {
   .admin-stats-filter-grid select {
     background-color: #fff;
     background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
-    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-position:
+      calc(100% - 16px) 52%,
+      calc(100% - 10px) 52%;
     background-repeat: no-repeat;
-    background-size: 6px 6px, 6px 6px;
+    background-size:
+      6px 6px,
+      6px 6px;
     padding-right: 34px;
     -webkit-appearance: none;
     appearance: none;
@@ -273,9 +295,13 @@ body.admin_sync_jobs {
   .sync-jobs-filter-form .filter_form_field select {
     background-color: #fff;
     background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
-    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-position:
+      calc(100% - 16px) 52%,
+      calc(100% - 10px) 52%;
     background-repeat: no-repeat;
-    background-size: 6px 6px, 6px 6px;
+    background-size:
+      6px 6px,
+      6px 6px;
     padding-right: 34px;
     -webkit-appearance: none;
     appearance: none;
@@ -361,9 +387,13 @@ body.active_admin {
   #sidebar .admin-custom-filter-form .filter_form_field select {
     background-color: #fff;
     background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
-    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-position:
+      calc(100% - 16px) 52%,
+      calc(100% - 10px) 52%;
     background-repeat: no-repeat;
-    background-size: 6px 6px, 6px 6px;
+    background-size:
+      6px 6px,
+      6px 6px;
     padding-right: 34px;
     -webkit-appearance: none;
     appearance: none;
@@ -538,9 +568,13 @@ body.active_admin {
   #main_content_wrapper form.formtastic fieldset.inputs select {
     background-color: #fff;
     background-image: linear-gradient(45deg, transparent 50%, #5e6f88 50%), linear-gradient(135deg, #5e6f88 50%, transparent 50%);
-    background-position: calc(100% - 16px) 52%, calc(100% - 10px) 52%;
+    background-position:
+      calc(100% - 16px) 52%,
+      calc(100% - 10px) 52%;
     background-repeat: no-repeat;
-    background-size: 6px 6px, 6px 6px;
+    background-size:
+      6px 6px,
+      6px 6px;
     padding-right: 34px;
     -webkit-appearance: none;
     appearance: none;

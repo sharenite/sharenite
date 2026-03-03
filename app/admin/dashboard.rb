@@ -83,100 +83,84 @@ ActiveAdmin.register_page "Dashboard" do
         end
       end
 
-      columns do
-        column do
-          panel "Users Overview" do
-            attributes_table_for :users do
-              row("Total users") { number.call(metrics[:users_total]) }
-              row("Confirmed users") { number.call(metrics[:users_confirmed_total]) }
-              row("New users (30d)") { number.call(metrics[:users_new_30d]) }
-              row("New users (prev 30d)") { number.call(metrics[:users_new_prev_30d]) }
-              row("New users trend (30d vs prev 30d)") { users_vs_prev_30d }
-              row("Confirmed users (30d)") { number.call(metrics[:users_confirmed_30d]) }
-            end
+      div class: "admin-dashboard-panels" do
+        panel "Users Overview" do
+          attributes_table_for :users do
+            row("Total users") { number.call(metrics[:users_total]) }
+            row("Confirmed users") { number.call(metrics[:users_confirmed_total]) }
+            row("New users (30d)") { number.call(metrics[:users_new_30d]) }
+            row("New users (prev 30d)") { number.call(metrics[:users_new_prev_30d]) }
+            row("New users trend (30d vs prev 30d)") { users_vs_prev_30d }
+            row("Confirmed users (30d)") { number.call(metrics[:users_confirmed_30d]) }
           end
         end
 
-        column do
-          panel "Sync Jobs Health (30 days)" do
-            attributes_table_for :sync_jobs do
-              row("Finished") { number.call(metrics[:sync_finished_30d]) }
-              row("Failed") { number.call(metrics[:sync_failed_30d]) }
-              row("Dead") { number.call(metrics[:sync_dead_30d]) }
-              row("Running") { number.call(metrics[:sync_running_30d]) }
-              row("Success rate (finished/(finished+failed+dead))") { metrics[:sync_success_rate] }
-              row("Avg processing time (s)") { metrics[:sync_avg_processing_time] || "N/A" }
-              row("Chunked requests") { number.call(metrics[:chunked_sync_requests_30d]) }
-              row("Chunk jobs") { number.call(metrics[:chunked_sync_jobs_30d]) }
-              row("Avg chunks per chunked request") { metrics[:avg_chunks_per_request_30d] || "N/A" }
-              row("Max chunks in one request") { metrics[:max_chunks_per_request_30d] || "N/A" }
-              row("Total chunk payload (30d)") { helpers.number_to_human_size(metrics[:sync_payload_bytes_30d]) }
-              row("Payload size total (30d)") { human_size.call(metrics[:sync_payload_bytes_30d]) }
-              row("Payload size avg/job (30d)") { human_size.call(metrics[:sync_avg_payload_size_bytes]) }
-              row("Synced games total (30d)") { number.call(metrics[:sync_games_30d]) }
-              row("Synced games avg/job (30d)") { metrics[:sync_avg_games_per_job] || "N/A" }
-            end
-          end
-        end
-      end
-
-      columns do
-        column do
-          panel "Activity Correlation (30 days)" do
-            attributes_table_for :activity do
-              row("Users active by sign-in") { number.call(metrics[:users_active_sign_in_30d]) }
-              row("Users active by sync job") { number.call(metrics[:sync_active_users_30d]) }
-              row("Games with activity") { number.call(metrics[:games_with_recent_activity]) }
-              row("Active in both (sign-in + sync)") { number.call(metrics[:users_active_both_30d]) }
-              row("Sign-in only") { number.call(metrics[:users_sign_in_only_30d]) }
-              row("Sync-only") { number.call(metrics[:users_sync_only_30d]) }
-            end
-            para "Useful to compare auth activity, sync activity, and actual game engagement."
+        panel "Sync Jobs Health (30 days)" do
+          attributes_table_for :sync_jobs do
+            row("Finished") { number.call(metrics[:sync_finished_30d]) }
+            row("Failed") { number.call(metrics[:sync_failed_30d]) }
+            row("Dead") { number.call(metrics[:sync_dead_30d]) }
+            row("Running") { number.call(metrics[:sync_running_30d]) }
+            row("Success rate (finished/(finished+failed+dead))") { metrics[:sync_success_rate] }
+            row("Avg processing time (s)") { metrics[:sync_avg_processing_time] || "N/A" }
+            row("Chunked requests") { number.call(metrics[:chunked_sync_requests_30d]) }
+            row("Chunk jobs") { number.call(metrics[:chunked_sync_jobs_30d]) }
+            row("Avg chunks per chunked request") { metrics[:avg_chunks_per_request_30d] || "N/A" }
+            row("Max chunks in one request") { metrics[:max_chunks_per_request_30d] || "N/A" }
+            row("Total chunk payload (30d)") { helpers.number_to_human_size(metrics[:sync_payload_bytes_30d]) }
+            row("Payload size total (30d)") { human_size.call(metrics[:sync_payload_bytes_30d]) }
+            row("Payload size avg/job (30d)") { human_size.call(metrics[:sync_avg_payload_size_bytes]) }
+            row("Synced games total (30d)") { number.call(metrics[:sync_games_30d]) }
+            row("Synced games avg/job (30d)") { metrics[:sync_avg_games_per_job] || "N/A" }
           end
         end
 
-        column do
-          panel "Games Overview" do
-            attributes_table_for :games do
-              row("Total games") { number.call(metrics[:games_total]) }
-              row("New games (30d)") { number.call(metrics[:games_new_30d]) }
-              row("New games (prev 30d)") { number.call(metrics[:games_new_prev_30d]) }
-              row("New games trend (30d vs prev 30d)") { games_vs_prev_30d }
-              row("Installed games") { number.call(metrics[:games_installed]) }
-              row("Favorite games") { number.call(metrics[:games_favorite]) }
-              row("Games with notes") { number.call(metrics[:games_with_notes]) }
-              row("Average games per user") { metrics[:avg_games_per_user] }
-            end
+        panel "Activity Correlation (30 days)" do
+          attributes_table_for :activity do
+            row("Users active by sign-in") { number.call(metrics[:users_active_sign_in_30d]) }
+            row("Users active by sync job") { number.call(metrics[:sync_active_users_30d]) }
+            row("Games with activity") { number.call(metrics[:games_with_recent_activity]) }
+            row("Active in both (sign-in + sync)") { number.call(metrics[:users_active_both_30d]) }
+            row("Sign-in only") { number.call(metrics[:users_sign_in_only_30d]) }
+            row("Sync-only") { number.call(metrics[:users_sync_only_30d]) }
           end
+          para "Useful to compare auth activity, sync activity, and actual game engagement."
         end
-      end
 
-      columns do
-        column do
-          panel "Top Users by Sync Jobs (30 days)" do
-            if metrics[:top_sync_users].any?
-              table_for metrics[:top_sync_users] do
-                column("User") { |user| link_to(user.email, admin_user_path(user)) }
-                column("Sync jobs") { |user| number.call(user.read_attribute(:sync_jobs_count).to_i) }
-                column("Last sign-in") { |user| user.last_sign_in_at&.strftime("%Y-%m-%d %H:%M") || "Never" }
-              end
-            else
-              para "No sync activity yet."
-            end
+        panel "Games Overview" do
+          attributes_table_for :games do
+            row("Total games") { number.call(metrics[:games_total]) }
+            row("New games (30d)") { number.call(metrics[:games_new_30d]) }
+            row("New games (prev 30d)") { number.call(metrics[:games_new_prev_30d]) }
+            row("New games trend (30d vs prev 30d)") { games_vs_prev_30d }
+            row("Installed games") { number.call(metrics[:games_installed]) }
+            row("Favorite games") { number.call(metrics[:games_favorite]) }
+            row("Games with notes") { number.call(metrics[:games_with_notes]) }
+            row("Average games per user") { metrics[:avg_games_per_user] }
           end
         end
 
-        column do
-          panel "Top Users by Added Games (30 days)" do
-            if metrics[:top_games_added_users].any?
-              table_for metrics[:top_games_added_users] do
-                column("User") { |user| link_to(user.email, admin_user_path(user)) }
-                column("Games added") { |user| number.call(user.read_attribute(:games_added_count).to_i) }
-                column("Total games now") { |user| number.call(user.read_attribute(:total_games_count).to_i) }
-              end
-            else
-              para "No game additions in the last 30 days."
+        panel "Top Users by Sync Jobs (30 days)" do
+          if metrics[:top_sync_users].any?
+            table_for metrics[:top_sync_users] do
+              column("User") { |user| link_to(user.email, admin_user_path(user)) }
+              column("Sync jobs") { |user| number.call(user.read_attribute(:sync_jobs_count).to_i) }
+              column("Last sign-in") { |user| user.last_sign_in_at&.strftime("%Y-%m-%d %H:%M") || "Never" }
             end
+          else
+            para "No sync activity yet."
+          end
+        end
+
+        panel "Top Users by Added Games (30 days)" do
+          if metrics[:top_games_added_users].any?
+            table_for metrics[:top_games_added_users] do
+              column("User") { |user| link_to(user.email, admin_user_path(user)) }
+              column("Games added") { |user| number.call(user.read_attribute(:games_added_count).to_i) }
+              column("Total games now") { |user| number.call(user.read_attribute(:total_games_count).to_i) }
+            end
+          else
+            para "No game additions in the last 30 days."
           end
         end
       end
