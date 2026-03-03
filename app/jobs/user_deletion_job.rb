@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Deletes a user asynchronously and tracks deletion lifecycle timestamps.
 class UserDeletionJob < ApplicationJob
   queue_as :default
 

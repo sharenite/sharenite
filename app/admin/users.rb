@@ -29,15 +29,17 @@ ActiveAdmin.register User do
       collection_path
     end
 
+    # rubocop:disable Metrics/AbcSize
     def normalize_user_password_params
       return unless params[:user].is_a?(ActionController::Parameters) || params[:user].is_a?(Hash)
-      return unless params[:user][:password].blank?
+      return if params[:user][:password].present?
 
       params[:user].delete(:password)
       params[:user].delete("password")
       params[:user].delete(:password_confirmation)
       params[:user].delete("password_confirmation")
     end
+    # rubocop:enable Metrics/AbcSize
   end
 
   # See permitted parameters documentation:
@@ -165,7 +167,7 @@ ActiveAdmin.register User do
         model != User &&
         model.columns_hash.key?("user_id")
     end
-                                       .sort_by { |admin_resource| admin_resource.resource_label }
+                                       .sort_by(&:resource_label)
 
     ul do
       filterable_resources.each do |admin_resource|

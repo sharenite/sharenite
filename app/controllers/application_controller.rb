@@ -12,9 +12,7 @@ class ApplicationController < ActionController::Base
       # Keep basic auth disabled when credentials cannot be decrypted.
     end
   end
-  if Rails.env.staging? && http_basic_user.present? && http_basic_password.present?
-    http_basic_authenticate_with name: http_basic_user, password: http_basic_password
-  end
+  http_basic_authenticate_with name: http_basic_user, password: http_basic_password if Rails.env.staging? && http_basic_user.present? && http_basic_password.present?
   class_attribute :missing_recaptcha_keys_warning_logged, instance_writer: false, default: false
 
   before_action :redirect_www_to_canonical_host

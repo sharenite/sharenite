@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Stores non-identifying lifecycle events for asynchronous user deletions.
 class UserDeletionEvent < ApplicationRecord
   belongs_to :scheduled_by_admin_user, class_name: "AdminUser", optional: true
 

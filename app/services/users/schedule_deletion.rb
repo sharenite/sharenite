@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Users
+  # Flags a user for deletion, anonymizes credentials, and enqueues async destroy.
   class ScheduleDeletion
     def self.call(user, scheduled_by_admin_user: nil)
       new(user, scheduled_by_admin_user:).call
@@ -11,10 +12,13 @@ module Users
       @scheduled_by_admin_user = scheduled_by_admin_user
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def call
       enqueued = false
       deletion_event_id = nil
 
+      # Keep user update + event creation atomic so job always has matching event context.
+      # rubocop:disable Metrics/BlockLength
       User.transaction do
         user.lock!
         user.skip_reconfirmation! if user.respond_to?(:skip_reconfirmation!)
@@ -46,10 +50,12 @@ module Users
           enqueued = true
         end
       end
+      # rubocop:enable Metrics/BlockLength
 
       UserDeletionJob.perform_later(user.id, deletion_event_id) if enqueued
       enqueued
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     private
 
