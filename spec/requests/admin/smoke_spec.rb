@@ -51,6 +51,7 @@ RSpec.describe "Admin smoke", type: :request do
   let!(:playlist) { create(:playlist, user: owner, name: "Demo Playlist") }
   let!(:igdb_cache) { create(:igdb_cache, name: "Demo IGDB") }
   let!(:playlist_item) { create(:playlist_item, playlist: playlist, igdb_cache: igdb_cache, order: 1) }
+  let!(:delete_candidate) { create(:user, email: "delete-candidate@sharenite.local") }
 
   let!(:sync_job) do
     attributes = {
@@ -223,5 +224,16 @@ RSpec.describe "Admin smoke", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(%(name="playlist_item[playlist_id]"))
     expect(response.body).to include(%(value="#{playlist.id}"))
+  end
+
+  it "schedules user deletion and preserves filter return path" do
+    delete "/admin/users/#{delete_candidate.id}", params: { return_to: "/admin/users?q%5Bemail_cont%5D=delete-candidate" }
+
+    expect(response).to redirect_to("/admin/users?q%5Bemail_cont%5D=delete-candidate")
+
+    delete_candidate.reload
+    expect(delete_candidate.deleting).to be(true)
+    expect(delete_candidate.deletion_requested_at).to be_present
+    expect(delete_candidate.email).to eq("#{delete_candidate.id}@sharenite.link")
   end
 end

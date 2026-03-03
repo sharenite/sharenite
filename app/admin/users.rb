@@ -9,7 +9,29 @@ ActiveAdmin.register User do
   controller do
     before_action :normalize_user_password_params, only: %i[create update]
 
+    def destroy
+      if resource.deleting?
+        redirect_to(safe_return_to_or_collection, notice: "User deletion is already in progress.")
+        return
+      end
+
+      Users::ScheduleDeletion.call(resource)
+      redirect_to(safe_return_to_or_collection, notice: "User deletion has been scheduled.")
+    end
+
     private
+
+    def safe_return_to_or_collection
+      return_to = params[:return_to].to_s
+      return collection_path if return_to.blank?
+
+      uri = URI.parse(return_to)
+      return collection_path unless uri.path == collection_path
+
+      return_to
+    rescue URI::InvalidURIError
+      collection_path
+    end
 
     def normalize_user_password_params
       return unless params[:user].is_a?(ActionController::Parameters) || params[:user].is_a?(Hash)
@@ -42,6 +64,10 @@ ActiveAdmin.register User do
   index do
     id_column
     column :email
+    column :deleting do |user|
+      status_tag(user.deleting? ? "yes" : "no", class: user.deleting? ? "warning" : "ok")
+    end
+    column :deletion_requested_at
     column :games_count do |user|
       games_total = user[:games_count]
       games_total = user.games.count if games_total.nil?
@@ -53,7 +79,20 @@ ActiveAdmin.register User do
     column :last_sign_in_ip
     column :created_at
     column :updated_at
-    actions
+    actions defaults: false do |user|
+      item "View", resource_path(user), class: "member_link view_link"
+      item "Edit", edit_resource_path(user), class: "member_link edit_link" unless user.deleting?
+
+      if user.deleting?
+        span "Deleting..", class: "member_link"
+      else
+        item "Delete",
+             resource_path(user, return_to: request.fullpath),
+             class: "member_link delete_link",
+             method: :delete,
+             data: { confirm: "Are you sure you want to schedule deletion for this user?" }
+      end
+    end
   end
 
   form do |f|
@@ -148,6 +187,17 @@ ActiveAdmin.register User do
         )
       end
       nil
+    end
+  end
+
+  action_item :destroy, only: :show do
+    if resource.deleting?
+      span "Deleting..", class: "action_item"
+    else
+      link_to "Delete User",
+              resource_path(resource, return_to: collection_path),
+              method: :delete,
+              data: { confirm: "Are you sure you want to schedule deletion for this user?" }
     end
   end
 end

@@ -47,6 +47,18 @@ class User < ApplicationRecord
     email
   end
 
+  def active_for_authentication?
+    super && !deleting?
+  end
+
+  def inactive_message
+    deleting? ? :deleting : super
+  end
+
+  def deletion_placeholder_email
+    "#{id}@sharenite.link"
+  end
+
   def self.ransackable_attributes(_auth_object = nil)
     attributes = ["confirmation_sent_at", "confirmation_token", "confirmed_at", "created_at", "current_sign_in_at", "current_sign_in_ip", "email", "id", "last_sign_in_at", "last_sign_in_ip",
                   "remember_created_at", "reset_password_sent_at", "reset_password_token", "sign_in_count", "unconfirmed_email", "updated_at"]

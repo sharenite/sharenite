@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_03_195000) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_03_203000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -414,9 +414,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_03_195000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "games_count", default: 0, null: false
+    t.boolean "deleting", default: false, null: false
+    t.datetime "deletion_requested_at"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["confirmed_at"], name: "index_users_on_confirmed_at"
     t.index ["created_at"], name: "index_users_on_created_at"
+    t.index ["deleting"], name: "index_users_on_deleting"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_sign_in_at"], name: "index_users_on_last_sign_in_at"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true

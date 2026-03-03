@@ -7,6 +7,7 @@ class ApplicationController < ActionController::Base
 
   before_action :redirect_www_to_canonical_host
   before_action :authenticate_user!
+  before_action :sign_out_if_account_deleting
   helper_method :captcha_required?, :current_profile, :pending_friend_invites_count
 
   # Devise overrides
@@ -26,6 +27,14 @@ class ApplicationController < ActionController::Base
     return 0 unless user_signed_in?
 
     @pending_friend_invites_count ||= Friend.where(invitee_id: current_user.id, status: :invited).count
+  end
+
+  def sign_out_if_account_deleting
+    return unless user_signed_in?
+    return unless current_user.deleting?
+
+    sign_out(current_user)
+    redirect_to root_path, alert: I18n.t("devise.failure.deleting")
   end
 
   def captcha_required?
