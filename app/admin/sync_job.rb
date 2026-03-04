@@ -78,8 +78,8 @@ ActiveAdmin.register SyncJob do
                                .order(:name)
                                .limit(400)
                                .pluck(:name)
-                               .map { |name| name.sub(/\s*\(chunk \d+\/\d+\)\z/, "").strip }
-                               .reject(&:blank?)
+                               .map { |name| name.sub(%r{\s*\(chunk \d+/\d+\)\z}, "").strip }
+                               .compact_blank
 
       (canonical_names + discovered_names).uniq.sort
     end
@@ -99,7 +99,7 @@ ActiveAdmin.register SyncJob do
       avg_gap = stats[:avg_gap]
       return :neutral if current_gap.nil? || avg_gap.nil? || avg_gap <= 0
 
-      ratio = current_gap.to_f / avg_gap.to_f
+      ratio = current_gap / avg_gap.to_f
       return :good if ratio <= 1.5
       return :warn if ratio <= 3.0
 
@@ -108,34 +108,27 @@ ActiveAdmin.register SyncJob do
 
     private
 
+    # rubocop:disable Metrics/AbcSize
     def normalize_sync_job_filters
-      params[:q] = ActionController::Parameters.new unless params[:q].is_a?(ActionController::Parameters) || params[:q].is_a?(Hash)
-      if params[:scope].to_s.start_with?("request_gap_")
-        params.delete(:scope)
-        params.delete("scope")
-      end
+      q = sync_job_query_params
+      clear_scope_param! if params[:scope].to_s.start_with?("request_gap_")
 
-      params[:q].delete(:status_eq)
-      params[:q].delete("status_eq")
-      if params.dig(:q, :name_start).to_s == "Any" || params.dig(:q, "name_start").to_s == "Any"
-        params[:q][:name_start] = ""
-        params[:q]["name_start"] = ""
-      end
+      q.delete(:status_eq)
+      q.delete("status_eq")
+      q[:name_start] = "" if q[:name_start].to_s == "Any" || q["name_start"].to_s == "Any"
 
-      user_id = params.dig(:q, :user_id_eq).presence
+      user_id = q[:user_id_eq].presence
       user_query = params[:user_query].to_s.strip
 
-      if user_id.present?
-        params[:q].delete(:user_email_cont)
-        params[:q].delete("user_email_cont")
-      elsif user_query.present?
-        params[:q][:user_email_cont] = user_query
+      if user_id.blank? && user_query.present?
+        q[:user_email_cont] = user_query
       else
-        params[:q].delete(:user_email_cont)
-        params[:q].delete("user_email_cont")
+        clear_user_email_filter!(q)
       end
     end
+    # rubocop:enable Metrics/AbcSize
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
     def sync_request_gap_stats
       @sync_request_gap_stats ||= begin
         rows = SyncJob.order(created_at: :desc)
@@ -145,19 +138,12 @@ ActiveAdmin.register SyncJob do
         request_times = []
         seen_keys = {}
 
-        rows.each do |created_at, id, sync_batch_id, payload_chunks, name, user_id|
-          key = sync_request_key_for_row(
-            created_at:,
-            id:,
-            sync_batch_id:,
-            payload_chunks:,
-            name:,
-            user_id:
-          )
+        rows.each do |row|
+          key = sync_request_key_for_row(row)
           next if seen_keys[key]
 
           seen_keys[key] = true
-          request_times << created_at
+          request_times << row[0]
           break if request_times.length >= 120
         end
 
@@ -173,15 +159,32 @@ ActiveAdmin.register SyncJob do
         }
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
 
-    def sync_request_key_for_row(created_at:, id:, sync_batch_id:, payload_chunks:, name:, user_id:)
+    def sync_request_key_for_row(row)
+      created_at, id, sync_batch_id, payload_chunks, name, user_id = row
       return sync_batch_id.to_s if sync_batch_id.present?
 
       payload_chunks_count = payload_chunks.to_i
       return id.to_s if payload_chunks_count <= 1
 
-      canonical_name = name.to_s.sub(/\s*\(chunk \d+\/\d+\)\z/, "")
+      canonical_name = name.to_s.sub(%r{\s*\(chunk \d+/\d+\)\z}, "")
       "#{user_id}|#{canonical_name}|#{created_at.change(usec: 0)}|#{payload_chunks_count}"
+    end
+
+    def sync_job_query_params
+      params[:q] = ActionController::Parameters.new unless params[:q].is_a?(ActionController::Parameters) || params[:q].is_a?(Hash)
+      params[:q]
+    end
+
+    def clear_scope_param!
+      params.delete(:scope)
+      params.delete("scope")
+    end
+
+    def clear_user_email_filter!(query)
+      query.delete(:user_email_cont)
+      query.delete("user_email_cont")
     end
 
     def humanize_gap(seconds)
@@ -554,8 +557,8 @@ ActiveAdmin.register SyncJob do
       row :updated_at
       row :started_processing_at
       row :finished_processing_at
-      row("Waiting time (s)") { |sync_job| sync_job.waiting_time }
-      row("Processing time (s)") { |sync_job| sync_job.processing_time }
+      row("Waiting time (s)", &:waiting_time)
+      row("Processing time (s)", &:processing_time)
     end
   end
 
@@ -583,7 +586,7 @@ ActiveAdmin.register SyncJob do
       div class: "filter_form_field" do
         label "Name"
         select name: "q[name_start]" do
-          text_node(%(<option value=""#{' selected="selected"' if q[:name_start].blank?}>Any</option>).html_safe)
+          option "Any", value: "", selected: q[:name_start].blank?
           sync_job_name_options.each do |name_option|
             option name_option, value: name_option, selected: (q[:name_start].to_s == name_option)
           end

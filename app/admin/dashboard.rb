@@ -4,9 +4,7 @@ ActiveAdmin.register_page "Dashboard" do
   menu priority: 1, label: proc { I18n.t("active_admin.dashboard") }
 
   content title: proc { I18n.t("active_admin.dashboard") } do
-    if params[:dashboard_refresh] == "1"
-      Admin::DashboardMetrics.clear_cache!
-    end
+    Admin::DashboardMetrics.clear_cache! if params[:dashboard_refresh] == "1"
     force_refresh = params[:dashboard_no_cache] == "1" || params[:dashboard_refresh] == "1"
     metrics = Admin::DashboardMetrics.call(force_refresh:)
 

@@ -285,6 +285,7 @@ module Admin
       { current: current_avg, previous: previous_avg, change: percent_change(current_avg, previous_avg) }
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def request_grouped_data(metric, avg_column: nil, scale: 1.0)
       avg_sql = avg_column.present? ? "AVG(#{avg_column})" : "NULL"
       grouped = request_rollups(from..to)
@@ -302,7 +303,7 @@ module Admin
           when :total_requests then total_requests.to_i
           when :avg_metric
             scaled = avg_value.to_f / scale
-            (scale - 1.0).abs > Float::EPSILON ? scaled.round(2) : scaled.round(2)
+            scaled.round(2)
           else 0
           end
         acc[bucket] = value
@@ -312,7 +313,9 @@ module Admin
         { time:, label: time.strftime(label_format), value: }
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def grouped_sync_status_stack
       trunc = "date_trunc('#{grouping}', created_at)"
       rows = SyncJob.where(created_at: from..to)
@@ -349,7 +352,9 @@ module Admin
         }
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
+    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def request_period_stats_for(range)
       rollups = request_rollups(range)
       total_requests = rollups.count
@@ -363,7 +368,9 @@ module Admin
         total_payload_size_bytes: avg_payload
       }
     end
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
+    # rubocop:disable Metrics/AbcSize
     def request_rollups(range)
       request_key = request_key_sql("sync_jobs")
       bucket_sql = "date_trunc('#{grouping}', sync_jobs.created_at)"
@@ -381,7 +388,9 @@ module Admin
 
       SyncJob.unscoped.from("(#{subquery.to_sql}) request_rollups")
     end
+    # rubocop:enable Metrics/AbcSize
 
+    # rubocop:disable Metrics/MethodLength
     def request_key_sql(table_alias)
       if SyncJob.columns_hash.key?("sync_batch_id")
         "COALESCE(#{table_alias}.sync_batch_id::text, #{table_alias}.id::text)"
@@ -403,6 +412,7 @@ module Admin
         SQL
       end
     end
+    # rubocop:enable Metrics/MethodLength
   end
   # rubocop:enable Metrics/ClassLength
 end
