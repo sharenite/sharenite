@@ -281,9 +281,13 @@ module Admin
       failed_requests_scope = request_rollups_30d.where("failed_dead_chunks > 0")
       sync_failed_requests_30d = failed_requests_scope.count
       sync_failed_requests_prev_30d = request_rollup_scope(sync_jobs_prev_30d).where("failed_dead_chunks > 0").count
-      request_processing_scope = terminal_requests_scope.where.not(total_processing_time: nil)
+      # rubocop:disable Rails/WhereNot
+      # request_rollups_30d is a subquery aliased as request_rollups; hash-style where.not
+      # may incorrectly qualify columns with sync_jobs and break SQL generation.
+      request_processing_scope = terminal_requests_scope.where("total_processing_time IS NOT NULL")
       sync_request_processing_sample_size = request_processing_scope.count
-      request_waiting_scope = request_rollups_30d.where.not(first_chunk_waiting_time: nil)
+      request_waiting_scope = request_rollups_30d.where("first_chunk_waiting_time IS NOT NULL")
+      # rubocop:enable Rails/WhereNot
       sync_avg_request_total_processing_time = request_processing_scope.average(:total_processing_time)&.to_f&.round(2)
       slow_requests_over_900s_30d = request_processing_scope.where("total_processing_time > 900").count
 
