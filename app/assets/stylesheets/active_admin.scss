@@ -30,6 +30,25 @@ body.admin_stats {
     margin-bottom: 14px;
   }
 
+  .admin-dashboard-refresh-note {
+    color: #5f6f87;
+    font-size: 12px;
+    margin: -4px 0 12px;
+  }
+
+  .admin-dashboard-refresh-note .admin-dashboard-refresh-link {
+    color: #2a5f94;
+    display: inline-block;
+    font-weight: 700;
+    margin-left: 4px;
+    margin-right: 4px;
+    text-decoration: none;
+  }
+
+  .admin-dashboard-refresh-note .admin-dashboard-refresh-link:hover {
+    text-decoration: underline;
+  }
+
   .admin-kpi-card {
     background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
     border: 1px solid #d8e2f1;
@@ -52,6 +71,14 @@ body.admin_stats {
     font-weight: 800;
     line-height: 1.1;
     margin-top: 6px;
+  }
+
+  .admin-kpi-value.is-good {
+    color: #146c37;
+  }
+
+  .admin-kpi-value.is-bad {
+    color: #aa2222;
   }
 
   .admin-kpi-meta {
@@ -88,45 +115,128 @@ body.admin_stats {
     color: #4f5f78;
   }
 
+  .admin-health-value {
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 8px;
+    text-transform: uppercase;
+  }
+
+  .admin-health-value.is-good {
+    background: #e7f9ee;
+    border: 1px solid #b8ebca;
+    color: #146c37;
+  }
+
+  .admin-health-value.is-bad {
+    background: #ffecec;
+    border: 1px solid #f7c0c0;
+    color: #aa2222;
+  }
+
+  .admin-health-value.is-neutral {
+    background: #eef2f8;
+    border: 1px solid #d4dce8;
+    color: #4f5f78;
+  }
+
   .admin-dashboard-panels {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
   }
 
+  .admin-sync-health-tabs .attributes_table table th {
+    white-space: nowrap;
+    width: 72%;
+  }
+
+  .admin-sync-health-tabs .attributes_table table td {
+    white-space: normal;
+    width: 28%;
+  }
+
+  .admin-sync-health-nav {
+    display: inline-flex;
+    gap: 0;
+    margin-top: 6px;
+    margin-bottom: 10px;
+  }
+
+  .admin-sync-health-nav-link {
+    background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
+    border: 1px solid #d3d3d3;
+    color: #33435a;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 6px 14px;
+    text-decoration: none;
+  }
+
+  .admin-sync-health-nav-link:first-child {
+    border-top-left-radius: 999px;
+    border-bottom-left-radius: 999px;
+  }
+
+  .admin-sync-health-nav-link:last-child {
+    border-top-right-radius: 999px;
+    border-bottom-right-radius: 999px;
+    margin-left: -1px;
+  }
+
+  .admin-sync-health-nav-link.is-active {
+    background: linear-gradient(180deg, #eef4ff 0%, #dfeaff 100%);
+    color: #1f3f7a;
+  }
+
+  .admin-sync-health-tab-content {
+    margin-top: 2px;
+  }
+
+  .admin-sync-health-status {
+    margin-bottom: 8px;
+  }
+
+  .admin-sync-health-status-hint {
+    border: 1px solid #c4cedd;
+    border-radius: 999px;
+    color: #5a6c86;
+    cursor: help;
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 6px;
+    padding: 2px 5px;
+    vertical-align: middle;
+  }
+
   .admin-sync-health-grid {
     display: grid;
-    gap: 10px;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .admin-sync-health-grid .attributes_table {
+  .admin-sync-health-col .attributes_table {
     margin-bottom: 0;
-  }
-
-  .admin-sync-health-grid .attributes_table table th {
-    white-space: normal;
-    width: 58%;
-    word-break: break-word;
-  }
-
-  .admin-sync-health-grid .attributes_table table td {
-    white-space: normal;
-    width: 42%;
   }
 
   @media (max-width: 1400px) {
     .admin-dashboard-panels {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    .admin-sync-health-grid {
-      grid-template-columns: 1fr;
-    }
   }
 
   @media (max-width: 900px) {
     .admin-dashboard-panels {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-sync-health-grid {
       grid-template-columns: 1fr;
     }
   }
@@ -300,6 +410,71 @@ body.admin_stats {
     width: 100%;
   }
 
+  .admin-mini-chart-bar-stack {
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-bottom: 5px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .admin-mini-chart-segment {
+    min-height: 2px;
+    width: 100%;
+  }
+
+  .admin-mini-chart-segment.is-finished {
+    background: linear-gradient(180deg, #68d994 0%, #2e9f5c 100%);
+  }
+
+  .admin-mini-chart-segment.is-failed {
+    background: linear-gradient(180deg, #ffbf7a 0%, #e6861f 100%);
+  }
+
+  .admin-mini-chart-segment.is-dead {
+    background: linear-gradient(180deg, #f28b8b 0%, #c94444 100%);
+  }
+
+  .admin-mini-chart-legend {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .admin-mini-chart-legend .legend-item {
+    color: #55657d;
+    font-size: 11px;
+    font-weight: 700;
+    padding-left: 12px;
+    position: relative;
+    text-transform: uppercase;
+  }
+
+  .admin-mini-chart-legend .legend-item::before {
+    border-radius: 999px;
+    content: "";
+    height: 8px;
+    left: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+  }
+
+  .admin-mini-chart-legend .legend-item.is-finished::before {
+    background: #2e9f5c;
+  }
+
+  .admin-mini-chart-legend .legend-item.is-failed::before {
+    background: #e6861f;
+  }
+
+  .admin-mini-chart-legend .legend-item.is-dead::before {
+    background: #c94444;
+  }
+
   .admin-mini-chart-label {
     color: #55657d;
     display: block;
@@ -321,6 +496,16 @@ body.admin_stats {
     gap: 12px;
   }
 
+  .admin-stats-empty-note {
+    background: #eef4ff;
+    border: 1px solid #d7deea;
+    border-radius: 10px;
+    color: #33435a;
+    font-size: 12px;
+    grid-column: 1 / -1;
+    padding: 10px 12px;
+  }
+
   .admin-stats-charts .panel {
     margin-bottom: 0;
   }
@@ -339,6 +524,42 @@ body.admin_stats {
 }
 
 body.admin_sync_jobs {
+  .scopes .scope.request_gap_good a.table_tools_button,
+  .scopes .scope.request_gap_good.selected a.table_tools_button {
+    background: #e7f9ee;
+    border-color: #b8ebca;
+    color: #146c37;
+  }
+
+  .scopes .scope.request_gap_warn a.table_tools_button,
+  .scopes .scope.request_gap_warn.selected a.table_tools_button {
+    background: #fff4e8;
+    border-color: #ffd6ad;
+    color: #ad5f00;
+  }
+
+  .scopes .scope.request_gap_bad a.table_tools_button,
+  .scopes .scope.request_gap_bad.selected a.table_tools_button {
+    background: #ffecec;
+    border-color: #f7c0c0;
+    color: #aa2222;
+  }
+
+  .scopes .scope.request_gap_neutral a.table_tools_button,
+  .scopes .scope.request_gap_neutral.selected a.table_tools_button {
+    background: #eef2f8;
+    border-color: #d4dce8;
+    color: #4f5f78;
+  }
+
+  .scopes .scope.request_gap_good a.table_tools_button,
+  .scopes .scope.request_gap_warn a.table_tools_button,
+  .scopes .scope.request_gap_bad a.table_tools_button,
+  .scopes .scope.request_gap_neutral a.table_tools_button {
+    cursor: default;
+    pointer-events: none;
+  }
+
   .sync-jobs-filter-form .filter_form_field {
     position: relative;
   }

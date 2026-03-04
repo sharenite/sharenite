@@ -17,6 +17,30 @@ ActiveAdmin.register SyncJob do
   scope :status_failed
   scope :status_finished
   scope :status_dead
+  scope(
+    proc { sync_request_gap_scope_label },
+    :request_gap_good,
+    show_count: false,
+    if: proc { sync_request_gap_tone == :good }
+  ) { |jobs| jobs }
+  scope(
+    proc { sync_request_gap_scope_label },
+    :request_gap_warn,
+    show_count: false,
+    if: proc { sync_request_gap_tone == :warn }
+  ) { |jobs| jobs }
+  scope(
+    proc { sync_request_gap_scope_label },
+    :request_gap_bad,
+    show_count: false,
+    if: proc { sync_request_gap_tone == :bad }
+  ) { |jobs| jobs }
+  scope(
+    proc { sync_request_gap_scope_label },
+    :request_gap_neutral,
+    show_count: false,
+    if: proc { sync_request_gap_tone == :neutral }
+  ) { |jobs| jobs }
 
   collection_action :user_options, method: :get do
     query = params[:q].to_s.strip
@@ -35,6 +59,8 @@ ActiveAdmin.register SyncJob do
   controller do
     helper_method :selected_sync_job_user
     helper_method :sync_job_name_options
+    helper_method :sync_request_gap_tone
+    helper_method :sync_request_gap_scope_label
     before_action :normalize_sync_job_filters, only: :index
 
     def selected_sync_job_user
@@ -58,10 +84,36 @@ ActiveAdmin.register SyncJob do
       (canonical_names + discovered_names).uniq.sort
     end
 
+    def sync_request_gap_scope_label
+      stats = sync_request_gap_stats
+      return "Req gap: N/A" if stats[:current_gap].nil?
+
+      current_gap_text = humanize_gap(stats[:current_gap])
+      avg_gap_text = stats[:avg_gap].present? ? humanize_gap(stats[:avg_gap]) : "N/A"
+      "Req gap: #{current_gap_text} / #{avg_gap_text} avg (n=120)"
+    end
+
+    def sync_request_gap_tone
+      stats = sync_request_gap_stats
+      current_gap = stats[:current_gap]
+      avg_gap = stats[:avg_gap]
+      return :neutral if current_gap.nil? || avg_gap.nil? || avg_gap <= 0
+
+      ratio = current_gap.to_f / avg_gap.to_f
+      return :good if ratio <= 1.5
+      return :warn if ratio <= 3.0
+
+      :bad
+    end
+
     private
 
     def normalize_sync_job_filters
       params[:q] = ActionController::Parameters.new unless params[:q].is_a?(ActionController::Parameters) || params[:q].is_a?(Hash)
+      if params[:scope].to_s.start_with?("request_gap_")
+        params.delete(:scope)
+        params.delete("scope")
+      end
 
       params[:q].delete(:status_eq)
       params[:q].delete("status_eq")
@@ -82,6 +134,71 @@ ActiveAdmin.register SyncJob do
         params[:q].delete(:user_email_cont)
         params[:q].delete("user_email_cont")
       end
+    end
+
+    def sync_request_gap_stats
+      @sync_request_gap_stats ||= begin
+        rows = SyncJob.order(created_at: :desc)
+                      .limit(500)
+                      .pluck(:created_at, :id, :sync_batch_id, :payload_chunks, :name, :user_id)
+
+        request_times = []
+        seen_keys = {}
+
+        rows.each do |created_at, id, sync_batch_id, payload_chunks, name, user_id|
+          key = sync_request_key_for_row(
+            created_at:,
+            id:,
+            sync_batch_id:,
+            payload_chunks:,
+            name:,
+            user_id:
+          )
+          next if seen_keys[key]
+
+          seen_keys[key] = true
+          request_times << created_at
+          break if request_times.length >= 120
+        end
+
+        latest_request_at = request_times.first
+        avg_gap = if request_times.length >= 2
+                    gaps = request_times.each_cons(2).map { |current_time, previous_time| current_time - previous_time }
+                    gaps.sum / gaps.length
+                  end
+
+        {
+          current_gap: latest_request_at.present? ? (Time.current - latest_request_at) : nil,
+          avg_gap:
+        }
+      end
+    end
+
+    def sync_request_key_for_row(created_at:, id:, sync_batch_id:, payload_chunks:, name:, user_id:)
+      return sync_batch_id.to_s if sync_batch_id.present?
+
+      payload_chunks_count = payload_chunks.to_i
+      return id.to_s if payload_chunks_count <= 1
+
+      canonical_name = name.to_s.sub(/\s*\(chunk \d+\/\d+\)\z/, "")
+      "#{user_id}|#{canonical_name}|#{created_at.change(usec: 0)}|#{payload_chunks_count}"
+    end
+
+    def humanize_gap(seconds)
+      total_seconds = seconds.to_i
+      return "#{total_seconds}s" if total_seconds < 60
+
+      minutes = total_seconds / 60
+      remaining_seconds = total_seconds % 60
+      return "#{minutes}m #{remaining_seconds}s" if minutes < 60
+
+      hours = minutes / 60
+      remaining_minutes = minutes % 60
+      return "#{hours}h #{remaining_minutes}m" if hours < 24
+
+      days = hours / 24
+      remaining_hours = hours % 24
+      "#{days}d #{remaining_hours}h"
     end
   end
 
@@ -421,6 +538,27 @@ ActiveAdmin.register SyncJob do
     end
   end
 
+  show do
+    attributes_table do
+      row :id
+      row :user
+      row :name
+      row :status
+      row :sync_batch_id if SyncJob.columns_hash.key?("sync_batch_id")
+      row :games_count if SyncJob.columns_hash.key?("games_count")
+      row :payload_size_bytes
+      row :payload_chunks
+      row :payload_chunk_index
+      row :error_message
+      row :created_at
+      row :updated_at
+      row :started_processing_at
+      row :finished_processing_at
+      row("Waiting time (s)") { |sync_job| sync_job.waiting_time }
+      row("Processing time (s)") { |sync_job| sync_job.processing_time }
+    end
+  end
+
   sidebar "Filters", only: :index do
     q = params.fetch(:q, {})
     selected_user = selected_sync_job_user
@@ -449,6 +587,16 @@ ActiveAdmin.register SyncJob do
           sync_job_name_options.each do |name_option|
             option name_option, value: name_option, selected: (q[:name_start].to_s == name_option)
           end
+        end
+      end
+
+      if SyncJob.columns_hash.key?("sync_batch_id")
+        div class: "filter_form_field" do
+          label "Sync batch ID"
+          input type: "text",
+                name: "q[sync_batch_id_eq]",
+                value: q[:sync_batch_id_eq].to_s,
+                placeholder: "Exact batch UUID"
         end
       end
 

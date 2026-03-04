@@ -29,6 +29,7 @@ class SyncJob < ApplicationRecord
   def self.ransackable_attributes(_auth_object = nil)
     attributes = RANSACKABLE_ATTRIBUTES.dup
     attributes << "games_count" if columns_hash.key?("games_count")
+    attributes << "sync_batch_id" if columns_hash.key?("sync_batch_id")
     attributes
   end
 

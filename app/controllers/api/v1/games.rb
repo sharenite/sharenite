@@ -161,6 +161,7 @@ module API
             payload_chunk_index: metadata[:chunk_index]
           }
           job_attributes[:games_count] = games_count if SyncJob.columns_hash.key?("games_count")
+          job_attributes[:sync_batch_id] = metadata[:sync_batch_id] if SyncJob.columns_hash.key?("sync_batch_id")
 
           current_user.sync_jobs.create!(job_attributes)
         end

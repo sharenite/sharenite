@@ -29,12 +29,13 @@ module Admin
           users: grouped_counts(User, :created_at),
           games: grouped_counts(Game, :created_at),
           sync_events: grouped_counts(SyncJob, :created_at),
-          sync_failed_events: grouped_counts(SyncJob.where(status: %w[failed dead]), :created_at),
-          sync_finished_events: grouped_counts(SyncJob.where(status: "finished"), :created_at),
+          sync_status_stack: grouped_sync_status_stack,
+          sync_requests: grouped_request_counts,
           sync_active_users: grouped_distinct_counts(SyncJob, :created_at, :user_id),
+          sync_avg_games_per_request: grouped_request_averages(:total_games_count),
+          sync_avg_processing_per_request_seconds: grouped_request_averages(:total_processing_time),
           user_sync_conversion_7d: grouped_user_sync_conversion_rate(days: 7),
-          sync_games: sync_games_series,
-          sync_payload_mb: grouped_sums(SyncJob, :created_at, :payload_size_bytes, scale: 1.megabyte.to_f)
+          sync_games: sync_games_series
         }
       }
     end
@@ -49,6 +50,9 @@ module Admin
         users: period_comparison(User, :created_at),
         games: period_comparison(Game, :created_at),
         sync_events: period_comparison(SyncJob, :created_at),
+        sync_requests: request_period_summary,
+        sync_avg_games_per_request: request_average_period_summary(:total_games_count),
+        sync_avg_processing_per_request_seconds: request_average_period_summary(:total_processing_time),
         sync_games: sync_games_summary,
         sync_payload_bytes: period_sum_comparison(SyncJob, :created_at, :payload_size_bytes),
         user_sync_conversion_7d: user_sync_conversion_summary(days: 7)
@@ -255,6 +259,149 @@ module Admin
          AND sync_conversion.created_at <= users.created_at + interval '#{days} days'
       SQL
            .distinct
+    end
+
+    def grouped_request_counts
+      request_grouped_data(:total_requests)
+    end
+
+    def grouped_request_averages(column, scale: 1.0)
+      request_grouped_data(:avg_metric, avg_column: column, scale:)
+    end
+
+    def request_period_summary
+      summary = request_period_stats_for(from..to)
+      previous = request_period_stats_for(previous_range)
+      current_count = summary[:total_requests]
+      previous_count = previous[:total_requests]
+      { current: current_count, previous: previous_count, change: percent_change(current_count, previous_count) }
+    end
+
+    def request_average_period_summary(column)
+      summary = request_period_stats_for(from..to)
+      previous = request_period_stats_for(previous_range)
+      current_avg = summary[column]
+      previous_avg = previous[column]
+      { current: current_avg, previous: previous_avg, change: percent_change(current_avg, previous_avg) }
+    end
+
+    def request_grouped_data(metric, avg_column: nil, scale: 1.0)
+      avg_sql = avg_column.present? ? "AVG(#{avg_column})" : "NULL"
+      grouped = request_rollups(from..to)
+                .group(Arel.sql("bucket"))
+                .order(Arel.sql("bucket"))
+                .pluck(
+                  Arel.sql("bucket"),
+                  Arel.sql("COUNT(*)"),
+                  Arel.sql(avg_sql)
+                )
+
+      data = grouped.each_with_object({}) do |(bucket, total_requests, avg_value), acc|
+        value =
+          case metric
+          when :total_requests then total_requests.to_i
+          when :avg_metric
+            scaled = avg_value.to_f / scale
+            (scale - 1.0).abs > Float::EPSILON ? scaled.round(2) : scaled.round(2)
+          else 0
+          end
+        acc[bucket] = value
+      end
+
+      fill_missing_points(data).map do |time, value|
+        { time:, label: time.strftime(label_format), value: }
+      end
+    end
+
+    def grouped_sync_status_stack
+      trunc = "date_trunc('#{grouping}', created_at)"
+      rows = SyncJob.where(created_at: from..to)
+                    .group(Arel.sql(trunc))
+                    .order(Arel.sql(trunc))
+                    .pluck(
+                      Arel.sql(trunc),
+                      Arel.sql("SUM(CASE WHEN status = 'finished' THEN 1 ELSE 0 END)"),
+                      Arel.sql("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END)"),
+                      Arel.sql("SUM(CASE WHEN status = 'dead' THEN 1 ELSE 0 END)")
+                    )
+
+      grouped = rows.each_with_object({}) do |(time, finished, failed, dead), acc|
+        finished_count = finished.to_i
+        failed_count = failed.to_i
+        dead_count = dead.to_i
+        acc[time] = {
+          finished: finished_count,
+          failed: failed_count,
+          dead: dead_count,
+          total: finished_count + failed_count + dead_count
+        }
+      end
+
+      fill_missing_points(grouped).map do |time, value|
+        bucket = value.is_a?(Hash) ? value : { finished: 0, failed: 0, dead: 0, total: 0 }
+        {
+          time:,
+          label: time.strftime(label_format),
+          finished: bucket[:finished].to_i,
+          failed: bucket[:failed].to_i,
+          dead: bucket[:dead].to_i,
+          value: bucket[:total].to_i
+        }
+      end
+    end
+
+    def request_period_stats_for(range)
+      rollups = request_rollups(range)
+      total_requests = rollups.count
+      avg_games = rollups.average(:total_games_count)&.to_f&.round(2) || 0.0
+      avg_processing = rollups.average(:total_processing_time)&.to_f&.round(2) || 0.0
+      avg_payload = rollups.average(:total_payload_size_bytes)&.to_f&.round || 0
+      {
+        total_requests:,
+        total_games_count: avg_games,
+        total_processing_time: avg_processing,
+        total_payload_size_bytes: avg_payload
+      }
+    end
+
+    def request_rollups(range)
+      request_key = request_key_sql("sync_jobs")
+      bucket_sql = "date_trunc('#{grouping}', sync_jobs.created_at)"
+      total_games_sql = SyncJob.columns_hash.key?("games_count") ? "SUM(COALESCE(sync_jobs.games_count, 0))" : "0"
+      subquery = SyncJob.where(created_at: range)
+                 .select(
+                   Arel.sql("#{bucket_sql} AS bucket"),
+                   Arel.sql("#{request_key} AS request_key"),
+                   Arel.sql("#{total_games_sql} AS total_games_count"),
+                   Arel.sql("SUM(COALESCE(sync_jobs.processing_time, 0)) AS total_processing_time"),
+                   Arel.sql("SUM(COALESCE(sync_jobs.payload_size_bytes, 0)) AS total_payload_size_bytes"),
+                   Arel.sql("SUM(CASE WHEN sync_jobs.status IN ('failed', 'dead') THEN 1 ELSE 0 END) AS failed_dead_chunks")
+                 )
+                 .group(Arel.sql(bucket_sql), Arel.sql(request_key))
+
+      SyncJob.unscoped.from("(#{subquery.to_sql}) request_rollups")
+    end
+
+    def request_key_sql(table_alias)
+      if SyncJob.columns_hash.key?("sync_batch_id")
+        "COALESCE(#{table_alias}.sync_batch_id::text, #{table_alias}.id::text)"
+      else
+        <<~SQL.squish
+          CASE
+            WHEN COALESCE(#{table_alias}.payload_chunks, 1) > 1 THEN
+              CONCAT(
+                #{table_alias}.user_id::text,
+                '|',
+                REGEXP_REPLACE(#{table_alias}.name, ' \\(chunk [0-9]+/[0-9]+\\)$', ''),
+                '|',
+                DATE_TRUNC('second', #{table_alias}.created_at)::text,
+                '|',
+                COALESCE(#{table_alias}.payload_chunks, 1)::text
+              )
+            ELSE #{table_alias}.id::text
+          END
+        SQL
+      end
     end
   end
   # rubocop:enable Metrics/ClassLength

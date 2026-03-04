@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_03_231500) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_04_104000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -380,9 +380,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_03_231500) do
     t.integer "payload_chunk_index", default: 0, null: false
     t.text "error_message"
     t.integer "games_count"
+    t.uuid "sync_batch_id"
+    t.index ["created_at", "payload_chunk_index"], name: "index_sync_jobs_on_created_at_and_payload_chunk_index"
     t.index ["created_at", "status"], name: "index_sync_jobs_on_created_at_and_status"
+    t.index ["created_at", "sync_batch_id"], name: "index_sync_jobs_on_created_at_and_sync_batch_id"
     t.index ["created_at"], name: "index_sync_jobs_on_created_at"
     t.index ["games_count"], name: "index_sync_jobs_on_games_count"
+    t.index ["sync_batch_id", "status"], name: "index_sync_jobs_on_sync_batch_id_and_status"
+    t.index ["sync_batch_id"], name: "index_sync_jobs_on_sync_batch_id"
     t.index ["user_id"], name: "index_sync_jobs_on_user_id"
   end
 
