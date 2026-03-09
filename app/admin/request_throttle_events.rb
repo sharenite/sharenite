@@ -6,6 +6,7 @@ ActiveAdmin.register RequestThrottleEvent do
   config.sort_order = "last_seen_at_desc"
   config.filters = false
 
+  scope :all
   scope :current, default: true
   scope :historical
   scope :throttle_events
@@ -14,7 +15,7 @@ ActiveAdmin.register RequestThrottleEvent do
 
   index do
     id_column
-    column("Status") { |event| status_tag(event.status_label) }
+    column("Status") { |event| status_tag(event.status_label, class: "admin-health-value #{event.current? ? 'is-bad' : 'is-neutral'}") }
     column :event_type
     column :rule_name
     column("Subject") do |event|
@@ -45,7 +46,7 @@ ActiveAdmin.register RequestThrottleEvent do
   show do
     attributes_table do
       row :id
-      row("Status") { |event| status_tag(event.status_label) }
+      row("Status") { |event| status_tag(event.status_label, class: "admin-health-value #{event.current? ? 'is-bad' : 'is-neutral'}") }
       row :event_type
       row :rule_name
       row :actor_type
