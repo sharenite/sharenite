@@ -120,7 +120,7 @@ RSpec.describe "Request throttling", type: :request do
       get "/users/sign_in"
       expect(response).to have_http_status(:too_many_requests)
       expect(response.media_type).to eq("text/html")
-      expect(response.body).to include("Too many requests.")
+      expect(response.body).to include("Too Many Requests")
       expect(RequestThrottleEvent.throttle_events.where(rule_name: "auth_unauthenticated").count).to eq(1)
     end
   end
@@ -165,6 +165,24 @@ RSpec.describe "Request throttling", type: :request do
       get path
       expect(response).to have_http_status(:forbidden)
       expect(RequestThrottleEvent.current.block_events.count).to eq(1)
+    end
+
+    it "applies a slow guest browsing window to profile and game pages only" do
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_PUBLIC_PROFILE_BROWSE_GUEST_LIMIT", anything).and_return("2")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_PUBLIC_PROFILE_BROWSE_GUEST_PERIOD", anything).and_return(1.day.to_i.to_s)
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_WEB_SHOW_GUEST_LIMIT", anything).and_return("100")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GLOBAL_GUEST_LIMIT", anything).and_return("100")
+      reset_request_throttling_rules!
+
+      get "/profiles"
+      expect(response).to have_http_status(:ok)
+
+      get "/profiles/#{profile_owner.profile.id}/games/#{game.id}"
+      expect(response).to have_http_status(:ok)
+
+      get "/profiles/#{profile_owner.profile.id}/games"
+      expect(response).to have_http_status(:too_many_requests)
+      expect(RequestThrottleEvent.throttle_events.where(rule_name: "public_profile_browse_unauthenticated_slow").count).to eq(1)
     end
   end
 
@@ -216,6 +234,21 @@ RSpec.describe "Request throttling", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("192.0.2.1")
     end
+
+    it "allows admins to add and lift manual IP blocks" do
+      sign_in admin_user
+
+      post "/admin/request_throttle_events/manual_block", params: { ip_address: "203.0.113.50" }
+      expect(response).to redirect_to("/admin/request_throttle_events")
+      expect(RequestThrottling.active_permanent_blocked?("203.0.113.50")).to be(true)
+
+      event = RequestThrottleEvent.find_by!(rule_name: "manual_admin_block", ip_address: "203.0.113.50")
+      put "/admin/request_throttle_events/#{event.id}/lift"
+
+      expect(response).to redirect_to("/admin/request_throttle_events/#{event.id}")
+      expect(RequestThrottling.active_permanent_blocked?("203.0.113.50")).to be(false)
+      expect(event.reload.lifted_at).to be_present
+    end
   end
 
   def reset_request_throttling_rules!
@@ -230,6 +263,7 @@ RSpec.describe "Request throttling", type: :request do
       @unauthenticated_web_index_rule
       @authenticated_web_show_rule
       @unauthenticated_web_show_rule
+      @unauthenticated_public_profile_browse_slow_rule
     ].each do |ivar|
       RequestThrottling.instance_variable_set(ivar, nil)
     end

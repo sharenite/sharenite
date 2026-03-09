@@ -81,6 +81,16 @@ ActiveAdmin.register RequestThrottleEvent do
     end
   end
 
+  collection_action :manual_block, method: :post do
+    ip_address = params[:ip_address].to_s.strip
+
+    if RequestThrottling.manually_block_ip!(ip_address)
+      redirect_to collection_path(scope: params[:scope].presence), notice: "IP block added for #{ip_address}."
+    else
+      redirect_to collection_path(scope: params[:scope].presence), alert: "Could not block that IP."
+    end
+  end
+
   action_item :lift, only: :show do
     next unless resource.permanent? && resource.current?
 
@@ -195,6 +205,22 @@ ActiveAdmin.register RequestThrottleEvent do
           text_node " "
           a "Clear", href: collection_path(scope: params[:scope].presence)
         end
+      end
+    end
+  end
+
+  sidebar "Manual Block", only: :index do
+    form action: manual_block_admin_request_throttle_events_path, method: :post do
+      input type: "hidden", name: helpers.request_forgery_protection_token, value: helpers.form_authenticity_token
+      input type: "hidden", name: "scope", value: params[:scope] if params[:scope].present?
+
+      div class: "filter_form_field" do
+        label "IP address"
+        input type: "text", name: "ip_address", placeholder: "203.0.113.42"
+      end
+
+      div class: "buttons" do
+        button "Block IP", type: "submit"
       end
     end
   end

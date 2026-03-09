@@ -40,6 +40,7 @@ module RequestThrottling
     applicable_rules = []
     applicable_rules << auth_rule(actor) if auth_path?(request.path)
     applicable_rules << games_rule(request.path, actor)
+    applicable_rules << slow_guest_browse_rule(request.path, actor)
     applicable_rules << global_rule(actor)
     applicable_rules.compact
   end
@@ -66,6 +67,56 @@ module RequestThrottling
     event.update!(lifted_at: Time.current)
   rescue StandardError => e
     Rails.logger.error("[request_throttling] block lift failed: #{e.class}: #{e.message}")
+    false
+  end
+
+  def manually_block_ip!(ip_address)
+    normalized_ip = ip_address.to_s.strip
+    return false if normalized_ip.blank?
+
+    now = Time.current
+    redis.set(permanent_block_key(normalized_ip), now.iso8601)
+
+    event = RequestThrottleEvent.where(
+      event_type: "block",
+      rule_name: "manual_admin_block",
+      actor_type: "ip",
+      actor_key: "ip:#{normalized_ip}",
+      ip_address: normalized_ip,
+      request_method: "MANUAL",
+      request_path: "*",
+      permanent: true,
+      lifted_at: nil
+    ).order(last_seen_at: :desc).first
+
+    if event&.current?(now)
+      event.update!(
+        last_seen_at: now,
+        hit_count: event.hit_count + 1,
+        peak_count: [event.peak_count, 1].max
+      )
+      return event
+    end
+
+    RequestThrottleEvent.create!(
+      event_type: "block",
+      rule_name: "manual_admin_block",
+      actor_type: "ip",
+      actor_key: "ip:#{normalized_ip}",
+      ip_address: normalized_ip,
+      request_method: "MANUAL",
+      request_path: "*",
+      limit_value: 1,
+      period_seconds: 1.day.to_i,
+      hit_count: 1,
+      peak_count: 1,
+      permanent: true,
+      started_at: now,
+      last_seen_at: now,
+      expires_at: nil
+    )
+  rescue StandardError => e
+    Rails.logger.error("[request_throttling] manual block failed: #{e.class}: #{e.message}")
     false
   end
 
@@ -193,6 +244,18 @@ module RequestThrottling
     )
   end
 
+  def unauthenticated_public_profile_browse_slow_rule
+    @unauthenticated_public_profile_browse_slow_rule ||= Rule.new(
+      name: "public_profile_browse_unauthenticated_slow",
+      limit: env_int("REQUEST_THROTTLE_PUBLIC_PROFILE_BROWSE_GUEST_LIMIT", 200),
+      period: env_int("REQUEST_THROTTLE_PUBLIC_PROFILE_BROWSE_GUEST_PERIOD", 1.day.to_i),
+      actor_type: "ip",
+      escalates_to_permanent_block: true,
+      escalation_threshold: env_int("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", 10),
+      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i)
+    )
+  end
+
   def env_int(name, fallback)
     Integer(ENV.fetch(name, fallback))
   rescue ArgumentError, TypeError
@@ -215,6 +278,15 @@ module RequestThrottling
       actor.authenticated? ? authenticated_web_index_rule : unauthenticated_web_index_rule
     when %r{\A/profiles/[^/]+/games/[^/]+\z}
       actor.authenticated? ? authenticated_web_show_rule : unauthenticated_web_show_rule
+    end
+  end
+
+  def slow_guest_browse_rule(path, actor)
+    return if actor.authenticated?
+
+    case path
+    when %r{\A/profiles\z}, %r{\A/profiles/[^/]+/games\z}, %r{\A/profiles/[^/]+/games/[^/]+\z}
+      unauthenticated_public_profile_browse_slow_rule
     end
   end
 
