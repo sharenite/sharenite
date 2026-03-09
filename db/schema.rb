@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_04_104000) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_09_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -337,6 +337,38 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_104000) do
     t.index ["user_id"], name: "index_regions_on_user_id"
   end
 
+  create_table "request_throttle_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "event_type", null: false
+    t.string "rule_name", null: false
+    t.string "actor_type", null: false
+    t.string "actor_key", null: false
+    t.uuid "user_id"
+    t.string "ip_address", null: false
+    t.string "request_method", null: false
+    t.string "request_path", null: false
+    t.integer "limit_value", null: false
+    t.integer "period_seconds", null: false
+    t.integer "hit_count", default: 1, null: false
+    t.integer "peak_count", default: 0, null: false
+    t.integer "escalation_value"
+    t.boolean "permanent", default: false, null: false
+    t.datetime "started_at", null: false
+    t.datetime "last_seen_at", null: false
+    t.datetime "expires_at"
+    t.datetime "lifted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_key"], name: "index_request_throttle_events_on_actor_key"
+    t.index ["event_type", "permanent", "lifted_at", "expires_at"], name: "index_request_throttle_events_on_state_columns"
+    t.index ["event_type"], name: "index_request_throttle_events_on_event_type"
+    t.index ["expires_at"], name: "index_request_throttle_events_on_expires_at"
+    t.index ["ip_address"], name: "index_request_throttle_events_on_ip_address"
+    t.index ["lifted_at"], name: "index_request_throttle_events_on_lifted_at"
+    t.index ["rule_name"], name: "index_request_throttle_events_on_rule_name"
+    t.index ["started_at"], name: "index_request_throttle_events_on_started_at"
+    t.index ["user_id"], name: "index_request_throttle_events_on_user_id"
+  end
+
   create_table "roms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.string "path"
@@ -489,6 +521,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_104000) do
   add_foreign_key "profiles", "users"
   add_foreign_key "publishers", "users"
   add_foreign_key "regions", "users"
+  add_foreign_key "request_throttle_events", "users"
   add_foreign_key "roms", "games"
   add_foreign_key "series", "users"
   add_foreign_key "sources", "users"

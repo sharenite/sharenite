@@ -9,6 +9,7 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable, :confirmable, :trackable
 
   has_many :games, dependent: :destroy
+  has_many :request_throttle_events, dependent: :nullify
   has_many :sync_jobs, dependent: :destroy
   has_many :tags, dependent: :destroy
   has_many :categories, dependent: :destroy

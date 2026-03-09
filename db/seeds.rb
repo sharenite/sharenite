@@ -454,6 +454,133 @@ if Rails.env.development?
     demo_user.sync_jobs.create!(attributes)
   end
 
+  seed_rule_names = %w[
+    api_games_authenticated
+    auth_unauthenticated
+    global_unauthenticated
+    profile_games_show_unauthenticated
+  ]
+  RequestThrottleEvent.where(rule_name: seed_rule_names)
+                      .where("request_path LIKE ?", "/seed/%")
+                      .delete_all
+
+  now = Time.current
+  request_limit_samples = [
+    {
+      event_type: "throttle",
+      rule_name: "api_games_authenticated",
+      actor_type: "user",
+      actor_key: "user:#{demo_user.id}",
+      user: demo_user,
+      ip_address: "198.51.100.10",
+      request_method: "GET",
+      request_path: "/seed/api/v1/games",
+      limit_value: 120,
+      period_seconds: 60,
+      hit_count: 4,
+      peak_count: 146,
+      started_at: 40.seconds.ago,
+      last_seen_at: 8.seconds.ago,
+      expires_at: 20.seconds.from_now,
+      permanent: false
+    },
+    {
+      event_type: "throttle",
+      rule_name: "auth_unauthenticated",
+      actor_type: "ip",
+      actor_key: "ip:203.0.113.10",
+      user: nil,
+      ip_address: "203.0.113.10",
+      request_method: "GET",
+      request_path: "/seed/users/sign_in",
+      limit_value: 20,
+      period_seconds: 60,
+      hit_count: 2,
+      peak_count: 31,
+      started_at: 25.seconds.ago,
+      last_seen_at: 4.seconds.ago,
+      expires_at: 35.seconds.from_now,
+      permanent: false
+    },
+    {
+      event_type: "throttle",
+      rule_name: "global_unauthenticated",
+      actor_type: "ip",
+      actor_key: "ip:203.0.113.25",
+      user: nil,
+      ip_address: "203.0.113.25",
+      request_method: "GET",
+      request_path: "/seed/profiles/demo-library/games",
+      limit_value: 120,
+      period_seconds: 60,
+      hit_count: 3,
+      peak_count: 180,
+      started_at: 2.hours.ago,
+      last_seen_at: 118.minutes.ago,
+      expires_at: 119.minutes.ago,
+      permanent: false
+    },
+    {
+      event_type: "block",
+      rule_name: "profile_games_show_unauthenticated",
+      actor_type: "ip",
+      actor_key: "ip:203.0.113.50",
+      user: nil,
+      ip_address: "203.0.113.50",
+      request_method: "GET",
+      request_path: "/seed/profiles/demo-library/games/showcase",
+      limit_value: 30,
+      period_seconds: 60,
+      hit_count: 6,
+      peak_count: 74,
+      escalation_value: 12,
+      started_at: 15.minutes.ago,
+      last_seen_at: 2.minutes.ago,
+      expires_at: nil,
+      permanent: true
+    },
+    {
+      event_type: "block",
+      rule_name: "auth_unauthenticated",
+      actor_type: "ip",
+      actor_key: "ip:203.0.113.77",
+      user: nil,
+      ip_address: "203.0.113.77",
+      request_method: "POST",
+      request_path: "/seed/users/sign_in",
+      limit_value: 20,
+      period_seconds: 60,
+      hit_count: 3,
+      peak_count: 41,
+      escalation_value: 10,
+      started_at: 2.days.ago,
+      last_seen_at: 2.days.ago + 10.minutes,
+      expires_at: nil,
+      lifted_at: 1.day.ago + 6.hours,
+      permanent: true
+    }
+  ]
+
+  request_limit_samples.each do |attributes|
+    event = RequestThrottleEvent.find_or_initialize_by(
+      event_type: attributes[:event_type],
+      rule_name: attributes[:rule_name],
+      actor_key: attributes[:actor_key],
+      request_method: attributes[:request_method],
+      request_path: attributes[:request_path]
+    )
+    event.assign_attributes(attributes)
+    event.save!
+  end
+
+  RequestThrottling.redis.set(
+    RequestThrottling.permanent_block_key("203.0.113.50"),
+    now.iso8601
+  )
+  RequestThrottling.redis.del(
+    RequestThrottling.permanent_block_key("203.0.113.77")
+  )
+
   puts "Seeded demo data: #{demo_user.email} / password: Test123$"
   puts "Public profiles seeded: #{Profile.privacy_public.count}"
   puts "Demo friends accepted: #{demo_user.friends.count}"
@@ -463,6 +590,7 @@ if Rails.env.development?
   puts "Demo declined invitations sent (they declined): #{demo_user.declined_friends.count}"
   puts "Demo playlists seeded: #{demo_user.playlists.count}"
   puts "Demo finished sync jobs seeded: #{demo_user.sync_jobs.where(status: :finished).count}"
+  puts "Request limit events seeded: #{RequestThrottleEvent.where("request_path LIKE ?", "/seed/%").count}"
   puts "Games seeded: #{demo_user.games.count}"
   puts "Games with no status: #{demo_user.games.where(completion_status_id: nil).count}"
   puts "Games with no source: #{demo_user.games.where(source_id: nil).count}"

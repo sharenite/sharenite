@@ -1,0 +1,201 @@
+# frozen_string_literal: true
+
+ActiveAdmin.register RequestThrottleEvent do
+  menu priority: 6, label: "Request Limits"
+  actions :index, :show
+  config.sort_order = "last_seen_at_desc"
+  config.filters = false
+
+  scope :current, default: true
+  scope :historical
+  scope :throttle_events
+  scope :block_events
+  scope :permanent_blocks
+
+  index do
+    id_column
+    column("Status") { |event| status_tag(event.status_label) }
+    column :event_type
+    column :rule_name
+    column("Subject") do |event|
+      if event.user.present?
+        link_to(event.subject_label, admin_user_path(event.user))
+      else
+        event.subject_label
+      end
+    end
+    column :ip_address
+    column(:request) { |event| "#{event.request_method} #{event.request_path}" }
+    column(:window) { |event| "#{event.limit_value}/#{event.period_seconds}s" }
+    column :hit_count
+    column :peak_count
+    column :escalation_value
+    column :started_at
+    column :last_seen_at
+    column :expires_at
+    column :lifted_at
+    column :permanent
+    actions defaults: true do |event|
+      next unless event.permanent? && event.current?
+
+      item "Lift", lift_admin_request_throttle_event_path(event), method: :put
+    end
+  end
+
+  show do
+    attributes_table do
+      row :id
+      row("Status") { |event| status_tag(event.status_label) }
+      row :event_type
+      row :rule_name
+      row :actor_type
+      row :actor_key
+      row :user do |event|
+        next "N/A" if event.user.blank?
+
+        link_to(event.user.email, admin_user_path(event.user))
+      end
+      row :ip_address
+      row :request_method
+      row :request_path
+      row :limit_value
+      row :period_seconds
+      row :hit_count
+      row :peak_count
+      row :escalation_value
+      row :started_at
+      row :last_seen_at
+      row :expires_at
+      row :lifted_at
+      row :permanent
+      row :created_at
+      row :updated_at
+    end
+  end
+
+  member_action :lift, method: :put do
+    if RequestThrottling.lift_permanent_block!(resource)
+      redirect_to resource_path(resource), notice: "Permanent block lifted."
+    else
+      redirect_to resource_path(resource), alert: "Could not lift block."
+    end
+  end
+
+  action_item :lift, only: :show do
+    next unless resource.permanent? && resource.current?
+
+    link_to "Lift Block", lift_admin_request_throttle_event_path(resource), method: :put
+  end
+
+  sidebar "Filters", only: :index do
+    q = params.fetch(:q, {})
+
+    form action: collection_path, method: :get, class: "admin-custom-filter-form" do
+      input type: "hidden", name: "scope", value: params[:scope] if params[:scope].present?
+
+      div class: "filter_form_field" do
+        label "Event type"
+        select name: "q[event_type_eq]" do
+          text_node(%(<option value=""#{' selected="selected"' if q[:event_type_eq].blank?}>Any</option>).html_safe)
+          RequestThrottleEvent::EVENT_TYPES.each do |event_type|
+            option event_type.humanize, value: event_type, selected: q[:event_type_eq].to_s == event_type
+          end
+        end
+      end
+
+      div class: "filter_form_field" do
+        label "Rule name"
+        input type: "text", name: "q[rule_name_cont]", value: q[:rule_name_cont].to_s
+      end
+
+      div class: "filter_form_field" do
+        label "Actor type"
+        select name: "q[actor_type_eq]" do
+          text_node(%(<option value=""#{' selected="selected"' if q[:actor_type_eq].blank?}>Any</option>).html_safe)
+          RequestThrottleEvent::ACTOR_TYPES.each do |actor_type|
+            option actor_type.humanize, value: actor_type, selected: q[:actor_type_eq].to_s == actor_type
+          end
+        end
+      end
+
+      div class: "filter_form_field" do
+        label "Actor key"
+        input type: "text", name: "q[actor_key_cont]", value: q[:actor_key_cont].to_s
+      end
+
+      div class: "filter_form_field" do
+        label "User ID"
+        input type: "text", name: "q[user_id_eq]", value: q[:user_id_eq].to_s
+      end
+
+      div class: "filter_form_field" do
+        label "IP address"
+        input type: "text", name: "q[ip_address_cont]", value: q[:ip_address_cont].to_s
+      end
+
+      div class: "filter_form_field" do
+        label "Request method"
+        select name: "q[request_method_eq]" do
+          text_node(%(<option value=""#{' selected="selected"' if q[:request_method_eq].blank?}>Any</option>).html_safe)
+          %w[GET POST PUT PATCH DELETE].each do |request_method|
+            option request_method, value: request_method, selected: q[:request_method_eq].to_s == request_method
+          end
+        end
+      end
+
+      div class: "filter_form_field" do
+        label "Request path"
+        input type: "text", name: "q[request_path_cont]", value: q[:request_path_cont].to_s
+      end
+
+      div class: "filter_form_field" do
+        label "Permanent"
+        select name: "q[permanent_eq]" do
+          text_node(%(<option value=""#{' selected="selected"' if q[:permanent_eq].blank?}>Any</option>).html_safe)
+          option "Yes", value: "true", selected: q[:permanent_eq].to_s == "true"
+          option "No", value: "false", selected: q[:permanent_eq].to_s == "false"
+        end
+      end
+
+      div class: "filter_form_field filter_range_pair" do
+        label "Started at"
+        div class: "range_inputs" do
+          input type: "text", class: "datepicker", name: "q[started_at_gteq]", value: q[:started_at_gteq].to_s, placeholder: "From"
+          input type: "text", class: "datepicker", name: "q[started_at_lteq_end_of_day]", value: q[:started_at_lteq_end_of_day].to_s, placeholder: "To"
+        end
+      end
+
+      div class: "filter_form_field filter_range_pair" do
+        label "Last seen at"
+        div class: "range_inputs" do
+          input type: "text", class: "datepicker", name: "q[last_seen_at_gteq]", value: q[:last_seen_at_gteq].to_s, placeholder: "From"
+          input type: "text", class: "datepicker", name: "q[last_seen_at_lteq_end_of_day]", value: q[:last_seen_at_lteq_end_of_day].to_s, placeholder: "To"
+        end
+      end
+
+      div class: "filter_form_field filter_range_pair" do
+        label "Expires at"
+        div class: "range_inputs" do
+          input type: "text", class: "datepicker", name: "q[expires_at_gteq]", value: q[:expires_at_gteq].to_s, placeholder: "From"
+          input type: "text", class: "datepicker", name: "q[expires_at_lteq_end_of_day]", value: q[:expires_at_lteq_end_of_day].to_s, placeholder: "To"
+        end
+      end
+
+      div class: "filter_form_field filter_range_pair" do
+        label "Lifted at"
+        div class: "range_inputs" do
+          input type: "text", class: "datepicker", name: "q[lifted_at_gteq]", value: q[:lifted_at_gteq].to_s, placeholder: "From"
+          input type: "text", class: "datepicker", name: "q[lifted_at_lteq_end_of_day]", value: q[:lifted_at_lteq_end_of_day].to_s, placeholder: "To"
+        end
+      end
+
+      div class: "buttons" do
+        button "Apply", type: "submit"
+        span do
+          text_node " "
+          a "Clear", href: collection_path(scope: params[:scope].presence)
+        end
+      end
+    end
+  end
+end
