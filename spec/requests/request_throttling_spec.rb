@@ -104,7 +104,9 @@ RSpec.describe "Request throttling", type: :request do
       allow(ENV).to receive(:fetch).and_call_original
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_AUTH_GUEST_LIMIT", anything).and_return("1")
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_AUTH_GUEST_PERIOD", anything).and_return("60")
-      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", anything).and_return("2")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_AUTH_GUEST_TEMP_BLOCK_THRESHOLD", anything).and_return("2")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_AUTH_GUEST_TEMP_BLOCK_PERIOD", anything).and_return((5.minutes.to_i).to_s)
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", anything).and_return("10")
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", anything).and_return((1.hour.to_i).to_s)
       reset_request_throttling_rules!
     end
@@ -122,6 +124,32 @@ RSpec.describe "Request throttling", type: :request do
       expect(response.media_type).to eq("text/html")
       expect(response.body).to include("Too Many Requests")
       expect(RequestThrottleEvent.throttle_events.where(rule_name: "auth_unauthenticated").count).to eq(1)
+    end
+
+    it "applies a temporary cooldown before escalating auth abuse to a permanent block" do
+      get "/users/sign_in"
+      expect(response).to have_http_status(:ok)
+
+      get "/users/sign_in"
+      expect(response).to have_http_status(:too_many_requests)
+      expect(RequestThrottleEvent.throttle_events.where(rule_name: "auth_unauthenticated").count).to eq(1)
+
+      travel 61.seconds
+      get "/users/sign_in"
+      expect(response).to have_http_status(:ok)
+
+      get "/users/sign_in"
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.headers["Retry-After"]).to eq("300")
+      expect(RequestThrottleEvent.block_events.where(rule_name: "auth_unauthenticated", permanent: false).count).to eq(1)
+      expect(RequestThrottleEvent.current.block_events.where(rule_name: "auth_unauthenticated", permanent: false).count).to eq(1)
+
+      get "/users/sign_in"
+      expect(response).to have_http_status(:too_many_requests)
+
+      travel 301.seconds
+      get "/users/sign_in"
+      expect(response).to have_http_status(:ok)
     end
   end
 

@@ -479,9 +479,9 @@ if Rails.env.development?
       period_seconds: 60,
       hit_count: 4,
       peak_count: 146,
-      started_at: 40.seconds.ago,
-      last_seen_at: 8.seconds.ago,
-      expires_at: 20.seconds.from_now,
+      started_at: 10.minutes.ago,
+      last_seen_at: 2.minutes.ago,
+      expires_at: 12.hours.from_now,
       permanent: false
     },
     {
@@ -497,9 +497,9 @@ if Rails.env.development?
       period_seconds: 60,
       hit_count: 2,
       peak_count: 31,
-      started_at: 25.seconds.ago,
-      last_seen_at: 4.seconds.ago,
-      expires_at: 35.seconds.from_now,
+      started_at: 8.minutes.ago,
+      last_seen_at: 90.seconds.ago,
+      expires_at: 6.hours.from_now,
       permanent: false
     },
     {

@@ -18,7 +18,9 @@ ActiveAdmin.register RequestThrottleEvent do
     column("Status") do |event|
       span event.status_label, class: "admin-health-value #{event.current? ? 'is-bad' : 'is-neutral'}"
     end
-    column :event_type
+    column("Event Type") do |event|
+      span event.event_type, class: "admin-health-value #{event.event_type == 'block' ? 'is-bad' : 'is-warning'}"
+    end
     column :rule_name
     column("Subject") do |event|
       if event.user.present?
@@ -51,7 +53,9 @@ ActiveAdmin.register RequestThrottleEvent do
       row("Status") do |event|
         span event.status_label, class: "admin-health-value #{event.current? ? 'is-bad' : 'is-neutral'}"
       end
-      row :event_type
+      row("Event Type") do |event|
+        span event.event_type, class: "admin-health-value #{event.event_type == 'block' ? 'is-bad' : 'is-warning'}"
+      end
       row :rule_name
       row :actor_type
       row :actor_key

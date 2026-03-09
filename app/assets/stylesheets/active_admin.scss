@@ -16,6 +16,40 @@
 //
 //   .status_tag { background: #6090DB; }
 
+ .admin-health-value {
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.admin-health-value.is-good {
+  background: #e7f9ee;
+  border: 1px solid #b8ebca;
+  color: #146c37;
+}
+
+.admin-health-value.is-warning {
+  background: #fff4df;
+  border: 1px solid #f3cf8d;
+  color: #946200;
+}
+
+.admin-health-value.is-bad {
+  background: #ffecec;
+  border: 1px solid #f7c0c0;
+  color: #aa2222;
+}
+
+.admin-health-value.is-neutral {
+  background: #eef2f8;
+  border: 1px solid #d4dce8;
+  color: #4f5f78;
+}
+
 // Dashboard and stats polish.
 body.admin_dashboard,
 body.admin_stats {
@@ -112,34 +146,6 @@ body.admin_stats {
   .admin-kpi-trend.is-neutral {
     background: #eef2f8;
     border-color: #d4dce8;
-    color: #4f5f78;
-  }
-
-  .admin-health-value {
-    border-radius: 999px;
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1;
-    padding: 3px 8px;
-    text-transform: uppercase;
-  }
-
-  .admin-health-value.is-good {
-    background: #e7f9ee;
-    border: 1px solid #b8ebca;
-    color: #146c37;
-  }
-
-  .admin-health-value.is-bad {
-    background: #ffecec;
-    border: 1px solid #f7c0c0;
-    color: #aa2222;
-  }
-
-  .admin-health-value.is-neutral {
-    background: #eef2f8;
-    border: 1px solid #d4dce8;
     color: #4f5f78;
   }
 

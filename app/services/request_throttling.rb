@@ -9,6 +9,8 @@ module RequestThrottling
     :escalates_to_permanent_block,
     :escalation_threshold,
     :escalation_period,
+    :temporary_block_threshold,
+    :temporary_block_period,
     keyword_init: true
   )
 
@@ -27,8 +29,16 @@ module RequestThrottling
       status == :throttle
     end
 
+    def temporarily_blocked?
+      status == :temporary_block
+    end
+
     def blocked?
       status == :block
+    end
+
+    def rate_limited?
+      throttled? || temporarily_blocked?
     end
   end
 
@@ -132,7 +142,9 @@ module RequestThrottling
       actor_type: "user",
       escalates_to_permanent_block: false,
       escalation_threshold: 0,
-      escalation_period: 0
+      escalation_period: 0,
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -144,7 +156,9 @@ module RequestThrottling
       actor_type: "user",
       escalates_to_permanent_block: false,
       escalation_threshold: 0,
-      escalation_period: 0
+      escalation_period: 0,
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -156,7 +170,9 @@ module RequestThrottling
       actor_type: "ip",
       escalates_to_permanent_block: true,
       escalation_threshold: env_int("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", 10),
-      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i)
+      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i),
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -168,7 +184,9 @@ module RequestThrottling
       actor_type: "user",
       escalates_to_permanent_block: false,
       escalation_threshold: 0,
-      escalation_period: 0
+      escalation_period: 0,
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -180,7 +198,9 @@ module RequestThrottling
       actor_type: "ip",
       escalates_to_permanent_block: true,
       escalation_threshold: env_int("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", 10),
-      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i)
+      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i),
+      temporary_block_threshold: env_int("REQUEST_THROTTLE_AUTH_GUEST_TEMP_BLOCK_THRESHOLD", 3),
+      temporary_block_period: env_int("REQUEST_THROTTLE_AUTH_GUEST_TEMP_BLOCK_PERIOD", 1.hour.to_i)
     )
   end
 
@@ -192,7 +212,9 @@ module RequestThrottling
       actor_type: "ip",
       escalates_to_permanent_block: true,
       escalation_threshold: env_int("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", 10),
-      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i)
+      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i),
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -204,7 +226,9 @@ module RequestThrottling
       actor_type: "user",
       escalates_to_permanent_block: false,
       escalation_threshold: 0,
-      escalation_period: 0
+      escalation_period: 0,
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -216,7 +240,9 @@ module RequestThrottling
       actor_type: "ip",
       escalates_to_permanent_block: true,
       escalation_threshold: env_int("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", 10),
-      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i)
+      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i),
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -228,7 +254,9 @@ module RequestThrottling
       actor_type: "user",
       escalates_to_permanent_block: false,
       escalation_threshold: 0,
-      escalation_period: 0
+      escalation_period: 0,
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -240,7 +268,9 @@ module RequestThrottling
       actor_type: "ip",
       escalates_to_permanent_block: true,
       escalation_threshold: env_int("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", 10),
-      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i)
+      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i),
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -252,7 +282,9 @@ module RequestThrottling
       actor_type: "ip",
       escalates_to_permanent_block: true,
       escalation_threshold: env_int("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", 10),
-      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i)
+      escalation_period: env_int("REQUEST_THROTTLE_GUEST_BLOCK_PERIOD", 24.hours.to_i),
+      temporary_block_threshold: 0,
+      temporary_block_period: 0
     )
   end
 
@@ -309,6 +341,9 @@ module RequestThrottling
     def call
       return allow unless rules.any?
       return blocked(fallback_rule) if blocked_ip?
+      if (cooldown_rule = active_temporary_block_rule)
+        return temporarily_blocked(cooldown_rule, temporary_block_retry_after(cooldown_rule))
+      end
 
       rules.each do |active_rule|
         count = RequestThrottling.redis.incr(counter_key(active_rule))
@@ -318,6 +353,7 @@ module RequestThrottling
         next if count <= active_rule.limit
 
         return block_from_escalation(active_rule, count) if escalate_to_permanent_block?(active_rule, count)
+        return temporary_block_from_escalation(active_rule, count) if escalate_to_temporary_block?(active_rule, count)
 
         log_throttle(active_rule, count, retry_after) if count == active_rule.limit + 1
         return throttle(active_rule, count, retry_after)
@@ -337,8 +373,20 @@ module RequestThrottling
       actor.type == "ip" && RequestThrottling.active_permanent_blocked?(actor.ip_address)
     end
 
+    def active_temporary_block_rule
+      return unless actor.type == "ip"
+
+      rules.find do |rule|
+        temporary_blocks_enabled?(rule) && temporary_block_retry_after(rule).positive?
+      end
+    end
+
     def fallback_rule
       rules.first || RequestThrottling.unauthenticated_global_rule
+    end
+
+    def temporary_blocks_enabled?(rule)
+      rule.temporary_block_threshold.to_i.positive? && rule.temporary_block_period.to_i.positive?
     end
 
     def escalate_to_permanent_block?(rule, count)
@@ -351,10 +399,27 @@ module RequestThrottling
       escalation_value >= rule.escalation_threshold
     end
 
+    def escalate_to_temporary_block?(rule, count)
+      return false unless actor.type == "ip"
+      return false unless temporary_blocks_enabled?(rule)
+      return false unless count == rule.limit + 1
+
+      escalation_value = RequestThrottling.redis.incr(temporary_block_escalation_key(rule))
+      RequestThrottling.redis.expire(temporary_block_escalation_key(rule), rule.temporary_block_period) if escalation_value == 1
+      escalation_value >= rule.temporary_block_threshold
+    end
+
     def block_from_escalation(rule, count)
       RequestThrottling.redis.set(RequestThrottling.permanent_block_key(actor.ip_address), Time.current.iso8601)
       log_block(rule, count)
       blocked(rule)
+    end
+
+    def temporary_block_from_escalation(rule, count)
+      RequestThrottling.redis.set(temporary_block_key(rule), Time.current.iso8601, ex: rule.temporary_block_period)
+      retry_after = temporary_block_retry_after(rule)
+      log_temporary_block(rule, count, retry_after)
+      temporarily_blocked(rule, retry_after)
     end
 
     def log_throttle(rule, count, retry_after)
@@ -378,10 +443,29 @@ module RequestThrottling
       )
     end
 
+    def log_temporary_block(rule, count, retry_after)
+      upsert_event!(
+        rule: rule,
+        event_type: "block",
+        count: count,
+        expires_at: Time.current + retry_after,
+        escalation_value: current_temporary_block_escalation_value(rule),
+        permanent: false
+      )
+    end
+
     def current_escalation_value(rule)
       return unless actor.type == "ip"
 
       RequestThrottling.redis.get(escalation_key(rule)).to_i
+    rescue StandardError
+      nil
+    end
+
+    def current_temporary_block_escalation_value(rule)
+      return unless actor.type == "ip"
+
+      RequestThrottling.redis.get(temporary_block_escalation_key(rule)).to_i
     rescue StandardError
       nil
     end
@@ -437,6 +521,19 @@ module RequestThrottling
       "request_throttling:escalation:#{rule.name}:#{actor.ip_address}"
     end
 
+    def temporary_block_key(rule)
+      "request_throttling:temporary_block:#{rule.name}:#{actor.ip_address}"
+    end
+
+    def temporary_block_escalation_key(rule)
+      "request_throttling:temporary_block_escalation:#{rule.name}:#{actor.ip_address}"
+    end
+
+    def temporary_block_retry_after(rule)
+      ttl = RequestThrottling.redis.ttl(temporary_block_key(rule))
+      ttl.positive? ? ttl : 0
+    end
+
     def normalized_ttl(ttl, rule)
       ttl.positive? ? ttl : rule.period
     end
@@ -451,6 +548,10 @@ module RequestThrottling
 
     def blocked(rule)
       Decision.new(status: :block, rule: rule, actor: actor, retry_after: 0, limit: rule.limit, count: rule.limit)
+    end
+
+    def temporarily_blocked(rule, retry_after)
+      Decision.new(status: :temporary_block, rule: rule, actor: actor, retry_after: retry_after, limit: rule.limit, count: rule.limit)
     end
   end
 
