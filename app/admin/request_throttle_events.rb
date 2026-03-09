@@ -6,8 +6,8 @@ ActiveAdmin.register RequestThrottleEvent do
   config.sort_order = "last_seen_at_desc"
   config.filters = false
 
-  scope :all
-  scope :current, default: true
+  scope :all, default: true
+  scope :current
   scope :historical
   scope :throttle_events
   scope :block_events
