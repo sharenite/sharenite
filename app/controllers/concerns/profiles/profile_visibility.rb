@@ -158,16 +158,32 @@ module Profiles
     end
 
     def component_visibility_by_user_id(profiles, column, viewer: current_user)
-      accepted_friend_user_ids = viewer.present? ? accepted_friend_user_ids_list_for(viewer.id).to_set : Set.new
-
-      profiles.index_with do |profile|
-        privacy_setting_visible_to_viewer?(
-          profile.public_send(column),
-          profile.user_id,
-          viewer,
-          accepted_friend_user_ids
-        )
+      Array(profiles).each_with_object({}) do |profile, visibility_by_user_id|
+        visibility_by_user_id[profile.user_id] = component_visible_to_viewer?(profile, column, viewer:)
       end
+    end
+
+    def component_visible_to_viewer?(profile, column, viewer:)
+      visibility_method = component_visibility_method_for(column)
+      return profile.public_send(visibility_method, viewer) if visibility_method
+
+      accepted_friend_user_ids = viewer.present? ? accepted_friend_user_ids_list_for(viewer.id).to_set : Set.new
+      privacy_setting_visible_to_viewer?(
+        profile.public_send(column),
+        profile.user_id,
+        viewer,
+        accepted_friend_user_ids
+      )
+    end
+
+    def component_visibility_method_for(column)
+      {
+        privacy: :visible_to?,
+        game_library_privacy: :game_library_visible_to?,
+        friends_privacy: :friends_list_visible_to?,
+        gaming_activity_privacy: :gaming_activity_visible_to?,
+        playlists_privacy: :playlists_visible_to?
+      }[column.to_sym]
     end
 
     def privacy_setting_visible_to_viewer?(setting, profile_user_id, viewer, accepted_friend_user_ids)

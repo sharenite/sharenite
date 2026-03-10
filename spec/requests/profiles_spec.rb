@@ -59,6 +59,22 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(profile_friends_path(viewer.profile, tab: "received"))
     end
+
+    it "shows the games count on community when the viewer is allowed to access the game library" do
+      viewer = create(:user)
+      owner = create(:user)
+      owner.profile.update!(privacy: :members, game_library_privacy: :members, name: "Visible Library")
+      owner.games.create!(name: "Community Visible Game")
+
+      sign_in viewer
+      get profiles_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Visible Library")
+      expect(response.body).to include(profile_games_path(owner.profile))
+      expect(response.body).to include("Games: 1")
+      expect(response.body).not_to include("Visible Library</td>\n<td>\n<span class='profiles-info-pill profiles-info-pill-muted'>Hidden</span>")
+    end
   end
 
   describe "GET /profiles/:id" do
