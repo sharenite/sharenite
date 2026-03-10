@@ -51,7 +51,7 @@ module Profiles
 
     def base_profiles_scope
       scope = visible_profiles_scope
-      blocked_ids = blocked_user_ids_for_current_user
+      blocked_ids = blocked_user_ids_for(current_user)
       scope = scope.where.not(user_id: blocked_ids) if blocked_ids.any?
       return scope.select("profiles.*, COALESCE(users.games_count, 0) AS games_count") if User.games_count_available?
 
@@ -89,23 +89,28 @@ module Profiles
       return scope.where(privacy: :public) unless viewer
 
       friend_user_ids = accepted_friend_user_ids_for(viewer.id)
-      scope.where(
+      visible_scope = scope.where(
         "profiles.user_id = :viewer_id OR profiles.privacy IN (:broad_privacies) " \
         "OR (profiles.privacy = 'friends' AND profiles.user_id IN (#{friend_user_ids.to_sql}))",
         viewer_id: viewer.id,
         broad_privacies: %w[public members]
       )
+
+      blocked_ids = blocked_user_ids_for(viewer)
+      return visible_scope if blocked_ids.empty?
+
+      visible_scope.where.not(user_id: blocked_ids)
     end
 
-    def blocked_user_ids_for_current_user
-      return [] unless current_user
+    def blocked_user_ids_for(viewer)
+      return [] unless viewer
 
       Friend.where(status: :blocked)
-           .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: current_user.id)
+           .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: viewer.id)
            .pluck(:inviter_id, :invitee_id)
            .flatten
            .uniq
-           .excluding(current_user.id)
+           .excluding(viewer.id)
     end
   end
 end

@@ -88,5 +88,15 @@ RSpec.describe "Games" do
       expect(response.body).not_to include("games-sort-link\">Last Activity")
       expect(response.body).not_to include("games-sort-link\">Playtime")
     end
+
+    it "defaults the mobile sort control to title order when gaming activity is hidden" do
+      user.profile.update!(gaming_activity_privacy: :private)
+
+      get profile_games_path(user.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('<option selected="selected" value="name_asc">Title (A-Z)</option>')
+      expect(response.body).not_to include('<option selected="selected" value="last_activity_desc">Last Activity (Newest first)</option>')
+    end
   end
 end

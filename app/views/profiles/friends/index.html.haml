@@ -68,7 +68,11 @@
                         - relation = @own_profile ? Friend.find_by(status: :accepted, inviter_id: [@profile.user.id, friend.user_id], invitee_id: [@profile.user.id, friend.user_id]) : nil
                         %tr
                           %td.fw-semibold= friend.name
-                          %td= games_count
+                          %td
+                            - if can_view_games
+                              = games_count
+                            - else
+                              %span.profiles-info-pill.profiles-info-pill-muted Hidden
                           %td.text-end
                             .d-inline-flex.gap-1.flex-wrap.justify-content-end
                               - if can_view_games
@@ -94,7 +98,11 @@
                           .d-flex.justify-content-between.align-items-start.gap-2
                             .min-w-0
                               .fw-semibold.text-break= friend.name
-                              .small.text-muted Games: #{games_count}
+                              .small.text-muted
+                                - if can_view_games
+                                  = "Games: #{games_count}"
+                                - else
+                                  %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted Hidden
                             .d-inline-flex.gap-1.flex-shrink-0
                               - if can_view_games
                                 = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }

@@ -1,5 +1,5 @@
 = form_with(url: profile_games_path(@profile), method: :get, class: "games-search-form", data: { controller: "search-form", turbo_frame: "games", turbo_action: "replace" }) do |form|
-  - current_sort = params[:sort].presence || "last_activity_desc"
+  - current_sort = params[:sort].presence || (@can_view_gaming_activity ? "last_activity_desc" : "name_asc")
   .row.g-1
     .col-12
       = form.label :search_query, "Search", class: "form-label mb-1 small text-muted"

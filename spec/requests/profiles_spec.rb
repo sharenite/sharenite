@@ -162,6 +162,42 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include("Total friends listed: 0")
     end
 
+    it "does not render blocked users in a visible friends list for the viewer" do
+      owner = create(:user)
+      viewer = create(:user)
+      blocked_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      blocked_friend.profile.update!(privacy: :public, name: "Blocked Friend")
+      Friend.create!(inviter: owner, invitee: blocked_friend, status: :accepted)
+      Friend.create!(inviter: viewer, invitee: blocked_friend, status: :blocked)
+
+      sign_in viewer
+      get profile_friends_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Blocked Friend")
+      expect(response.body).to include("Total friends listed: 0")
+    end
+
+    it "hides game counts for friends whose library privacy blocks the viewer" do
+      owner = create(:user)
+      viewer = create(:user)
+      hidden_library_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      hidden_library_friend.profile.update!(privacy: :public, game_library_privacy: :friends, name: "Hidden Library Friend")
+      hidden_library_friend.games.create!(name: "Secret Game")
+      Friend.create!(inviter: owner, invitee: hidden_library_friend, status: :accepted)
+
+      sign_in viewer
+      get profile_friends_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Hidden Library Friend")
+      expect(response.body).to include("Hidden")
+      expect(response.body).not_to include("Games: 1")
+      expect(response.body).not_to include(profile_games_path(hidden_library_friend.profile))
+    end
+
     it "redirects when friends list privacy blocks access" do
       owner = create(:user)
       owner.profile.update!(privacy: :public, friends_privacy: :private)
@@ -314,6 +350,29 @@ RSpec.describe "Profiles requests", type: :request do
       get new_profile_path
 
       expect(response).to redirect_to(profiles_path)
+    end
+  end
+
+  describe "profile stats" do
+    it "does not count blocked friends in the visible friends stat" do
+      owner = create(:user)
+      viewer = create(:user)
+      visible_friend = create(:user)
+      blocked_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public)
+      visible_friend.profile.update!(privacy: :public)
+      blocked_friend.profile.update!(privacy: :public)
+      Friend.create!(inviter: owner, invitee: visible_friend, status: :accepted)
+      Friend.create!(inviter: owner, invitee: blocked_friend, status: :accepted)
+      Friend.create!(inviter: viewer, invitee: blocked_friend, status: :blocked)
+
+      sign_in viewer
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Friends")
+      expect(response.body).to include(">1<")
+      expect(response.body).not_to include(">2<")
     end
   end
 end
