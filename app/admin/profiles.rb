@@ -6,7 +6,7 @@ ActiveAdmin.register Profile do
 
   belongs_to :user, optional: true
   includes :user
-  permit_params :user_id, :name, :vanity_url, :privacy, :game_library_privacy
+  permit_params :user_id, :name, :vanity_url, :privacy, :game_library_privacy, :gaming_activity_privacy, :playlists_privacy, :friends_privacy
 
   controller do
     before_action :normalize_profile_user_param, only: %i[create update]
@@ -72,6 +72,9 @@ ActiveAdmin.register Profile do
     column :vanity_url
     column :privacy
     column :game_library_privacy
+    column :gaming_activity_privacy
+    column :playlists_privacy
+    column :friends_privacy
     column :created_at
     column :updated_at
     actions
@@ -81,6 +84,9 @@ ActiveAdmin.register Profile do
   filter :vanity_url
   filter :privacy, as: :select, collection: Profile.privacies.keys
   filter :game_library_privacy, as: :select, collection: Profile.game_library_privacies.keys
+  filter :gaming_activity_privacy, as: :select, collection: Profile.gaming_activity_privacies.keys
+  filter :playlists_privacy, as: :select, collection: Profile.playlists_privacies.keys
+  filter :friends_privacy, as: :select, collection: Profile.friends_privacies.keys
   filter :user_email, as: :string
   filter :created_at
   filter :updated_at
@@ -112,6 +118,9 @@ ActiveAdmin.register Profile do
       f.input :vanity_url
       f.input :privacy, as: :select, collection: Profile.privacies.keys
       f.input :game_library_privacy, as: :select, collection: Profile.game_library_privacies.keys
+      f.input :gaming_activity_privacy, as: :select, collection: Profile.gaming_activity_privacies.keys
+      f.input :playlists_privacy, as: :select, collection: Profile.playlists_privacies.keys
+      f.input :friends_privacy, as: :select, collection: Profile.friends_privacies.keys
     end
     f.actions
   end

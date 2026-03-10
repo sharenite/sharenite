@@ -28,11 +28,13 @@ module Profiles
       "status_desc" => "(SELECT LOWER(completion_statuses.name) FROM completion_statuses WHERE completion_statuses.id = games.completion_status_id) DESC NULLS LAST, LOWER(games.name) ASC"
     }.freeze
 
+    before_action :check_current_user_profile, only: %i[edit update destroy]
     before_action :check_game_library_access_profile, only: %i[index show]
     before_action :game, only: %i[show edit update destroy]
     skip_before_action :check_general_access_profile, only: %i[index show]
 
     def index
+      @can_view_gaming_activity = @profile.gaming_activity_visible_to?(current_user)
       set_games
       set_sync_jobs
       set_search_options
@@ -78,9 +80,7 @@ module Profiles
 
     def check_game_library_access_profile
       set_profile
-      return if profile_own?
-      return if @profile.game_library_privacy_public?
-      return if @profile.game_library_privacy_friendly? && game_library_friend?
+      return if @profile.game_library_visible_to?(current_user)
 
       redirect_to_profile_when_game_library_hidden
     rescue ActiveRecord::RecordNotFound
@@ -206,6 +206,8 @@ module Profiles
     end
 
     def apply_activity_filters
+      return unless @can_view_gaming_activity
+
       @games = case params[:activity_state]
                when "played"
                  @games.where.not(last_activity: nil)
@@ -223,6 +225,8 @@ module Profiles
     end
 
     def apply_last_activity_date_range
+      return unless @can_view_gaming_activity
+
       from_date = parse_date_param(:last_activity_from)
       to_date = parse_date_param(:last_activity_to)
       return if from_date.blank? && to_date.blank?
@@ -232,7 +236,7 @@ module Profiles
     end
 
     def sort_games
-      sort_key = params[:sort].presence || "last_activity_desc"
+      sort_key = effective_sort_key
       @games = if SORT_ORDERS.key?(sort_key)
                  @games.order(SORT_ORDERS.fetch(sort_key))
                elsif SORT_SQL_ORDERS.key?(sort_key)
@@ -277,7 +281,7 @@ module Profiles
     end
 
     def profile_visible_to_current_user?
-      profile_own? || @profile.privacy_public? || (@profile.privacy_friendly? && profile_friend?)
+      @profile.visible_to?(current_user)
     end
 
     def igdb_cache_update_requested?
@@ -305,6 +309,16 @@ module Profiles
       sort_games
       @games_count = @games.count
       @games = @games.page params[:page]
+    end
+
+    def effective_sort_key
+      requested_sort = params[:sort].presence
+      return requested_sort || "last_activity_desc" if @can_view_gaming_activity
+
+      return "name_asc" if requested_sort.blank?
+      return requested_sort unless requested_sort.start_with?("last_activity_", "playtime_")
+
+      "name_asc"
     end
 
     def game_params

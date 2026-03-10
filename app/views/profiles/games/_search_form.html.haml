@@ -22,19 +22,19 @@
         .col-12.d-lg-none
           = form.label :sort, "Sort", class: "form-label mb-1 small text-muted"
           = form.select :sort, options_for_select(games_sort_options, current_sort), {}, class: "form-select", data: { action: "change->search-form#search" }
-        .col-12.col-md-6.col-xl-2
+        .col-12.col-md-6.col-xl-4
           = form.label :source_ids, "Source", class: "form-label mb-1 small text-muted"
           = form.select :source_ids, options_for_select([["No source", Profiles::GamesController::NONE_FILTER_VALUE]] + @source_options.to_a, Array(params[:source_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
-        .col-12.col-md-6.col-xl-2
+        .col-12.col-md-6.col-xl-4
           = form.label :completion_status_ids, "Status", class: "form-label mb-1 small text-muted"
           = form.select :completion_status_ids, options_for_select([["No status", Profiles::GamesController::NONE_FILTER_VALUE]] + @completion_status_options.to_a, Array(params[:completion_status_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
-        .col-12.col-md-6.col-xl-2
+        .col-12.col-md-6.col-xl-4
           = form.label :platform_ids, "Platform", class: "form-label mb-1 small text-muted"
           = form.select :platform_ids, options_for_select([["No platform", Profiles::GamesController::NONE_FILTER_VALUE]] + @platform_options.to_a, Array(params[:platform_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
-        .col-12.col-md-6.col-xl-3
+        .col-12.col-xl-6
           = form.label :tag_ids, "Tags", class: "form-label mb-1 small text-muted"
           = form.select :tag_ids, options_for_select([["No tags", Profiles::GamesController::NONE_FILTER_VALUE]] + @tag_options.to_a, Array(params[:tag_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
-        .col-12.col-md-6.col-xl-3
+        .col-12.col-xl-6
           = form.label :category_ids, "Categories", class: "form-label mb-1 small text-muted"
           = form.select :category_ids, options_for_select([["No category", Profiles::GamesController::NONE_FILTER_VALUE]] + @category_options.to_a, Array(params[:category_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
         .col-12.col-lg-4

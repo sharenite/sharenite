@@ -17,6 +17,7 @@
 - last_size_scan_label = game.last_size_scan_date ? "#{time_ago_in_words(game.last_size_scan_date)} ago" : "N/A"
 - recent_activity_label = game.recent_activity ? "#{time_ago_in_words(game.recent_activity)} ago" : "N/A"
 - own_profile = @profile == current_user&.profile
+- can_view_gaming_activity = @profile.gaming_activity_visible_to?(current_user)
 
 .game-details
   .game-details__header.mb-3
@@ -27,9 +28,12 @@
             %i.bi.bi-play-fill
         = game.name
       - if game.favorite
-        %span.badge.rounded-pill.text-bg-warning.text-dark Favorite
+        %span.games-state-pill.games-state-pill--favorite Favorite
       - if game.is_installed
-        %span.badge.rounded-pill.text-bg-success Installed
+        %span.games-state-pill.games-state-pill--installed Installed
+      - if can_view_gaming_activity
+        - game_activity_states(game).each do |state|
+          %span{class: game_activity_pill_class(state[:tone])}= state[:label]
 
   .card.game-details__hero.mb-3
     .row.g-0
@@ -56,14 +60,15 @@
               %span.games-meta-pill__value= tags_label.presence || "N/A"
 
           .row.g-2.g-md-3.mb-3.game-details__stats-row
-            .col-6.col-md-3
-              .game-details__stat
-                .game-details__stat-label Last activity
-                .game-details__stat-value= last_activity_label
-            .col-6.col-md-3
-              .game-details__stat
-                .game-details__stat-label Playtime
-                .game-details__stat-value= playtime_label
+            - if can_view_gaming_activity
+              .col-6.col-md-3
+                .game-details__stat
+                  .game-details__stat-label Last activity
+                  .game-details__stat-value= last_activity_label
+              .col-6.col-md-3
+                .game-details__stat
+                  .game-details__stat-label Playtime
+                  .game-details__stat-value= playtime_label
             .col-6.col-md-3
               .game-details__stat
                 .game-details__stat-label Play count
@@ -122,20 +127,22 @@
             %dd= game.is_custom_game ? "Yes" : "No"
             %dt Installed
             %dd= game.is_installed ? "Yes" : "No"
-            %dt Installing
-            %dd= game.is_installing ? "Yes" : "No"
-            %dt Launching
-            %dd= game.is_launching ? "Yes" : "No"
-            %dt Running
-            %dd= game.is_running ? "Yes" : "No"
-            %dt Uninstalling
-            %dd= game.is_uninstalling ? "Yes" : "No"
+            - if can_view_gaming_activity
+              %dt Activity status
+              %dd
+                .d-flex.flex-wrap.gap-2
+                  - if game_activity_states(game).any?
+                    - game_activity_states(game).each do |state|
+                      %span{class: game_activity_pill_class(state[:tone])}= state[:label]
+                  - else
+                    %span.text-muted None
             %dt Override install state
             %dd= game.override_install_state ? "Yes" : "No"
             %dt System HDR
             %dd= game.enable_system_hdr ? "Yes" : "No"
-            %dt Recent activity
-            %dd= recent_activity_label
+            - if can_view_gaming_activity
+              %dt Recent activity
+              %dd= recent_activity_label
 
     .col-12.col-xl-6
       .card.h-100

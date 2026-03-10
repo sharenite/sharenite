@@ -14,14 +14,43 @@
       .form-text#vanity_url_help Custom URL slug for your profile page.
 
     .col-12
-      = f.label :privacy, class: "form-label"
-      = f.select :privacy, Profile.privacies.keys.map { |w| [w.humanize, w] }, {}, { class: "form-select", "aria-describedby" => "privacy_help" }
-      .form-text#privacy_help Private: hidden. Public: visible to everyone. Friendly: share profile URL and allow invites.
+      .card.border-0.bg-body-tertiary
+        .card-body
+          %h2.h5.mb-3 Privacy settings
+          .row.g-3
+            .col-12.col-lg-6
+              = f.label :privacy, "Profile", class: "form-label"
+              = f.select :privacy, profile_privacy_options, {}, { class: "form-select" }
+            .col-12.col-lg-6
+              = f.label :game_library_privacy, "Games", class: "form-label"
+              = f.select :game_library_privacy, profile_privacy_options, {}, { class: "form-select" }
+            .col-12.col-lg-6
+              = f.label :gaming_activity_privacy, "Gaming activity", class: "form-label"
+              = f.select :gaming_activity_privacy, profile_privacy_options, {}, { class: "form-select" }
+            .col-12.col-lg-6
+              = f.label :playlists_privacy, "Playlists", class: "form-label"
+              = f.select :playlists_privacy, profile_privacy_options, {}, { class: "form-select" }
+            .col-12.col-lg-6
+              = f.label :friends_privacy, "Friends", class: "form-label"
+              = f.select :friends_privacy, profile_privacy_options, {}, { class: "form-select" }
 
     .col-12
-      = f.label :game_library_privacy, class: "form-label"
-      = f.select :game_library_privacy, Profile.game_library_privacies.keys.map { |w| [w.humanize, w] }, {}, { class: "form-select", "aria-describedby" => "game_library_privacy_help" }
-      .form-text#game_library_privacy_help Controls who can see your games library page.
+      .card.border-0.bg-body-tertiary
+        .card-body
+          %h2.h6.mb-3 Visibility levels
+          .small.text-muted.d-flex.flex-column.gap-2
+            %div
+              %strong Public:
+              visible to everyone, even when logged out.
+            %div
+              %strong Members:
+              visible to signed-in users only.
+            %div
+              %strong Friends only:
+              visible to accepted friends only.
+            %div
+              %strong Private:
+              hidden from everyone else.
 
   .d-flex.flex-wrap.justify-content-end.gap-2.mt-3
     = link_to "Back", profile_path(@profile), class: "btn btn-outline-secondary"

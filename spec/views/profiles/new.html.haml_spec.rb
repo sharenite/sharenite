@@ -15,6 +15,10 @@ RSpec.describe "profiles/profiles/new" do
       assert_select "input[name=?]", "profile[name]"
       assert_select "input[name=?]", "profile[vanity_url]"
       assert_select "select[name=?]", "profile[privacy]"
+      assert_select "select[name=?]", "profile[game_library_privacy]"
+      assert_select "select[name=?]", "profile[gaming_activity_privacy]"
+      assert_select "select[name=?]", "profile[playlists_privacy]"
+      assert_select "select[name=?]", "profile[friends_privacy]"
     end
   end
 end

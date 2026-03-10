@@ -1,18 +1,9 @@
-%h1 Public profiles
-%p.text-muted.mb-3 To make your profile public, edit it in the avatar menu.
-
 .profiles-search-form.mb-3
   = form_with url: profiles_path, method: :get, local: true, data: { controller: "search-form", turbo_frame: "profiles_list", turbo_action: "replace" } do |form|
     .row.g-2
-      .col-12.col-md-6
+      .col-12
         = form.label :search_name, "Search name", class: "form-label mb-1 small text-muted"
         = form.text_field :search_name, value: params[:search_name], class: "form-control", placeholder: "Profile name...", data: { action: "input->search-form#search" }
-      .col-6.col-md-3
-        = form.label :games_from, "Games from", class: "form-label mb-1 small text-muted"
-        = form.number_field :games_from, value: params[:games_from], min: 0, class: "form-control", placeholder: "0", data: { action: "input->search-form#search" }
-      .col-6.col-md-3
-        = form.label :games_to, "Games to", class: "form-label mb-1 small text-muted"
-        = form.number_field :games_to, value: params[:games_to], min: 0, class: "form-control", placeholder: "No max", data: { action: "input->search-form#search" }
       .col-12.d-flex.justify-content-end.gap-2
         = link_to "Reset", profiles_path, class: "btn btn-outline-secondary"
         = form.submit "Apply", class: "btn btn-primary"
@@ -36,17 +27,23 @@
             - games_count = profile.read_attribute(:games_count).to_i
             - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
             - friendship_state = @friendship_states_by_user_id[profile.user_id]
-            - can_view_games = is_own_profile || profile.game_library_privacy_public? || (profile.game_library_privacy_friendly? && friendship_state&.to_sym == :friends)
+            - can_open_profile = profile.visible_to?(current_user)
+            - can_view_games = profile.game_library_visible_to?(current_user)
             - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
             - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
             %tr
               %td.fw-semibold= profile.name
-              %td= games_count
+              %td
+                - if can_view_games
+                  = games_count
+                - else
+                  %span.profiles-info-pill.profiles-info-pill-muted Hidden
               %td.text-end
                 .d-inline-flex.gap-2
                   - if can_view_games
                     = link_to 'Games', profile_games_path(profile), class: "profiles-action-pill", data: { turbo_frame: "_top" }
-                  = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                  - if can_open_profile
+                    = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
                       = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile_slug, tab: "received"), class: profile_friendship_state_class(friendship_state), data: { turbo_frame: "_top" }
@@ -61,7 +58,8 @@
         - games_count = profile.read_attribute(:games_count).to_i
         - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
         - friendship_state = @friendship_states_by_user_id[profile.user_id]
-        - can_view_games = is_own_profile || profile.game_library_privacy_public? || (profile.game_library_privacy_friendly? && friendship_state&.to_sym == :friends)
+        - can_open_profile = profile.visible_to?(current_user)
+        - can_view_games = profile.game_library_visible_to?(current_user)
         - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
         - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
         .col-12
@@ -70,11 +68,16 @@
               .d-flex.justify-content-between.align-items-start.gap-2
                 .min-w-0
                   .fw-semibold.text-break= profile.name
-                  .small.text-muted Games: #{games_count}
+                  .small.text-muted
+                    - if can_view_games
+                      = "Games: #{games_count}"
+                    - else
+                      %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted Hidden
                 .d-inline-flex.gap-1.flex-shrink-0
                   - if can_view_games
                     = link_to 'Games', profile_games_path(profile), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
-                  = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                  - if can_open_profile
+                    = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
                       = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile_slug, tab: "received"), class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm", data: { turbo_frame: "_top" }

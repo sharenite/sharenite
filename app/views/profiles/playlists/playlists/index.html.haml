@@ -1,6 +1,7 @@
-%h1 Playlists
-%p.text-muted.mb-2 This is experimental and still in progress.
-%p.mb-3= link_to "New playlist", new_profile_playlist_path, class: "btn btn-primary"
+- own_profile = user_signed_in? && current_user == @profile.user
+= render "profiles/profiles/profile_nav", current_section: :playlists
+- if own_profile
+  %p.mb-3= link_to "New playlist", new_profile_playlist_path, class: "btn btn-primary"
 
 .profiles-search-form.mb-3
   = form_with url: profile_playlists_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "playlists_list", turbo_action: "replace" } do |form|
@@ -44,8 +45,9 @@
                 %td.text-end
                   .d-inline-flex.gap-2
                     = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
-                    = link_to "Edit", edit_profile_playlist_path(@profile, playlist), class: "profiles-action-pill", data: { turbo_frame: "_top" }
-                    = button_to "Delete", profile_playlist_path(@profile, playlist), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
+                    - if own_profile
+                      = link_to "Edit", edit_profile_playlist_path(@profile, playlist), class: "profiles-action-pill", data: { turbo_frame: "_top" }
+                      = button_to "Delete", profile_playlist_path(@profile, playlist), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
           - else
             %tr
               %td.text-muted{colspan: 4} No playlists match current filters.
@@ -66,8 +68,9 @@
                       = " | Public: #{playlist.public? ? 'Yes' : 'No'}"
                   .d-inline-flex.gap-1.flex-wrap.flex-shrink-0.justify-content-end
                     = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
-                    = link_to "Edit", edit_profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
-                    = button_to "Delete", profile_playlist_path(@profile, playlist), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
+                    - if own_profile
+                      = link_to "Edit", edit_profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                      = button_to "Delete", profile_playlist_path(@profile, playlist), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
       - else
         .col-12
           .text-muted No playlists match current filters.

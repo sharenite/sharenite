@@ -1,6 +1,7 @@
 - items_count = @playlist_items.size
 - owned_total = @playlist_items.sum { |item| (@owned_counts_by_igdb_cache_id || {})[item.igdb_cache_id].to_i }
 - unique_status_count = (@owned_statuses_by_igdb_cache_id || {}).values.flatten.uniq.size
+- own_profile = user_signed_in? && current_user == @profile.user
 
 .profiles-show-header.card.profiles-section-card.mb-3
   .card-body
@@ -12,8 +13,9 @@
             Public:
             %strong.ms-1= @playlist.public? ? "Yes" : "No"
       .d-flex.flex-wrap.gap-2
-        = link_to "New item", new_profile_playlist_playlist_item_path(@profile, @playlist), class: "profiles-action-pill profiles-action-pill-primary"
-        = link_to "Edit playlist", edit_profile_playlist_path(@profile, @playlist), class: "profiles-action-pill"
+        - if own_profile
+          = link_to "New item", new_profile_playlist_playlist_item_path(@profile, @playlist), class: "profiles-action-pill profiles-action-pill-primary"
+          = link_to "Edit playlist", edit_profile_playlist_path(@profile, @playlist), class: "profiles-action-pill"
         = link_to "Back to playlists", profile_playlists_path(@profile), class: "profiles-action-pill"
 
 .row.g-3.mb-3
@@ -34,7 +36,7 @@
         .profiles-stat-value= unique_status_count
 
 .profiles-list-desktop.d-none.d-lg-block
-  - if @playlist_items.any?
+  - if own_profile && @playlist_items.any?
     %p.small.text-muted.mb-2 Drag items by using the grip icon in the Order column.
   .table-responsive.profiles-table-wrap
     %table.table.table-hover.align-middle.profiles-table.mb-0
@@ -45,7 +47,7 @@
           %th Owned
           %th Statuses
           %th.text-end Actions
-      %tbody{data: { controller: "playlist-sort", playlist_sort_url_value: reorder_profile_playlist_playlist_items_path(@profile, @playlist) }}
+      %tbody{data: (own_profile ? { controller: "playlist-sort", playlist_sort_url_value: reorder_profile_playlist_playlist_items_path(@profile, @playlist) } : {})}
         - if @playlist_items.any?
           - @playlist_items.each do |playlist_item|
             - owned_count = (@owned_counts_by_igdb_cache_id || {})[playlist_item.igdb_cache_id].to_i
@@ -56,15 +58,16 @@
               "data-action" => "dragover->playlist-sort#over drop->playlist-sort#over"
             }
               %td
-                %button.btn.btn-sm.profiles-action-pill.profiles-action-pill-sm.playlist-sort-grab{
-                  type: "button",
-                  draggable: true,
-                  title: "Drag to reorder",
-                  aria: { label: "Drag to reorder item" },
-                  "data-action" => "dragstart->playlist-sort#start dragend->playlist-sort#end"
-                }
-                  %i.bi.bi-grip-vertical
-                  %span.ms-1.d-none.d-xl-inline Drag
+                - if own_profile
+                  %button.btn.btn-sm.profiles-action-pill.profiles-action-pill-sm.playlist-sort-grab{
+                    type: "button",
+                    draggable: true,
+                    title: "Drag to reorder",
+                    aria: { label: "Drag to reorder item" },
+                    "data-action" => "dragstart->playlist-sort#start dragend->playlist-sort#end"
+                  }
+                    %i.bi.bi-grip-vertical
+                    %span.ms-1.d-none.d-xl-inline Drag
                 %span.ms-2{data: { playlist_sort_order: true }}= playlist_item.order
               %td.fw-semibold= playlist_item.igdb_cache&.name || "N/A"
               %td= owned_count
@@ -77,16 +80,17 @@
                   %span.text-muted None
               %td.text-end
                 .d-inline-flex.gap-2
-                  = link_to "Edit", edit_profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), class: "profiles-action-pill"
-                  = button_to "Delete", profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline"
+                  - if own_profile
+                    = link_to "Edit", edit_profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), class: "profiles-action-pill"
+                    = button_to "Delete", profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline"
         - else
           %tr
             %td.text-muted{colspan: 5} No playlist items yet.
 
 .profiles-list-mobile.d-lg-none
-  - if @playlist_items.any?
+  - if own_profile && @playlist_items.any?
     %p.small.text-muted.mb-2 Use the grab handle to reorder playlist items.
-  .row.g-2{data: { controller: "playlist-sort", playlist_sort_url_value: reorder_profile_playlist_playlist_items_path(@profile, @playlist) }}
+  .row.g-2{data: (own_profile ? { controller: "playlist-sort", playlist_sort_url_value: reorder_profile_playlist_playlist_items_path(@profile, @playlist) } : {})}
     - if @playlist_items.any?
       - @playlist_items.each do |playlist_item|
         - owned_count = (@owned_counts_by_igdb_cache_id || {})[playlist_item.igdb_cache_id].to_i
@@ -109,16 +113,17 @@
                       - statuses.each do |status|
                         %span.profiles-info-pill.profiles-info-pill-sm= status
                 .d-inline-flex.gap-1.flex-wrap.flex-shrink-0.justify-content-end.align-items-start
-                  %button.btn.btn-sm.profiles-action-pill.profiles-action-pill-sm.playlist-sort-grab{
-                    type: "button",
-                    draggable: true,
-                    title: "Drag to reorder",
-                    aria: { label: "Drag to reorder item" },
-                    "data-action" => "dragstart->playlist-sort#start dragend->playlist-sort#end"
-                  }
-                    %i.bi.bi-grip-vertical
-                  = link_to "Edit", edit_profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), class: "profiles-action-pill profiles-action-pill-sm"
-                  = button_to "Delete", profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline"
+                  - if own_profile
+                    %button.btn.btn-sm.profiles-action-pill.profiles-action-pill-sm.playlist-sort-grab{
+                      type: "button",
+                      draggable: true,
+                      title: "Drag to reorder",
+                      aria: { label: "Drag to reorder item" },
+                      "data-action" => "dragstart->playlist-sort#start dragend->playlist-sort#end"
+                    }
+                      %i.bi.bi-grip-vertical
+                    = link_to "Edit", edit_profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), class: "profiles-action-pill profiles-action-pill-sm"
+                    = button_to "Delete", profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline"
     - else
       .col-12
         .text-muted No playlist items yet.

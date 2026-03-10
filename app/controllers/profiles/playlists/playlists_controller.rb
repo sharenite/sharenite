@@ -5,6 +5,8 @@ module Profiles
   module Playlists
     # Profiles playlists controller
     class PlaylistsController < ::Profiles::BaseController
+      before_action :check_current_user_profile, only: %i[new create edit update destroy]
+      before_action :check_playlist_library_access_profile, only: %i[index]
       before_action :playlist, only: %i[show edit update destroy]
 
       def index
@@ -56,14 +58,26 @@ module Profiles
 
       private
 
+      def check_playlist_library_access_profile
+        return if profile_own?
+        return if @profile.playlists_visible_to?(current_user)
+
+        redirect_to_profile_when_playlist_library_hidden
+      end
+
       def playlist
         @playlist = @profile.user.playlists.find_by(id: params[:id])
+        return redirect_to_profile_when_playlist_library_hidden if @playlist && !profile_own? && !@profile.playlists_visible_to?(current_user)
+        return redirect_to_playlists_with_notice if @playlist && !profile_own? && !@playlist.public?
+
         @playlist ||= redirect_to_playlists_with_notice # defined in app controller
       end
 
       # rubocop:disable Metrics/AbcSize
       def set_playlists
         scope = @profile.user.playlists
+        scope = scope.where(public: true) unless profile_own?
+        scope = scope
                         .left_joins(:playlist_items)
                         .select("playlists.*, COUNT(playlist_items.id) AS items_count")
                         .group("playlists.id")
@@ -119,6 +133,12 @@ module Profiles
         flash[:notice] = "Playlist not found."
         # rubocop:enable all
         redirect_to profile_playlists_path
+      end
+
+      def redirect_to_profile_when_playlist_library_hidden
+        # rubocop:disable Rails/I18nLocaleTexts
+        redirect_to profile_path(@profile), notice: "This profile's playlists are private."
+        # rubocop:enable Rails/I18nLocaleTexts
       end
     end
   end

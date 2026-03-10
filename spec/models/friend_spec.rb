@@ -8,6 +8,6 @@ RSpec.describe Friend do
   end
 
   it "defines status enum values" do
-    expect(described_class.statuses).to include("invited" => "invited", "accepted" => "accepted", "declined" => "declined")
+    expect(described_class.statuses).to include("invited" => "invited", "accepted" => "accepted", "declined" => "declined", "blocked" => "blocked")
   end
 end

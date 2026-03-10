@@ -12,7 +12,13 @@
           .d-flex.flex-wrap.gap-2
             %span.profiles-show-badge
               Privacy:
-              %strong.ms-1= @profile.privacy.humanize
+              %strong.ms-1= profile_privacy_label(@profile.privacy)
+            %span.profiles-show-badge
+              Games:
+              %strong.ms-1= profile_privacy_label(@profile.game_library_privacy)
+            %span.profiles-show-badge
+              Friends:
+              %strong.ms-1= profile_privacy_label(@profile.friends_privacy)
             - if @profile.vanity_url.present?
               %span.profiles-show-badge
                 Vanity:
@@ -57,7 +63,7 @@
         %h2.h5.mb-3 Profile URL
         %p.text-muted.small.mb-2 Share this link:
         .profiles-url-box.text-break= profile_url_value
-        .small.text-muted.mt-2 Works for public and friendly profiles.
+        .small.text-muted.mt-2 Public profiles are visible to everyone. Friends-only profiles are visible to accepted friends.
 
 .row.g-3
   .col-12.col-xl-7

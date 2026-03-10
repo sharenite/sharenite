@@ -1,0 +1,42 @@
+- own_profile = user_signed_in? && current_user == @profile.user
+- current_section ||= :profile
+- hide_nav = own_profile && current_section != :profile
+- profile_title = own_profile ? "My profile" : @profile.name
+- member_since_label = "#{time_ago_in_words(@profile.created_at)} ago"
+- last_active_at = @profile.user.last_sign_in_at || @profile.user.current_sign_in_at
+- last_active_label = last_active_at ? "#{time_ago_in_words(last_active_at)} ago" : "N/A"
+- running_game_label = profile_running_game_summary(@profile, current_user)
+- nav_link_class = ->(active) { "profiles-action-pill#{active ? ' profiles-action-pill-primary' : ''}" }
+
+- unless hide_nav
+  .profiles-show-header.card.profiles-section-card.mb-3
+    .card-body
+      .profiles-show-header-layout
+        .profiles-show-header-primary.d-flex.align-items-start.gap-3.min-w-0
+          .profiles-show-avatar
+            %i.bi.bi-person-circle
+          .min-w-0
+            %h1.mb-1.text-break= profile_title
+            .d-flex.flex-wrap.gap-2
+              %span.profiles-show-badge
+                Member since:
+                %strong.ms-1= member_since_label
+              %span.profiles-show-badge
+                Last active:
+                %strong.ms-1= last_active_label
+              - if running_game_label.present?
+                %span.profiles-show-badge.profiles-show-badge--activity
+                  %strong.profiles-show-badge-activity= running_game_label
+        .profiles-show-header-actions.d-flex.flex-wrap.gap-2
+          = link_to "Profile", profile_path(@profile), class: nav_link_class.call(current_section == :profile)
+          - if @profile.game_library_visible_to?(current_user)
+            = link_to "Games", profile_games_path(@profile), class: nav_link_class.call(current_section == :games)
+          - if @profile.playlists_visible_to?(current_user) || own_profile
+            = link_to "Playlists", profile_playlists_path(@profile), class: nav_link_class.call(current_section == :playlists)
+          - if @profile.friends_list_visible_to?(current_user) || own_profile
+            = link_to "Friends", profile_friends_path(@profile, tab: "friends"), class: nav_link_class.call(current_section == :friends)
+          - if own_profile
+            = link_to "Edit profile", edit_profile_path(@profile), class: "profiles-action-pill"
+            = link_to "Account settings", edit_user_registration_path, class: "profiles-action-pill"
+          - elsif current_user.present? && @friendship_state&.to_sym != :blocked_by_you && @friendship_state&.to_sym != :blocked_you
+            = button_to "Block", profile_block_profile_friend_path(@profile, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }

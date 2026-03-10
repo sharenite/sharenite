@@ -2,29 +2,32 @@
   %header.p-3.text-bg-dark
     .container
       .d-flex.flex-wrap.align-items-center.justify-content-center.justify-content-lg-start
-        - nav_link_class = ->(path, default_color = "text-white") { "nav-link px-2 #{current_page?(path) ? 'active text-white' : default_color}" }
         - pending_count = pending_friend_invites_count
         - pending_count_label = pending_count > 99 ? "99+" : pending_count
         - profile = current_profile
+        - viewed_profile = local_assigns.fetch(:profile, nil) || instance_variable_get(:@profile)
+        - own_viewed_profile = current_user.present? && viewed_profile.present? && viewed_profile.user_id == current_user.id
+        - active_nav_class = ->(active, default_color = "text-white") { "nav-link px-2 #{active ? 'active text-white' : default_color}" }
         %ul.nav.col-10.col-sm-auto.me-sm-auto.mb-2.justify-content-center.mb-md-0
           %li
-            = link_to 'Home', root_path, class: nav_link_class.call(root_path, "text-secondary")
+            = link_to 'Home', root_path, class: active_nav_class.call(current_page?(root_path), "text-secondary")
           - if current_user
             %li
-              = link_to 'Dashboard', static_pages_dashboard_path, class: nav_link_class.call(static_pages_dashboard_path)
+              = link_to 'My Profile', profile_path(profile), class: active_nav_class.call(current_page?(profile_path(profile)))
             %li
-              = link_to 'Games', profile_games_path(profile), class: nav_link_class.call(profile_games_path(profile))
+              = link_to 'My Games', profile_games_path(profile), class: active_nav_class.call(current_page?(profile_games_path(profile)))
             %li
-              = link_to profile_friends_path(profile, tab: "friends"), class: nav_link_class.call(profile_friends_path(profile, tab: "friends")) do
-                %span Friends
+              = link_to profile_friends_path(profile, tab: "friends"), class: active_nav_class.call(current_page?(profile_friends_path(profile, tab: "friends"))) do
+                %span My Friends
                 - if pending_count.positive?
                   %span.badge.rounded-pill.text-bg-danger.ms-1.align-middle
                     %i.bi.bi-bell-fill.me-1
                     = pending_count_label
             %li
-              = link_to 'Playlists', profile_playlists_path(profile), class: nav_link_class.call(profile_playlists_path(profile))
+              = link_to 'My Playlists', profile_playlists_path(profile), class: active_nav_class.call(current_page?(profile_playlists_path(profile)))
           %li
-            = link_to 'Profiles', profiles_path, class: nav_link_class.call(profiles_path)
+            - community_active = current_page?(profiles_path) || (viewed_profile.present? && !own_viewed_profile)
+            = link_to 'Community', profiles_path, class: active_nav_class.call(community_active)
           -#
             -# %form.col-12.col-lg-auto.mb-3.mb-lg-0.me-lg-3{role: "search"}
             -# %input.form-control.form-control-dark.text-bg-dark{"aria-label" => "Search", placeholder: "Search...", type: "search"}

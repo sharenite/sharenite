@@ -26,7 +26,7 @@ RSpec.describe "StaticPages" do
 
       get static_pages_dashboard_path
 
-      expect(response).to have_http_status(:ok)
+      expect(response).to redirect_to(profile_path(user.profile))
     end
   end
 end

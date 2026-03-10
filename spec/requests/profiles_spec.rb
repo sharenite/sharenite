@@ -9,11 +9,29 @@ RSpec.describe "Profiles requests", type: :request do
     it "renders successfully for guests" do
       public_profile = create(:user).profile
       public_profile.update!(privacy: :public, name: "Public Name")
+      friends_profile = create(:user).profile
+      friends_profile.update!(privacy: :friends, name: "Friends Name")
+      members_profile = create(:user).profile
+      members_profile.update!(privacy: :members, name: "Members Name")
 
       get profiles_path
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Public Name")
+      expect(response.body).not_to include("Friends Name")
+      expect(response.body).not_to include("Members Name")
+    end
+
+    it "does not list blocked profiles for the blocker" do
+      viewer = create(:user)
+      blocked_user = create(:user)
+      blocked_user.profile.update!(privacy: :public, name: "Blocked Name")
+      Friend.create!(inviter: viewer, invitee: blocked_user, status: :blocked)
+
+      sign_in viewer
+      get profiles_path
+
+      expect(response.body).not_to include("Blocked Name")
     end
   end
 
@@ -26,6 +44,210 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Visible Profile")
+    end
+
+    it "redirects for a friends-only profile when viewer is not a friend" do
+      profile = create(:user).profile
+      profile.update!(privacy: :friends, name: "Friends Only")
+
+      get profile_path(profile)
+
+      expect(response).to redirect_to(profiles_path)
+    end
+
+    it "redirects for a blocked profile even when it is public" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, name: "Blocked Public")
+      Friend.create!(inviter: owner, invitee: viewer, status: :blocked)
+
+      sign_in viewer
+      get profile_path(owner.profile)
+
+      expect(response).to redirect_to(profiles_path)
+    end
+
+    it "lets a signed-in viewer block from another user's profile page" do
+      viewer = create(:user)
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, name: "Block Me")
+
+      sign_in viewer
+      get profile_block_profile_friend_path(owner.profile)
+
+      expect(response).to redirect_to(profile_friends_path(viewer.profile, tab: "blocked"))
+      relation = Friend.find_by(inviter: viewer, invitee: owner)
+      expect(relation).to be_present
+      expect(relation.status).to eq("blocked")
+    end
+
+    it "rejects editing another user's profile" do
+      owner = create(:user)
+      viewer = create(:user)
+      sign_in viewer
+
+      get edit_profile_path(owner.profile)
+
+      expect(response).to redirect_to(profiles_path)
+    end
+  end
+
+  describe "GET /profiles/:profile_id/friends" do
+    it "renders accepted friends for an allowed public friends list" do
+      owner = create(:user)
+      friend_user = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      friend_user.profile.update!(privacy: :public, name: "Accepted Friend")
+      Friend.create!(inviter: owner, invitee: friend_user, status: :accepted)
+
+      get profile_friends_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Accepted Friend")
+      expect(response.body).not_to include("Received")
+      expect(response.body).not_to include("Declined")
+    end
+
+    it "does not render private accepted friends in the visible list" do
+      owner = create(:user)
+      private_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      private_friend.profile.update!(privacy: :private, name: "Hidden Friend")
+      Friend.create!(inviter: owner, invitee: private_friend, status: :accepted)
+
+      get profile_friends_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Hidden Friend")
+      expect(response.body).to include("Total friends listed: 0")
+    end
+
+    it "redirects when friends list privacy blocks access" do
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :private)
+
+      get profile_friends_path(owner.profile)
+
+      expect(response).to redirect_to(profiles_path)
+    end
+
+    it "rejects accepting another user's invitation through their profile route" do
+      owner = create(:user)
+      viewer = create(:user)
+      inviter = create(:user)
+      invitation = Friend.create!(inviter:, invitee: owner, status: :invited)
+
+      sign_in viewer
+      get profile_accept_friend_path(owner.profile, id: invitation.id)
+
+      expect(response).to redirect_to(profiles_path)
+      expect(invitation.reload.status).to eq("invited")
+    end
+
+    it "rejects cancelling another user's sent invitation through their profile route" do
+      owner = create(:user)
+      viewer = create(:user)
+      invitee = create(:user)
+      invitation = Friend.create!(inviter: owner, invitee:, status: :invited)
+
+      sign_in viewer
+      get profile_cancel_friend_path(owner.profile, id: invitation.id)
+
+      expect(response).to redirect_to(profiles_path)
+      expect(invitation.reload).to be_present
+    end
+
+    it "lets the owner unfriend from their own friends list" do
+      owner = create(:user)
+      friend_user = create(:user)
+      relation = Friend.create!(inviter: owner, invitee: friend_user, status: :accepted)
+
+      sign_in owner
+      get profile_unfriend_friend_path(owner.profile, id: relation.id)
+
+      expect(response).to redirect_to(profile_friends_path(owner.profile, tab: "friends"))
+      expect(Friend.where(id: relation.id)).to be_empty
+    end
+
+    it "lets the owner block an accepted friend and hides that profile afterward" do
+      owner = create(:user)
+      friend_user = create(:user)
+      friend_user.profile.update!(privacy: :public, name: "Former Friend")
+      relation = Friend.create!(inviter: owner, invitee: friend_user, status: :accepted)
+
+      sign_in owner
+      get profile_block_friend_path(owner.profile, id: relation.id)
+
+      expect(response).to redirect_to(profile_friends_path(owner.profile, tab: "blocked"))
+      blocked_relation = Friend.find_by(inviter: owner, invitee: friend_user)
+      expect(blocked_relation).to be_present
+      expect(blocked_relation.status).to eq("blocked")
+
+      get profiles_path
+      expect(response.body).not_to include("Former Friend")
+    end
+
+    it "lets the owner unblock from the blocked tab" do
+      owner = create(:user)
+      blocked_user = create(:user)
+      relation = Friend.create!(inviter: owner, invitee: blocked_user, status: :blocked)
+
+      sign_in owner
+      get profile_unblock_friend_path(owner.profile, id: relation.id)
+
+      expect(response).to redirect_to(profile_friends_path(owner.profile, tab: "blocked"))
+      expect(Friend.where(id: relation.id)).to be_empty
+    end
+  end
+
+  describe "GET /profiles/:profile_id/playlists" do
+    it "redirects when game library privacy blocks playlist access" do
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :private)
+
+      get profile_playlists_path(owner.profile)
+
+      expect(response).to redirect_to(profile_path(owner.profile))
+    end
+
+    it "hides playlist owner actions for another viewer" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :public)
+      playlist = create(:playlist, user: owner, name: "Visible Playlist", public: true)
+      create(:playlist_item, playlist:, order: 1)
+
+      sign_in viewer
+      get profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Visible Playlist")
+      expect(response.body).not_to include("Edit playlist")
+      expect(response.body).not_to include("New item")
+      expect(response.body).not_to include("Delete")
+    end
+
+    it "rejects editing another user's playlist" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :public)
+      playlist = create(:playlist, user: owner, public: true)
+
+      sign_in viewer
+      get edit_profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to redirect_to(profiles_path)
+    end
+
+    it "rejects creating a playlist for another user" do
+      owner = create(:user)
+      viewer = create(:user)
+      sign_in viewer
+
+      post profile_playlists_path(owner.profile), params: { playlist: { name: "Bad", public: true } }, as: :turbo_stream
+
+      expect(response).to redirect_to(profiles_path)
+      expect(owner.playlists.where(name: "Bad")).to be_empty
     end
   end
 

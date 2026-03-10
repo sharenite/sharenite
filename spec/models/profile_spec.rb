@@ -14,7 +14,20 @@ RSpec.describe Profile do
   end
 
   it "defines privacy enums" do
-    expect(described_class.privacies.keys).to include("private", "public", "friendly")
-    expect(described_class.game_library_privacies.keys).to include("private", "public", "friendly")
+    expect(described_class.privacies.keys).to include("private", "friends", "members", "public")
+    expect(described_class.game_library_privacies.keys).to include("private", "friends", "members", "public")
+    expect(described_class.gaming_activity_privacies.keys).to include("private", "friends", "members", "public")
+    expect(described_class.playlists_privacies.keys).to include("private", "friends", "members", "public")
+    expect(described_class.friends_privacies.keys).to include("private", "friends", "members", "public")
+  end
+
+  it "is not visible to a blocked viewer even when public" do
+    owner = create(:user)
+    viewer = create(:user)
+    owner.profile.update!(privacy: :public)
+    Friend.create!(inviter: viewer, invitee: owner, status: :blocked)
+
+    expect(owner.profile.visible_to?(viewer)).to be(false)
+    expect(owner.profile.friends_with?(viewer)).to be(false)
   end
 end

@@ -28,6 +28,56 @@
   border-color: var(--bs-border-color);
 }
 
+.profiles-section-summary {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.profiles-friends-tabs {
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.profiles-friends-tabs .nav-item {
+  margin-bottom: -1px;
+}
+
+.profiles-friends-tabs .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: transparent;
+  color: var(--bs-primary);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.profiles-friends-tabs .nav-link:hover,
+.profiles-friends-tabs .nav-link:focus-visible {
+  border-color: rgba(var(--bs-border-color-rgb), 1);
+  border-bottom-color: transparent;
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-primary);
+}
+
+.profiles-friends-tabs .nav-link.active {
+  border-color: var(--bs-border-color);
+  border-bottom-color: var(--bs-body-bg);
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+.profiles-friends-tabs .nav-link .badge {
+  min-width: 1.25rem;
+  padding: 0.2rem 0.4rem;
+  line-height: 1;
+}
+
 .profile-form-card .form-control,
 .profile-form-card .form-select {
   min-height: 2.5rem;
@@ -158,8 +208,30 @@ a.profiles-info-pill.profiles-info-pill-muted:focus-visible {
   background: rgba(var(--bs-secondary-rgb), 0.12);
 }
 
+.profiles-info-pill-danger {
+  border-color: rgba(var(--bs-danger-rgb), 0.35);
+  color: var(--bs-danger-text-emphasis);
+  background: rgba(var(--bs-danger-rgb), 0.12);
+}
+
 .profiles-show-header .card-body {
   padding: 1rem 1.1rem;
+}
+
+.profiles-show-header-layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profiles-show-header-primary {
+  flex: 1 1 auto;
+}
+
+.profiles-show-header-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
 }
 
 .profiles-show-avatar {
@@ -186,6 +258,60 @@ a.profiles-info-pill.profiles-info-pill-muted:focus-visible {
   font-size: 0.84rem;
 }
 
+.profiles-show-badge strong {
+  line-height: 1.15;
+}
+
+.profiles-show-badge--activity {
+  border-color: rgba(var(--bs-success-rgb), 0.35);
+  background: rgba(var(--bs-success-rgb), 0.12);
+  color: var(--bs-success-text-emphasis);
+}
+
+.profiles-show-badge-activity {
+  color: inherit;
+}
+
+.profiles-activity-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.65rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(var(--bs-success-rgb), 0.18);
+  border: 1px solid rgba(var(--bs-success-rgb), 0.35);
+  color: var(--bs-success-text-emphasis);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.profiles-activity-pill--playing {
+  background: rgba(var(--bs-success-rgb), 0.18);
+  border-color: rgba(var(--bs-success-rgb), 0.35);
+  color: var(--bs-success-text-emphasis);
+}
+
+.profiles-activity-pill--launching {
+  background: rgba(var(--bs-primary-rgb), 0.16);
+  border-color: rgba(var(--bs-primary-rgb), 0.35);
+  color: var(--bs-primary-text-emphasis);
+}
+
+.profiles-activity-pill--installing {
+  background: rgba(var(--bs-info-rgb), 0.16);
+  border-color: rgba(var(--bs-info-rgb), 0.35);
+  color: var(--bs-info-text-emphasis);
+}
+
+.profiles-activity-pill--uninstalling {
+  background: rgba(var(--bs-warning-rgb), 0.2);
+  border-color: rgba(var(--bs-warning-rgb), 0.4);
+  color: var(--bs-warning-text-emphasis);
+}
+
 .profiles-stat-label {
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -208,6 +334,17 @@ a.profiles-info-pill.profiles-info-pill-muted:focus-visible {
   padding: 0.6rem 0.75rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.82rem;
+}
+
+@media (max-width: 991.98px) {
+  .profiles-show-header-layout {
+    flex-direction: column;
+  }
+
+  .profiles-show-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .playlist-sort-row {

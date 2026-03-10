@@ -20,7 +20,15 @@ if Rails.env.development?
   end
 
   profile = demo_user.profile || Profile.create!(user: demo_user)
-  profile.update!(name: "Demo Library", privacy: :public, vanity_url: "demo-library")
+  profile.update!(
+    name: "Demo Library",
+    privacy: :members,
+    game_library_privacy: :members,
+    gaming_activity_privacy: :members,
+    playlists_privacy: :members,
+    friends_privacy: :members,
+    vanity_url: "demo-library"
+  )
 
   source_names = ["Steam", "GOG", "Epic", "Xbox", "Switch", "Emulator"]
   status_names = ["Backlog", "Playing", "Completed", "Paused", "Dropped"]
@@ -258,6 +266,20 @@ if Rails.env.development?
   end
   showcase_game.update!(igdb_cache: showcase_igdb)
 
+  active_runtime_games = {
+    "Showcase - Multi Meta" => { is_running: true },
+    "Hades" => { is_launching: true },
+    "Dead Cells" => { is_installing: true },
+    "Risk of Rain 2" => { is_uninstalling: true }
+  }
+
+  active_runtime_games.each do |title, flags|
+    game = demo_user.games.find_by(name: title)
+    next unless game
+
+    game.update!(flags.merge(last_activity: Time.current))
+  end
+
   showcase_game.tags = [
     tags["RPG"],
     tags["Action"],
@@ -290,9 +312,46 @@ if Rails.env.development?
     end
 
     seeded_profile = seeded_user.profile || Profile.create!(user: seeded_user)
+    profile_privacy = (sequence % 11).zero? ? :private : (sequence % 4).zero? ? :friends : :members
+    game_privacy = case sequence % 6
+                   when 0, 1
+                     :members
+                   when 2, 3, 4
+                     :friends
+                   else
+                     :private
+                   end
+    activity_privacy = case sequence % 5
+                       when 0
+                         :members
+                       when 1, 2, 3
+                         :friends
+                       else
+                         :private
+                       end
+    playlists_privacy = case sequence % 4
+                        when 0
+                          :members
+                        when 1, 2
+                          :friends
+                        else
+                          :private
+                        end
+    friends_privacy = case sequence % 3
+                      when 0
+                        :members
+                      when 1
+                        :friends
+                      else
+                        :private
+                      end
     seeded_profile.update!(
       name: format("Profile Seed %03d", sequence),
-      privacy: (sequence % 11).zero? ? :private : :public,
+      privacy: profile_privacy,
+      game_library_privacy: game_privacy,
+      gaming_activity_privacy: activity_privacy,
+      playlists_privacy: playlists_privacy,
+      friends_privacy: friends_privacy,
       vanity_url: format("profile-seed-%03d", sequence)
     )
 
@@ -332,9 +391,52 @@ if Rails.env.development?
                .destroy_all
   end
 
-  accepted_friend_count = 40
-  accepted_friend_count.times do |index|
-    seeded_profile_slug = format("profile-seed-%03d", index + 1)
+  seeded_profile_user_ids = Profile.where("slug LIKE ?", "profile-seed-%").pluck(:user_id)
+  Friend.where(
+    "(inviter_id = :demo_user_id AND invitee_id IN (:seeded_ids)) OR " \
+    "(invitee_id = :demo_user_id AND inviter_id IN (:seeded_ids))",
+    demo_user_id: demo_user.id,
+    seeded_ids: seeded_profile_user_ids
+  ).delete_all
+
+  # Demo accepted-friend privacy showcase.
+  # Expected as demo:
+  # profile-seed-001: everything members-only
+  # profile-seed-002: all major sections friends-only
+  # profile-seed-003: profile friends-only, sections members
+  # profile-seed-004: profile members-only, all major sections private
+  # profile-seed-005: games friends-only
+  # profile-seed-006: activity friends-only
+  # profile-seed-007: playlists friends-only
+  # profile-seed-008: friends list friends-only
+  # profile-seed-009: games private, playlists friends-only, friends private
+  # profile-seed-010: games friends-only, activity private, playlists private
+  # profile-seed-011: profile friends-only, games private, activity friends-only, playlists members-only
+  # profile-seed-012: games members, activity private, playlists friends-only
+  # profile-seed-013: blocked by demo, should appear in Blocked tab only
+  # profile-seed-014: blocks demo, should be fully invisible to demo
+  friend_visibility_showcase = [
+    { slug: "profile-seed-001", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :members, playlists_privacy: :members, friends_privacy: :members },
+    { slug: "profile-seed-002", privacy: :members, game_library_privacy: :friends, gaming_activity_privacy: :friends, playlists_privacy: :friends, friends_privacy: :friends },
+    { slug: "profile-seed-003", privacy: :friends, game_library_privacy: :members, gaming_activity_privacy: :members, playlists_privacy: :members, friends_privacy: :members },
+    { slug: "profile-seed-004", privacy: :members, game_library_privacy: :private, gaming_activity_privacy: :private, playlists_privacy: :private, friends_privacy: :private },
+    { slug: "profile-seed-005", privacy: :members, game_library_privacy: :friends, gaming_activity_privacy: :members, playlists_privacy: :members, friends_privacy: :members },
+    { slug: "profile-seed-006", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :friends, playlists_privacy: :members, friends_privacy: :members },
+    { slug: "profile-seed-007", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :members, playlists_privacy: :friends, friends_privacy: :members },
+    { slug: "profile-seed-008", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :members, playlists_privacy: :members, friends_privacy: :friends },
+    { slug: "profile-seed-009", privacy: :members, game_library_privacy: :private, gaming_activity_privacy: :members, playlists_privacy: :friends, friends_privacy: :private },
+    { slug: "profile-seed-010", privacy: :members, game_library_privacy: :friends, gaming_activity_privacy: :private, playlists_privacy: :private, friends_privacy: :friends },
+    { slug: "profile-seed-011", privacy: :friends, game_library_privacy: :private, gaming_activity_privacy: :friends, playlists_privacy: :members, friends_privacy: :private },
+    { slug: "profile-seed-012", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :private, playlists_privacy: :friends, friends_privacy: :private },
+    { slug: "profile-seed-013", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :members, playlists_privacy: :members, friends_privacy: :members },
+    { slug: "profile-seed-014", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :members, playlists_privacy: :members, friends_privacy: :members }
+  ]
+
+  accepted_friend_slugs = friend_visibility_showcase.map { |config| config.fetch(:slug) }
+  blocked_by_demo_slug = accepted_friend_slugs.pop
+  blocked_demo_slug = accepted_friend_slugs.pop
+  accepted_friend_count = accepted_friend_slugs.size
+  accepted_friend_slugs.each_with_index do |seeded_profile_slug, index|
     friend_user = Profile.find_by!(slug: seeded_profile_slug).user
 
     relation = if index.even?
@@ -386,6 +488,27 @@ if Rails.env.development?
     relation = Friend.find_or_initialize_by(inviter: demo_user, invitee: invitee_user)
     relation.status = :declined
     relation.save!
+  end
+
+  blocked_by_demo_user = Profile.find_by!(slug: blocked_by_demo_slug).user
+  Friend.find_or_initialize_by(inviter: demo_user, invitee: blocked_by_demo_user).tap do |relation|
+    relation.status = :blocked
+    relation.save!
+  end
+
+  blocked_demo_user = Profile.find_by!(slug: blocked_demo_slug).user
+  Friend.find_or_initialize_by(inviter: blocked_demo_user, invitee: demo_user).tap do |relation|
+    relation.status = :blocked
+    relation.save!
+  end
+
+  explicit_visibility_showcase = friend_visibility_showcase + [
+    { slug: "profile-seed-020", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :friends, playlists_privacy: :friends, friends_privacy: :members },
+    { slug: "profile-seed-021", privacy: :members, game_library_privacy: :friends, gaming_activity_privacy: :private, playlists_privacy: :members, friends_privacy: :friends }
+  ]
+
+  explicit_visibility_showcase.each do |config|
+    Profile.find_by!(slug: config.fetch(:slug)).update!(config.except(:slug))
   end
 
   playlist_caches = 40.times.map do |index|
@@ -583,7 +706,12 @@ if Rails.env.development?
 
   puts "Seeded demo data: #{demo_user.email} / password: Test123$"
   puts "Public profiles seeded: #{Profile.privacy_public.count}"
+  puts "Members-only profiles seeded: #{Profile.privacy_members.count}"
   puts "Demo friends accepted: #{demo_user.friends.count}"
+  puts "Demo accepted friend showcase: #{accepted_friend_slugs.join(', ')}"
+  puts "Demo blocked showcase: blocked_by_demo=#{blocked_by_demo_slug}, blocked_demo=#{blocked_demo_slug}"
+  puts "Seed profiles with members-only games: #{Profile.where(game_library_privacy: :members).count}"
+  puts "Seed profiles with friends-only games: #{Profile.where(game_library_privacy: :friends).count}"
   puts "Demo pending invitations received: #{demo_user.pending_inviters.count}"
   puts "Demo pending invitations sent: #{demo_user.pending_invitees.count}"
   puts "Demo declined invitations received (you declined): #{demo_user.declined_friendlies.count}"

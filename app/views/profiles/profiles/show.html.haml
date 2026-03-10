@@ -1,95 +1,89 @@
 - games_count = @profile_stats[:games_count]
+- games_played_count = @profile_stats[:games_played_count]
 - playlists_count = @profile_stats[:playlists_count]
 - is_own_profile = user_signed_in? && @current_user_id == @profile.user_id
 - active_friends_count = @profile_stats[:active_friends_count]
-- pending_received_count = @profile_stats[:pending_received_count]
 - profile_url_value = profile_url(@profile)
-- invite_tab = @friendship_state&.to_sym == :you_declined ? "friends" : "sent"
-- invite_data = @friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
-- can_view_games = is_own_profile || @profile.game_library_privacy_public? || (@profile.game_library_privacy_friendly? && @friendship_state&.to_sym == :friends)
 
-.profiles-show-header.card.profiles-section-card.mb-3
-  .card-body
-    .d-flex.flex-wrap.align-items-start.justify-content-between.gap-3
-      .d-flex.align-items-start.gap-3.min-w-0
-        .profiles-show-avatar
-          %i.bi.bi-person-circle
-        .min-w-0
-          %h1.mb-1.text-break= @profile.name
-          .d-flex.flex-wrap.gap-2
-            %span.profiles-show-badge
-              Privacy:
-              %strong.ms-1= @profile.privacy.humanize
-            %span.profiles-show-badge
-              Games privacy:
-              %strong.ms-1= @profile.game_library_privacy.humanize
-            - if @profile.vanity_url.present?
-              %span.profiles-show-badge
-                Vanity:
-                %strong.ms-1= @profile.vanity_url
-      .d-flex.flex-wrap.gap-2
-        - if can_view_games
-          = link_to "Games", profile_games_path(@profile), class: "profiles-action-pill profiles-action-pill-primary"
-        - if is_own_profile
-          = link_to "Edit profile", edit_profile_path(@profile), class: "profiles-action-pill"
-          = link_to "Friends", profile_friends_path(@profile, tab: "friends"), class: "profiles-action-pill"
-          = link_to "Playlists", profile_playlists_path(@profile), class: "profiles-action-pill"
-        - elsif user_signed_in?
-          - if @friendship_state&.to_sym == :invite_received
-            = link_to profile_friendship_state_label(@friendship_state), profile_friends_path(@current_profile, tab: "received"), class: profile_friendship_state_class(@friendship_state)
-          - elsif @friendship_state.present? && @friendship_state.to_sym != :you_declined
-            %span{class: profile_friendship_state_class(@friendship_state)}= profile_friendship_state_label(@friendship_state)
-          - else
-            = link_to "Invite", profile_invite_friend_path(@profile, tab: invite_tab), class: "profiles-action-pill", data: invite_data
-        = link_to "Back", profiles_path, class: "profiles-action-pill"
+= render "profiles/profiles/profile_nav", current_section: :profile
 
 .row.g-3.mb-3
-  .col-12.col-md-6.col-xl-3
-    .card.profiles-section-card.h-100
-      .card-body
-        .profiles-stat-label Games
-        .profiles-stat-value= games_count
-  .col-12.col-md-6.col-xl-3
-    .card.profiles-section-card.h-100
-      .card-body
-        .profiles-stat-label Playlists
-        .profiles-stat-value= playlists_count
-  .col-12.col-md-6.col-xl-3
-    .card.profiles-section-card.h-100
-      .card-body
-        .profiles-stat-label Friends
-        .profiles-stat-value= active_friends_count
-  .col-12.col-md-6.col-xl-3
-    .card.profiles-section-card.h-100
-      .card-body
-        .profiles-stat-label Pending invites
-        .profiles-stat-value= pending_received_count
+  - if @can_view_games
+    .col-12.col-md-6.col-xl-3
+      .card.profiles-section-card.h-100
+        .card-body
+          .profiles-stat-label Games
+          .profiles-stat-value= games_count
+    .col-12.col-md-6.col-xl-3
+      .card.profiles-section-card.h-100
+        .card-body
+          .profiles-stat-label Played Games
+          .profiles-stat-value= games_played_count
+          .small.text-muted.mt-1 Games with last activity
+  - if @can_view_playlists || is_own_profile
+    .col-12.col-md-6.col-xl-3
+      .card.profiles-section-card.h-100
+        .card-body
+          .profiles-stat-label Playlists
+          .profiles-stat-value= playlists_count
+          .small.text-muted.mt-1 Visible under playlist privacy
+  - if @can_view_friends || is_own_profile
+    .col-12.col-md-6.col-xl-3
+      .card.profiles-section-card.h-100
+        .card-body
+          .profiles-stat-label Friends
+          .profiles-stat-value= active_friends_count
 
-.row.g-3
-  .col-12.col-lg-7
-    .card.profiles-section-card.h-100
-      .card-body
-        %h2.h5.mb-3 Profile details
-        %dl.row.mb-0
-          %dt.col-5.col-md-4.text-muted Name
-          %dd.col-7.col-md-8= @profile.name
+.card.profiles-section-card
+  .card-body
+    %h2.h5.mb-3 Profile URL
+    %p.text-muted.small.mb-2 Share this link:
+    .profiles-url-box.text-break= profile_url_value
 
-          %dt.col-5.col-md-4.text-muted Vanity URL
-          %dd.col-7.col-md-8= @profile.vanity_url.presence || "N/A"
+- if @can_view_gaming_activity
+  .row.g-3.mt-1
+    .col-12.col-xl-7
+      .card.profiles-section-card.h-100
+        .card-body
+          .d-flex.align-items-center.justify-content-between.gap-2.mb-2
+            %h2.h5.mb-0 Recent game activity
+            - if @can_view_games
+              = link_to "Open games", profile_games_path(@profile), class: "profiles-action-pill profiles-action-pill-sm"
+          - if @recent_games.any?
+            .table-responsive.profiles-table-wrap
+              %table.table.table-sm.align-middle.profiles-table.mb-0
+                %thead
+                  %tr
+                    %th Name
+                    %th Last activity
+                    %th.text-end
+                %tbody
+                  - @recent_games.each do |game|
+                    %tr
+                      %td.fw-semibold= game.name
+                      %td= time_ago_in_words(game.last_activity) + " ago"
+                      %td.text-end
+                        - if @can_view_games
+                          = link_to "Show", profile_game_path(@profile, game), class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm"
+          - else
+            %p.text-muted.mb-0 No recent activity yet.
 
-          %dt.col-5.col-md-4.text-muted Privacy
-          %dd.col-7.col-md-8= @profile.privacy.humanize
-
-          %dt.col-5.col-md-4.text-muted Games privacy
-          %dd.col-7.col-md-8= @profile.game_library_privacy.humanize
-
-          %dt.col-5.col-md-4.text-muted Member since
-          %dd.col-7.col-md-8= time_ago_in_words(@profile.created_at) + " ago"
-
-  .col-12.col-lg-5
-    .card.profiles-section-card.h-100
-      .card-body
-        %h2.h5.mb-3 Profile URL
-        %p.text-muted.small.mb-2 Share this link:
-        .profiles-url-box.text-break= profile_url_value
-        .small.text-muted.mt-2 Works for public and friendly profiles.
+    .col-12.col-xl-5
+      .card.profiles-section-card.h-100
+        .card-body
+          .d-flex.flex-wrap.align-items-center.justify-content-between.gap-2.mb-3
+            %h2.h5.mb-0 Current game activity
+            - if @can_view_games
+              = link_to "Open games", profile_games_path(@profile), class: "profiles-action-pill profiles-action-pill-sm"
+          - if @active_games.any?
+            .d-flex.flex-column.gap-2
+              - @active_games.each do |game|
+                .d-flex.flex-wrap.align-items-center.justify-content-between.gap-2
+                  .fw-semibold= game.name
+                  .d-flex.flex-wrap.justify-content-end.gap-2
+                    - game_activity_states(game).each do |state|
+                      %span{class: profile_activity_pill_class(state[:tone])}= state[:label]
+                    - if @can_view_games
+                      = link_to "Show", profile_game_path(@profile, game), class: "profiles-action-pill profiles-action-pill-sm"
+          - else
+            %p.text-muted.mb-0 No active game runtime statuses right now.

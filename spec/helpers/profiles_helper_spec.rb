@@ -2,6 +2,33 @@
 require 'rails_helper'
 
 RSpec.describe ProfilesHelper do
+  describe "#profile_running_game_summary" do
+    it "returns a single running game label when activity is visible" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      user.games.create!(name: "Hades", is_running: true)
+
+      expect(helper.profile_running_game_summary(user.profile, nil)).to eq("Now playing: Hades")
+    end
+
+    it "collapses multiple running games into a short summary" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      user.games.create!(name: "Balatro", is_running: true)
+      user.games.create!(name: "Hades", is_running: true)
+
+      expect(helper.profile_running_game_summary(user.profile, nil)).to eq("Now playing: Balatro +1 more")
+    end
+
+    it "returns nil when activity visibility is blocked" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :private)
+      user.games.create!(name: "Hades", is_running: true)
+
+      expect(helper.profile_running_game_summary(user.profile, nil)).to be_nil
+    end
+  end
+
   describe "#profile_friendship_state_label" do
     it "returns a human-readable label for known states" do
       expect(helper.profile_friendship_state_label(:friends)).to eq("Friends")

@@ -1,5 +1,4 @@
-%h1 Friends
-%p.text-muted.mb-3 You can set your profile to friendly in the avatar menu and share your profile URL for a friend to invite.
+= render "profiles/profiles/profile_nav", current_section: :friends
 
 .profiles-search-form.mb-3
   = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
@@ -22,35 +21,39 @@
   - tab_path = ->(tab_name) { profile_friends_path(@profile, filter_params.merge(tab: tab_name)) }
   .card.profiles-section-card.mt-3
     .card-body
-      %ul.nav.nav-tabs.profiles-friends-tabs.mb-3{role: "tablist"}
-        %li.nav-item{role: "presentation"}
-          = link_to tab_path.call("friends"), class: "nav-link #{'active' if @active_tab == 'friends'}", role: "tab", aria: { selected: (@active_tab == "friends").to_s } do
-            Friends
-            %span.badge.rounded-pill.text-bg-secondary.ms-1= @friends_total_count
-        %li.nav-item{role: "presentation"}
-          = link_to tab_path.call("received"), class: "nav-link #{'active' if @active_tab == 'received'}", role: "tab", aria: { selected: (@active_tab == "received").to_s } do
-            Received
-            %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_received_count
-        %li.nav-item{role: "presentation"}
-          = link_to tab_path.call("sent"), class: "nav-link #{'active' if @active_tab == 'sent'}", role: "tab", aria: { selected: (@active_tab == "sent").to_s } do
-            Sent
-            %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_sent_count
-        %li.nav-item{role: "presentation"}
-          = link_to tab_path.call("declined"), class: "nav-link #{'active' if @active_tab == 'declined'}", role: "tab", aria: { selected: (@active_tab == "declined").to_s } do
-            Declined
-            %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_declined_count
-
+      - if @own_profile
+        %ul.nav.nav-tabs.profiles-friends-tabs.mb-3{role: "tablist"}
+          %li.nav-item{role: "presentation"}
+            = link_to tab_path.call("friends"), class: "nav-link #{'active' if @active_tab == 'friends'}", role: "tab", aria: { selected: (@active_tab == "friends").to_s } do
+              Friends
+              %span.badge.rounded-pill.text-bg-secondary.ms-1= @friends_total_count
+          %li.nav-item{role: "presentation"}
+            = link_to tab_path.call("received"), class: "nav-link #{'active' if @active_tab == 'received'}", role: "tab", aria: { selected: (@active_tab == "received").to_s } do
+              Received
+              %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_received_count
+          %li.nav-item{role: "presentation"}
+            = link_to tab_path.call("sent"), class: "nav-link #{'active' if @active_tab == 'sent'}", role: "tab", aria: { selected: (@active_tab == "sent").to_s } do
+              Sent
+              %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_sent_count
+          %li.nav-item{role: "presentation"}
+            = link_to tab_path.call("declined"), class: "nav-link #{'active' if @active_tab == 'declined'}", role: "tab", aria: { selected: (@active_tab == "declined").to_s } do
+              Declined
+              %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_declined_count
+          %li.nav-item{role: "presentation"}
+            = link_to tab_path.call("blocked"), class: "nav-link #{'active' if @active_tab == 'blocked'}", role: "tab", aria: { selected: (@active_tab == "blocked").to_s } do
+              Blocked
+              %span.badge.rounded-pill.text-bg-secondary.ms-1= @blocked_count
       - if @active_tab == "friends"
         .tab-content
           .tab-pane.fade.show.active{role: "tabpanel"}
             .d-flex.align-items-center.justify-content-end.mb-2
               = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
 
-            %p.mb-2 Total friends listed: #{@friends_total_count}
+            %p.profiles-section-summary Total friends listed: #{@friends_total_count}
 
             .profiles-list-desktop.d-none.d-md-block
               .table-responsive.profiles-table-wrap
-                %table.table.table-hover.align-middle.profiles-table.mb-0
+                %table.table.table-sm.table-hover.align-middle.profiles-table.mb-0
                   %thead
                     %tr
                       %th Name
@@ -60,15 +63,19 @@
                     - if @friends.any?
                       - @friends.each do |friend|
                         - games_count = friend.read_attribute(:games_count).to_i
-                        - can_view_games = friend.game_library_privacy_public? || friend.game_library_privacy_friendly?
+                        - can_view_games = friend.game_library_visible_to?(current_user)
+                        - relation = @own_profile ? Friend.find_by(status: :accepted, inviter_id: [@profile.user.id, friend.user_id], invitee_id: [@profile.user.id, friend.user_id]) : nil
                         %tr
                           %td.fw-semibold= friend.name
                           %td= games_count
                           %td.text-end
-                            .d-inline-flex.gap-2
+                            .d-inline-flex.gap-1.flex-wrap.justify-content-end
                               - if can_view_games
-                                = link_to "Games", profile_games_path(friend), class: "profiles-action-pill", data: { turbo_frame: "_top" }
-                              = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                                = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                              = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                              - if relation.present?
+                                = link_to "Unfriend", profile_unfriend_friend_path(@profile, id: relation.id, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "Remove this friend?" }
+                                = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
                     - else
                       %tr
                         %td.text-muted{colspan: 3} No friends match current filters.
@@ -78,7 +85,8 @@
                 - if @friends.any?
                   - @friends.each do |friend|
                     - games_count = friend.read_attribute(:games_count).to_i
-                    - can_view_games = friend.game_library_privacy_public? || friend.game_library_privacy_friendly?
+                    - can_view_games = friend.game_library_visible_to?(current_user)
+                    - relation = @own_profile ? Friend.find_by(status: :accepted, inviter_id: [@profile.user.id, friend.user_id], invitee_id: [@profile.user.id, friend.user_id]) : nil
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3
@@ -90,6 +98,9 @@
                               - if can_view_games
                                 = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
                               = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                              - if relation.present?
+                                = link_to "Unfriend", profile_unfriend_friend_path(@profile, id: relation.id, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "Remove this friend?" }
+                                = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
                 - else
                   .col-12
                     .text-muted No friends match current filters.
@@ -99,7 +110,7 @@
       - elsif @active_tab == "received"
         .tab-content
           .tab-pane.fade.show.active{role: "tabpanel"}
-            %p.mb-2 Total received invitations listed: #{@invitations_received_count}
+            %p.profiles-section-summary Total received invitations listed: #{@invitations_received_count}
             - if @invitations_received.any?
               .table-responsive.profiles-table-wrap
                 %table.table.table-sm.align-middle.profiles-table.mb-0
@@ -116,12 +127,13 @@
                             = link_to "Show", invitation_received.inviter.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
                             = link_to "Accept", profile_accept_friend_path(@profile, id: invitation_received.id, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
                             = link_to "Decline", profile_decline_friend_path(@profile, id: invitation_received.id, tab: "declined"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
+                            = button_to "Block", profile_block_friend_path(@profile, id: invitation_received.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
             - else
               %p.text-muted.mb-0 No invitations received.
       - elsif @active_tab == "sent"
         .tab-content
           .tab-pane.fade.show.active{role: "tabpanel"}
-            %p.mb-2 Total sent invitations listed: #{@invitations_sent_count}
+            %p.profiles-section-summary Total sent invitations listed: #{@invitations_sent_count}
             - if @invitations_sent.any?
               .table-responsive.profiles-table-wrap
                 %table.table.table-sm.align-middle.profiles-table.mb-0
@@ -137,13 +149,17 @@
                           .d-inline-flex.gap-1.flex-wrap.justify-content-end
                             = link_to "Show", invitation_sent.invitee.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
                             = link_to "Cancel", profile_cancel_friend_path(@profile, id: invitation_sent.id, tab: "sent"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
+                            = button_to "Block", profile_block_friend_path(@profile, id: invitation_sent.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
             - else
               %p.text-muted.mb-0 No invitations sent.
       - else
         .tab-content
           .tab-pane.fade.show.active{role: "tabpanel"}
-            %p.mb-2 Total declined invitations listed: #{@invitations_declined_count}
-            - if @invitations_declined.any?
+            - if @active_tab == "declined"
+              %p.profiles-section-summary Total declined invitations listed: #{@invitations_declined_count}
+            - else
+              %p.profiles-section-summary Total blocked users listed: #{@blocked_count}
+            - if @active_tab == "declined" && @invitations_declined.any?
               .table-responsive.profiles-table-wrap
                 %table.table.table-sm.align-middle.profiles-table.mb-0
                   %thead
@@ -169,5 +185,21 @@
                               = link_to "Show", other_profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
                             - if you_declined && other_profile.present?
                               = link_to "Invite", profile_invite_friend_path(other_profile, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" }
+                            = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
+            - elsif @active_tab == "blocked" && @blocked_relations.any?
+              .table-responsive.profiles-table-wrap
+                %table.table.table-sm.align-middle.profiles-table.mb-0
+                  %thead
+                    %tr
+                      %th Name
+                      %th.text-end Actions
+                  %tbody
+                    - @blocked_relations.each do |relation|
+                      - blocked_profile = relation.invitee.profile
+                      %tr
+                        %td.fw-semibold= blocked_profile&.name || relation.invitee.email
+                        %td.text-end
+                          .d-inline-flex.gap-1.flex-wrap.justify-content-end
+                            = link_to "Unblock", profile_unblock_friend_path(@profile, id: relation.id, tab: "blocked"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "Unblock this user?" }
             - else
-              %p.text-muted.mb-0 No declined invitations.
+              %p.text-muted.mb-0= @active_tab == "blocked" ? "No blocked users." : "No declined invitations."

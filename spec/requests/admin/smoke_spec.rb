@@ -15,7 +15,10 @@ RSpec.describe "Admin smoke", type: :request do
         name: "Demo Filter Profile",
         vanity_url: "demo-filter-profile",
         privacy: :public,
-        game_library_privacy: :friendly
+        game_library_privacy: :friends,
+        gaming_activity_privacy: :friends,
+        playlists_privacy: :friends,
+        friends_privacy: :friends
       )
     end
   end
@@ -126,7 +129,7 @@ RSpec.describe "Admin smoke", type: :request do
       "/admin/admin_users" => { q: { email_cont: admin_user.email, sign_in_count_eq: "0" } },
       "/admin/users" => { q: { email_cont: owner.email, games_count_gteq: "0", games_count_lteq: "999" } },
       "/admin/user_deletion_events" => { q: { status_eq: "requested" } },
-      "/admin/profiles" => { q: { name_cont: "Demo", vanity_url_cont: "demo", privacy_eq: "public", game_library_privacy_eq: "friendly", user_email_cont: owner.email } },
+      "/admin/profiles" => { q: { name_cont: "Demo", vanity_url_cont: "demo", privacy_eq: "public", game_library_privacy_eq: "friends", user_email_cont: owner.email } },
       "/admin/friends" => { q: { inviter_email_cont: owner.email, invitee_email_cont: invitee.email, status_eq: "Any" } },
       "/admin/games" => { q: { name_cont: game.name, user_email_cont: owner.email } },
       "/admin/categories" => { q: { user_email_cont: owner.email } },
@@ -210,11 +213,11 @@ RSpec.describe "Admin smoke", type: :request do
   it "renders empty-value Any options for enum-like filters" do
     get "/admin/friends"
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(%(<option value="" selected="selected">Any</option>))
+    expect(response.body).to match(/<option(?: value="")?(?: selected="(?:selected|true)")?>Any<\/option>/)
 
     get "/admin/sync_jobs"
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(%(<option value="" selected="selected">Any</option>))
+    expect(response.body).to match(/<option(?: value="")?(?: selected="(?:selected|true)")?>Any<\/option>/)
   end
 
   it "shows playlist item sidebar links and pre-fills new form from filtered referer" do

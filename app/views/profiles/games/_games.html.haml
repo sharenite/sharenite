@@ -1,6 +1,6 @@
 = turbo_frame_tag "games" do
   %p.games-list-total.mt-3.mb-2 Total games listed: #{@games_count}
-  - current_sort = params[:sort].presence || "last_activity_desc"
+  - current_sort = @can_view_gaming_activity ? (params[:sort].presence || "last_activity_desc") : "name_asc"
 
   .d-flex.align-items-center.justify-content-end.mb-2
     = paginate @games, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
@@ -23,8 +23,9 @@
               %span.games-col-title.games-col-title--tag Tags
             %th.games-col-header.d-none.d-xxl-table-cell
               %span.games-col-title.games-col-title--platform Platforms
-            %th= games_sort_link(@profile, "Last Activity", current_sort, { asc: "last_activity_asc", desc: "last_activity_desc" })
-            %th= games_sort_link(@profile, "Playtime", current_sort, { asc: "playtime_asc", desc: "playtime_desc" })
+            - if @can_view_gaming_activity
+              %th= games_sort_link(@profile, "Last Activity", current_sort, { asc: "last_activity_asc", desc: "last_activity_desc" })
+              %th= games_sort_link(@profile, "Playtime", current_sort, { asc: "playtime_asc", desc: "playtime_desc" })
             %th= games_sort_link(@profile, "Plays", current_sort, { asc: "play_count_asc", desc: "play_count_desc" })
             %th.text-end Actions
         %tbody

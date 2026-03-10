@@ -57,21 +57,11 @@ module Profiles
     end
 
     def check_profile
-      redirect_to_profiles_with_notice if @profile.nil? || 
-        (!profile_own? && 
-        !profile_public? && 
-        !profile_friend?)
+      redirect_to_profiles_with_notice if @profile.nil? || !@profile.visible_to?(current_user)
     end
 
     def check_friendly_profile
-      redirect_to_profiles_with_notice if @profile.nil? || 
-        (!profile_public? && 
-        !profile_friendly? && 
-        !profile_friend?)
-    end
-
-    def profile_friendly?
-      @profile.privacy_friendly?
+      redirect_to_profiles_with_notice if @profile.nil? || !@profile.visible_to?(current_user)
     end
 
     def profile_own?
@@ -83,10 +73,7 @@ module Profiles
     end
 
     def profile_friend?
-      return false unless current_user
-      return false if @profile.privacy_private?
-
-      accepted_friendship_with_profile_user?
+      @profile.friends_with?(current_user)
     end
 
     def accepted_friendship_with_profile_user?

@@ -1,4 +1,4 @@
-- row_cache_key = ["games-row-v2", view_mode, game.cache_key_with_version]
+- row_cache_key = ["games-row-v3", view_mode, @can_view_gaming_activity, game.cache_key_with_version]
 
 - cache row_cache_key do
   - tag_names = game.tags.map(&:name).sort
@@ -14,7 +14,10 @@
             %i.bi.bi-star-fill.text-warning
           %strong= game.name
           - if game.is_installed
-            %span.badge.rounded-pill.text-bg-success.ms-1 Installed
+            %span.games-state-pill.games-state-pill--installed.ms-1 Installed
+          - if @can_view_gaming_activity
+            - game_activity_states(game).each do |state|
+              %span{class: game_activity_pill_class(state[:tone])}= state[:label]
       %td.d-lg-table-cell.d-xxl-none
         .games-meta-stack
           - if game.source&.name.present?
@@ -71,16 +74,18 @@
               %span.games-value-pill.games-value-pill--platform= platform_name
           - else
             %span.games-value-pill.games-value-pill--platform.games-value-pill--muted No platform
-      %td
-        - if game.last_activity
-          %abbr{title: game.last_activity.to_s} #{time_ago_in_words(game.last_activity)} ago
-        - else
-          Never
-      %td= playtime_label
+      - if @can_view_gaming_activity
+        %td
+          - if game.last_activity
+            %abbr{title: game.last_activity.to_s} #{time_ago_in_words(game.last_activity)} ago
+          - else
+            Never
+        %td= playtime_label
       %td= game.play_count.to_i
       %td.text-end
         .d-inline-flex.gap-2
-          = link_to "Edit", edit_profile_game_path(@profile, game), class: "games-action-pill", data: { turbo_frame: "_top" }
+          - if current_user == @profile.user
+            = link_to "Edit", edit_profile_game_path(@profile, game), class: "games-action-pill", data: { turbo_frame: "_top" }
           = link_to "Show", profile_game_path(@profile, game), class: "games-action-pill games-action-pill-primary", data: { turbo_frame: "_top" }
   - else
     .card.games-mobile-card.mb-2{id: dom_id(game)}
@@ -90,19 +95,24 @@
             - if game.favorite
               %i.bi.bi-star-fill.text-warning
             %strong= game.name
-          - if game.is_installed
-            %span.badge.rounded-pill.text-bg-success Installed
+          .d-flex.flex-wrap.justify-content-end.gap-2
+            - if game.is_installed
+              %span.games-state-pill.games-state-pill--installed Installed
+            - if @can_view_gaming_activity
+              - game_activity_states(game).each do |state|
+                %span{class: game_activity_pill_class(state[:tone])}= state[:label]
         .row.g-2.mt-1.small
-          .col-6
-            .text-muted Last activity
-            %div
-              - if game.last_activity
-                = "#{time_ago_in_words(game.last_activity)} ago"
-              - else
-                Never
-          .col-6
-            .text-muted Playtime
-            %div= playtime_label
+          - if @can_view_gaming_activity
+            .col-6
+              .text-muted Last activity
+              %div
+                - if game.last_activity
+                  = "#{time_ago_in_words(game.last_activity)} ago"
+                - else
+                  Never
+            .col-6
+              .text-muted Playtime
+              %div= playtime_label
           .col-6
             .text-muted Plays
             %div= game.play_count.to_i
@@ -132,5 +142,6 @@
               - else
                 %span.games-value-pill.games-value-pill--platform.games-value-pill--muted No platform
         .d-flex.gap-3.mt-2
-          = link_to "Edit", edit_profile_game_path(@profile, game), class: "games-action-pill", data: { turbo_frame: "_top" }
+          - if current_user == @profile.user
+            = link_to "Edit", edit_profile_game_path(@profile, game), class: "games-action-pill", data: { turbo_frame: "_top" }
           = link_to "Show", profile_game_path(@profile, game), class: "games-action-pill games-action-pill-primary", data: { turbo_frame: "_top" }

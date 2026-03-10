@@ -15,7 +15,13 @@ module Profiles
       @friendship_state = friendship_states_for_user_ids([@profile.user_id])[@profile.user_id]
       @current_user_id = current_user&.id
       @current_profile = current_profile
+      @can_view_games = @profile.game_library_visible_to?(current_user)
+      @can_view_gaming_activity = @profile.gaming_activity_visible_to?(current_user)
+      @can_view_playlists = @profile.playlists_visible_to?(current_user)
+      @can_view_friends = @profile.friends_list_visible_to?(current_user)
       @profile_stats = build_profile_stats
+      @recent_games = @can_view_gaming_activity ? recent_games_scope.limit(5).to_a : []
+      @active_games = @can_view_gaming_activity ? active_games_scope.limit(8).to_a : []
     end
 
     def update
@@ -36,22 +42,7 @@ module Profiles
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
 
-      games_from = parse_games_count_param(:games_from)
-      games_to = parse_games_count_param(:games_to)
-
-      scope = apply_games_count_filter(scope, games_from:, games_to:)
-
       scope.order("profiles.name ASC")
-    end
-
-    def parse_games_count_param(key)
-      value = params[key].to_s.strip
-      return if value.blank?
-
-      parsed = Integer(value, 10)
-      parsed.negative? ? nil : parsed
-    rescue ArgumentError
-      nil
     end
 
     def friendship_states_for_user_ids(user_ids)
@@ -60,20 +51,8 @@ module Profiles
       FriendshipStateResolver.states_for_users(current_user_id: current_user.id, user_ids:)
     end
 
-    def check_profile
-      redirect_to_profiles_with_notice if @profile.nil? || 
-        (!profile_own? && 
-        !profile_public? && 
-        !profile_friendly? && 
-        !profile_friend?)
-    end
-
-    def profile_friendly?
-      @profile.privacy_friendly?
-    end
-
     def profile_params
-      params.require(:profile).permit(:name, :privacy, :game_library_privacy, :vanity_url)
+      params.require(:profile).permit(:name, :privacy, :game_library_privacy, :gaming_activity_privacy, :playlists_privacy, :friends_privacy, :vanity_url)
     end
 
     def set_profile
@@ -82,20 +61,43 @@ module Profiles
 
     def build_profile_stats
       profile_user_id = @profile.user_id
-      is_own_profile = user_signed_in? && @current_user_id == profile_user_id
+      visible_friend_user_ids = Profile.where.not(privacy: :private)
+                                       .where(user_id: accepted_friend_user_ids_scope(profile_user_id))
 
       {
         games_count: games_count_value(@profile.user),
+        games_played_count: @profile.user.games.where.not(last_activity: nil).count,
         playlists_count: Playlist.where(user_id: profile_user_id).count,
-        active_friends_count: Friend.where(status: :accepted)
-                                    .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: profile_user_id)
-                                    .count,
-        pending_received_count: is_own_profile ? Friend.where(invitee_id: profile_user_id, status: :invited).count : 0
+        active_friends_count: visible_friend_user_ids.count
       }
     end
 
+    def active_games_scope
+      @profile.user.games.where(
+        "is_launching = :active OR is_running = :active OR is_installing = :active OR is_uninstalling = :active",
+        active: true
+      ).order(Arel.sql("LOWER(name) ASC"))
+    end
+
+    def recent_games_scope
+      @profile.user.games.where.not(last_activity: nil).order(last_activity: :desc)
+    end
+
     def base_profiles_scope
-      scope = Profile.privacy_public.joins(:user)
+      scope = Profile.joins(:user)
+      scope = if current_user
+                scope.where.not(privacy: :private)
+              else
+                scope.where(privacy: :public)
+              end
+      if current_user
+        blocked_user_ids = Friend.where(status: :blocked)
+                                 .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: current_user.id)
+                                 .pluck(:inviter_id, :invitee_id)
+                                 .flatten
+                                 .uniq - [current_user.id]
+        scope = scope.where.not(user_id: blocked_user_ids) if blocked_user_ids.any?
+      end
       return scope.select("profiles.*, COALESCE(users.games_count, 0) AS games_count") if User.games_count_available?
 
       scope.left_joins(user: :games)
@@ -103,31 +105,18 @@ module Profiles
            .group("profiles.id")
     end
 
-    def apply_games_count_filter(scope, games_from:, games_to:)
-      return scope if games_from.nil? && games_to.nil?
-
-      comparator = User.games_count_available? ? "COALESCE(users.games_count, 0)" : "COUNT(games.id)"
-      apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
-    end
-
-    def apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
-      if User.games_count_available?
-        scope = scope.where("#{comparator} >= ?", games_from) unless games_from.nil?
-        return scope.where("#{comparator} <= ?", games_to) unless games_to.nil?
-
-        return scope
-      end
-
-      scope = scope.having("#{comparator} >= ?", games_from) unless games_from.nil?
-      return scope.having("#{comparator} <= ?", games_to) unless games_to.nil?
-
-      scope
-    end
-
     def games_count_value(user)
       return user.games_count.to_i if User.games_count_available?
 
       user.games.count
+    end
+
+    def accepted_friend_user_ids_scope(user_id)
+      quoted_user_id = ActiveRecord::Base.connection.quote(user_id)
+      sql = "DISTINCT CASE WHEN inviter_id = #{quoted_user_id} THEN invitee_id ELSE inviter_id END"
+      Friend.where(status: :accepted)
+            .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
+            .select(Arel.sql(sql))
     end
   end
 end

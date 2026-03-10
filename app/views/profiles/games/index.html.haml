@@ -1,3 +1,5 @@
+= render "profiles/profiles/profile_nav", current_section: :games
+
 - if @sync_jobs&.any?
   .alert.alert-primary
     = "There's a synchronization still being processed:"
@@ -20,4 +22,5 @@
 .row
   .col-12
     = render "search_form"
-= render 'games', games: @games
+.games-list-breakout
+  = render 'games', games: @games

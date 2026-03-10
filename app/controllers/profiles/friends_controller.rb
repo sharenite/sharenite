@@ -5,13 +5,15 @@ module Profiles
   # Profiles friends controller
   # rubocop:disable Metrics/ClassLength
   class FriendsController < BaseController
-    TABS = %w[friends received sent declined].freeze
+    TABS = %w[friends received sent declined blocked].freeze
 
-    before_action :check_current_user_profile, only: %i[index accept decline cancel]
-    before_action :check_friendly_access_profile, only: %i[invite]
+    before_action :check_friends_index_access_profile, only: %i[index]
+    before_action :check_current_user_profile, only: %i[accept decline cancel unfriend block unblock]
+    before_action :check_friendly_access_profile, only: %i[invite block_profile]
 
     def index
-      @active_tab = active_tab
+      @own_profile = profile_own?
+      @active_tab = @own_profile ? active_tab : "friends"
       set_friends
       set_invitations
       render :index
@@ -44,6 +46,10 @@ module Profiles
         case state
         when :friends
           flash[:notice] = "User is already a friend."
+        when :blocked_by_you
+          flash[:error] = "You have blocked this user."
+        when :blocked_you
+          flash[:error] = "This user is unavailable."
         when :invite_sent
           flash[:notice] = "Invitation already sent."
         when :invite_received
@@ -97,9 +103,77 @@ module Profiles
       end
       redirect_to profile_friends_path(current_user.profile, tab: redirect_tab("sent"))
     end
+
+    def unfriend
+      friend = Friend.find_by(id: params[:id])
+      if friend && friend.status_accepted? && friendship_involves_current_user?(friend)
+        friend.destroy
+        flash[:notice] = "Friend was removed."
+      else
+        flash[:error] = "Friend relation was not found."
+      end
+      redirect_to profile_friends_path(current_user.profile, tab: redirect_tab("friends"))
+    end
+
+    def block
+      friend = Friend.find_by(id: params[:id])
+      other_user = friend_other_user(friend)
+
+      if friend && other_user.present? && friendship_involves_current_user?(friend)
+        Friend.where(
+          "(inviter_id = :current_user_id AND invitee_id = :other_user_id) OR " \
+          "(inviter_id = :other_user_id AND invitee_id = :current_user_id)",
+          current_user_id: current_user.id,
+          other_user_id: other_user.id
+        ).delete_all
+        Friend.create!(inviter: current_user, invitee: other_user, status: :blocked)
+        flash[:notice] = "User was blocked."
+      else
+        flash[:error] = "Relation was not found."
+      end
+      redirect_to profile_friends_path(current_user.profile, tab: redirect_tab("blocked"))
+    end
+
+    def block_profile
+      other_user = @profile.user
+      if current_user.id == other_user.id
+        flash[:error] = "Can't block yourself."
+      else
+        Friend.where(
+          "(inviter_id = :current_user_id AND invitee_id = :other_user_id) OR " \
+          "(inviter_id = :other_user_id AND invitee_id = :current_user_id)",
+          current_user_id: current_user.id,
+          other_user_id: other_user.id
+        ).delete_all
+        Friend.create!(inviter: current_user, invitee: other_user, status: :blocked)
+        flash[:notice] = "User was blocked."
+      end
+      redirect_to profile_friends_path(current_user.profile, tab: redirect_tab("blocked"))
+    end
+
+    def unblock
+      friend = Friend.find_by(id: params[:id])
+      if friend && friend.status_blocked? && friend.inviter_id == current_user.id
+        friend.destroy
+        flash[:notice] = "User was unblocked."
+      else
+        flash[:error] = "Blocked relation was not found."
+      end
+      redirect_to profile_friends_path(current_user.profile, tab: redirect_tab("blocked"))
+    end
     # rubocop:enable all
 
     private
+
+    def check_friends_index_access_profile
+      set_profile
+      return if profile_own?
+      return if @profile.visible_to?(current_user) && @profile.friends_list_visible_to?(current_user)
+
+      redirect_to_profiles_with_notice
+    rescue ActiveRecord::RecordNotFound
+      redirect_to_profiles_with_notice
+    end
 
     # rubocop:disable Metrics/AbcSize
     def set_friends
@@ -123,6 +197,18 @@ module Profiles
     end
 
     def set_invitations
+      unless @own_profile
+        @invitations_received_count = 0
+        @invitations_received = []
+        @invitations_sent_count = 0
+        @invitations_sent = []
+        @invitations_declined_count = 0
+        @invitations_declined = []
+        @blocked_count = 0
+        @blocked_relations = []
+        return
+      end
+
       name_query = params[:search_name].to_s.strip
       games_from = parse_games_count_param(:games_from)
       games_to = parse_games_count_param(:games_to)
@@ -140,6 +226,10 @@ module Profiles
       declined_scope = invitation_declined_scope(any_filter:, filtered_user_ids:)
       @invitations_declined_count = declined_scope.count
       @invitations_declined = @active_tab == "declined" ? declined_scope.load : []
+
+      blocked_scope = blocked_scope(any_filter:, filtered_user_ids:)
+      @blocked_count = blocked_scope.count
+      @blocked_relations = @active_tab == "blocked" ? blocked_scope.load : []
     end
 
     def parse_games_count_param(key)
@@ -201,6 +291,15 @@ module Profiles
         current_user_id: @profile.user.id,
         filtered_user_ids:
       )
+    end
+
+    def blocked_scope(any_filter:, filtered_user_ids:)
+      scope = Friend.where(status: :blocked, inviter_id: @profile.user.id)
+                    .includes(invitee: :profile)
+                    .order(updated_at: :desc)
+      return scope unless any_filter
+
+      scope.where(invitee_id: filtered_user_ids)
     end
 
     def accepted_friend_user_ids_scope
@@ -266,6 +365,16 @@ module Profiles
 
     def normalize_count_result(result)
       result.is_a?(Hash) ? result.size : result
+    end
+
+    def friendship_involves_current_user?(friend)
+      friend.inviter_id == current_user.id || friend.invitee_id == current_user.id
+    end
+
+    def friend_other_user(friend)
+      return unless friend
+
+      friend.inviter_id == current_user.id ? friend.invitee : friend.inviter
     end
 
     # rubocop:enable Metrics/AbcSize

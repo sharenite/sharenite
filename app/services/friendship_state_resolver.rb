@@ -3,6 +3,8 @@
 # Resolves relationship states between users based on Friend relations.
 class FriendshipStateResolver
   STATE_PRIORITY = {
+    blocked_you: 5,
+    blocked_by_you: 6,
     you_declined: 10,
     invite_declined: 20,
     invite_received: 30,
@@ -45,6 +47,8 @@ class FriendshipStateResolver
     def state_from_relations(relations:, current_user_id:)
       return nil if relations.blank?
 
+      return :blocked_by_you if relations.any? { |relation| relation.status_blocked? && relation.inviter_id == current_user_id }
+      return :blocked_you if relations.any? { |relation| relation.status_blocked? && relation.invitee_id == current_user_id }
       return :friends if relations.any?(&:status_accepted?)
       return :invite_sent if relations.any? { |relation| relation.status_invited? && relation.inviter_id == current_user_id }
       return :invite_received if relations.any? { |relation| relation.status_invited? && relation.invitee_id == current_user_id }
@@ -57,6 +61,8 @@ class FriendshipStateResolver
 
     def state_from_priority(priority)
       case priority.to_i
+      when STATE_PRIORITY[:blocked_by_you] then :blocked_by_you
+      when STATE_PRIORITY[:blocked_you] then :blocked_you
       when STATE_PRIORITY[:friends] then :friends
       when STATE_PRIORITY[:invite_sent] then :invite_sent
       when STATE_PRIORITY[:invite_received] then :invite_received
@@ -77,6 +83,8 @@ class FriendshipStateResolver
       <<~SQL.squish
         CASE
           WHEN status = 'accepted' THEN #{STATE_PRIORITY[:friends]}
+          WHEN status = 'blocked' AND inviter_id = #{quoted_current_id} THEN #{STATE_PRIORITY[:blocked_by_you]}
+          WHEN status = 'blocked' AND invitee_id = #{quoted_current_id} THEN #{STATE_PRIORITY[:blocked_you]}
           WHEN status = 'invited' AND inviter_id = #{quoted_current_id} THEN #{STATE_PRIORITY[:invite_sent]}
           WHEN status = 'invited' AND invitee_id = #{quoted_current_id} THEN #{STATE_PRIORITY[:invite_received]}
           WHEN status = 'declined' AND inviter_id = #{quoted_current_id} THEN #{STATE_PRIORITY[:invite_declined]}
