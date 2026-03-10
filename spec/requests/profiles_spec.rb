@@ -119,6 +119,20 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include("Played Games")
     end
 
+    it "does not show privately overridden running games in the profile header for other viewers" do
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      owner.games.create!(name: "Visible Game", is_running: true, private_override: false)
+      owner.games.create!(name: "Hidden Game", is_running: true, private_override: true)
+
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Now playing: Visible Game")
+      expect(response.body).not_to include("Hidden Game")
+      expect(response.body).not_to include("+1 more")
+    end
+
     it "rejects editing another user's profile" do
       owner = create(:user)
       viewer = create(:user)
@@ -222,6 +236,23 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include("Hidden")
       expect(response.body).not_to include("Games: 1")
       expect(response.body).not_to include(profile_games_path(hidden_library_friend.profile))
+    end
+
+    it "does not allow filtering hidden-library friends by their game count" do
+      owner = create(:user)
+      viewer = create(:user)
+      hidden_library_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      hidden_library_friend.profile.update!(privacy: :public, game_library_privacy: :friends, name: "Hidden Library Friend")
+      hidden_library_friend.games.create!(name: "Secret Game")
+      Friend.create!(inviter: owner, invitee: hidden_library_friend, status: :accepted)
+
+      sign_in viewer
+      get profile_friends_path(owner.profile, games_from: 1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Hidden Library Friend")
+      expect(response.body).to include("Total friends listed: 0")
     end
 
     it "redirects when friends list privacy blocks access" do
@@ -448,6 +479,19 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Playlists")
       expect(response.body).to include(">1<")
+    end
+
+    it "counts privately overridden playlists for the owner" do
+      owner = create(:user)
+      sign_in owner
+      create(:playlist, user: owner, private_override: false)
+      create(:playlist, user: owner, private_override: true)
+
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Playlists")
+      expect(response.body).to include(">2<")
     end
 
     it "does not count blocked friends in the visible friends stat" do

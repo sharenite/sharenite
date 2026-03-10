@@ -47,7 +47,7 @@ module ProfilesHelper
   def profile_running_game_summary(profile, viewer)
     return unless profile.gaming_activity_visible_to?(viewer)
 
-    summaries = profile_running_game_summaries(profile)
+    summaries = profile_running_game_summaries(profile, viewer)
     total_count = summaries.length
     return if total_count.zero?
 
@@ -84,7 +84,9 @@ module ProfilesHelper
 
   private
 
-  def profile_running_game_summaries(profile)
-    profile.user.games.where(is_running: true).order(Arel.sql("LOWER(name) ASC")).pluck(:name)
+  def profile_running_game_summaries(profile, viewer)
+    scope = profile.user.games.where(is_running: true)
+    scope = scope.where(private_override: false) unless viewer&.id == profile.user_id
+    scope.order(Arel.sql("LOWER(name) ASC")).pluck(:name)
   end
 end

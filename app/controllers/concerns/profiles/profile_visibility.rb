@@ -64,6 +64,7 @@ module Profiles
     end
 
     def playlists_count_value
+      return @profile.user.playlists.count if current_user&.id == @profile.user_id
       return @profile.user.playlists.where(private_override: false).count if @profile.playlists_visible_to?(current_user)
 
       0
@@ -88,6 +89,11 @@ module Profiles
               end
 
       scope.group(:user_id).count
+    end
+
+    def visible_game_count_sql(viewer: current_user, profiles_table: "profiles")
+      visibility_sql = visible_game_library_condition_sql(viewer:, profiles_table:)
+      "SUM(CASE WHEN #{visibility_sql} THEN 1 ELSE 0 END)"
     end
 
     def accepted_friend_user_ids_for(user_id)
@@ -165,6 +171,22 @@ module Profiles
       else
         false
       end
+    end
+
+    def visible_game_library_condition_sql(viewer: current_user, profiles_table: "profiles")
+      profile_user_column = "#{profiles_table}.user_id"
+      privacy_column = "#{profiles_table}.game_library_privacy"
+
+      return "#{privacy_column} = 'public'" unless viewer
+
+      friend_user_ids_sql = accepted_friend_user_ids_for(viewer.id).to_sql
+      quoted_viewer_id = ActiveRecord::Base.connection.quote(viewer.id)
+
+      <<~SQL.squish
+        #{profile_user_column} = #{quoted_viewer_id}
+        OR #{privacy_column} IN ('public', 'members')
+        OR (#{privacy_column} = 'friends' AND #{profile_user_column} IN (#{friend_user_ids_sql}))
+      SQL
     end
   end
   # rubocop:enable Metrics/ModuleLength

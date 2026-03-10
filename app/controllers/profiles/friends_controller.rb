@@ -352,17 +352,18 @@ module Profiles
     end
 
     def base_friends_scope
+      visible_games_count_sql = visible_game_count_sql
       scope = apply_profile_visibility_scope(Profile.where(user_id: accepted_friend_user_ids_scope))
               .joins(:user)
               .joins("LEFT JOIN games AS visible_games ON visible_games.user_id = users.id AND visible_games.private_override = FALSE")
-      scope.select("profiles.*, COUNT(visible_games.id) AS games_count")
+      scope.select("profiles.*, #{visible_games_count_sql} AS games_count")
            .group("profiles.id")
     end
 
     def apply_games_count_filter(scope, games_from:, games_to:)
       return scope if games_from.nil? && games_to.nil?
 
-      apply_games_count_bounds(scope, comparator: "COUNT(visible_games.id)", games_from:, games_to:)
+      apply_games_count_bounds(scope, comparator: visible_game_count_sql, games_from:, games_to:)
     end
 
     def apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
@@ -375,10 +376,11 @@ module Profiles
     def apply_user_games_count_filter(scope, games_from:, games_to:)
       return scope if games_from.nil? && games_to.nil?
 
+      visible_games_count_sql = visible_game_count_sql(viewer: current_user)
       apply_games_count_bounds(
         scope.joins("LEFT JOIN games AS visible_games ON visible_games.user_id = users.id AND visible_games.private_override = FALSE")
              .group("users.id"),
-        comparator: "COUNT(visible_games.id)",
+        comparator: visible_games_count_sql,
         games_from:,
         games_to:
       )

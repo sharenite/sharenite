@@ -27,6 +27,24 @@ RSpec.describe ProfilesHelper do
 
       expect(helper.profile_running_game_summary(user.profile, nil)).to be_nil
     end
+
+    it "excludes privately overridden running games for non-owners" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      user.games.create!(name: "Balatro", is_running: true, private_override: false)
+      user.games.create!(name: "Hades", is_running: true, private_override: true)
+
+      expect(helper.profile_running_game_summary(user.profile, nil)).to eq("Now playing: Balatro")
+    end
+
+    it "includes privately overridden running games for the owner" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      user.games.create!(name: "Balatro", is_running: true, private_override: false)
+      user.games.create!(name: "Hades", is_running: true, private_override: true)
+
+      expect(helper.profile_running_game_summary(user.profile, user)).to eq("Now playing: Balatro +1 more")
+    end
   end
 
   describe "#profile_friendship_state_label" do
