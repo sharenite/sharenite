@@ -269,7 +269,12 @@ module Profiles
 
     def invitation_collections(filter_options)
       INVITATION_COLLECTION_CONFIG.map do |config|
-        config.merge(scope: public_send(config[:scope_method], **filter_options))
+        {
+          count_ivar: config[:count_ivar],
+          records_ivar: config[:records_ivar],
+          tab_name: config[:tab_name],
+          scope: send(config[:scope_method], **filter_options)
+        }
       end
     end
 

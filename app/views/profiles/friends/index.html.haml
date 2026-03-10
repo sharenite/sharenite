@@ -46,8 +46,9 @@
       - if @active_tab == "friends"
         .tab-content
           .tab-pane.fade.show.active{role: "tabpanel"}
-            .d-flex.align-items-center.justify-content-end.mb-2
-              = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
+            - if @friends.total_pages > 1
+              .d-flex.align-items-center.justify-content-end.mb-2
+                = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
 
             %p.profiles-section-summary Total friends listed: #{@friends_total_count}
 
@@ -105,8 +106,9 @@
                   .col-12
                     .text-muted No friends match current filters.
 
-            .d-flex.align-items-center.justify-content-end.mt-3
-              = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
+            - if @friends.total_pages > 1
+              .d-flex.align-items-center.justify-content-end.mt-3
+                = paginate @friends, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
       - elsif @active_tab == "received"
         .tab-content
           .tab-pane.fade.show.active{role: "tabpanel"}

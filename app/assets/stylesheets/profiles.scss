@@ -49,23 +49,37 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.55rem 0.9rem;
-  border: 1px solid transparent;
+  border: 1px solid var(--bs-border-color);
   border-radius: 0.5rem 0.5rem 0 0;
-  background: transparent;
-  color: var(--bs-primary);
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
   font-weight: 600;
   line-height: 1.1;
+  text-decoration: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 }
 
 .profiles-friends-tabs .nav-link:hover,
 .profiles-friends-tabs .nav-link:focus-visible {
-  border-color: rgba(var(--bs-border-color-rgb), 1);
+  border-color: rgba(var(--bs-primary-rgb), 0.3);
   border-bottom-color: transparent;
-  background: var(--bs-tertiary-bg);
+  background: rgba(var(--bs-primary-rgb), 0.08);
   color: var(--bs-primary);
 }
 
 .profiles-friends-tabs .nav-link.active {
+  border-color: var(--bs-border-color);
+  border-bottom-color: var(--bs-body-bg);
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  box-shadow: 0 -1px 0 rgba(var(--bs-border-color-rgb), 0.2);
+}
+
+.profiles-friends-tabs .nav-link.active:hover,
+.profiles-friends-tabs .nav-link.active:focus-visible {
   border-color: var(--bs-border-color);
   border-bottom-color: var(--bs-body-bg);
   background: var(--bs-body-bg);
@@ -156,7 +170,10 @@
 
 a.profiles-info-pill {
   text-decoration: none;
-  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
 }
 
 a.profiles-info-pill:hover {

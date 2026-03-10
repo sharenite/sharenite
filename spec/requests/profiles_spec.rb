@@ -120,6 +120,18 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include("Declined")
     end
 
+    it "renders the owner friends page with tab collections" do
+      owner = create(:user)
+      inviter = create(:user)
+      Friend.create!(inviter:, invitee: owner, status: :invited)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, tab: "friends")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Received")
+    end
+
     it "does not render private accepted friends in the visible list" do
       owner = create(:user)
       private_friend = create(:user)
