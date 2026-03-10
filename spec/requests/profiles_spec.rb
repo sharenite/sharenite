@@ -33,6 +33,18 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response.body).not_to include("Blocked Name")
     end
+
+    it "does not list friends-only profiles for signed-in users who are not friends" do
+      viewer = create(:user)
+      hidden_user = create(:user)
+      hidden_user.profile.update!(privacy: :friends, name: "Hidden Friends Profile")
+
+      sign_in viewer
+      get profiles_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Hidden Friends Profile")
+    end
   end
 
   describe "GET /profiles/:id" do
@@ -119,6 +131,22 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("Hidden Friend")
+      expect(response.body).to include("Total friends listed: 0")
+    end
+
+    it "does not render friends-only accepted friends for unrelated signed-in viewers" do
+      owner = create(:user)
+      viewer = create(:user)
+      hidden_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      hidden_friend.profile.update!(privacy: :friends, name: "Friends Only Friend")
+      Friend.create!(inviter: owner, invitee: hidden_friend, status: :accepted)
+
+      sign_in viewer
+      get profile_friends_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Friends Only Friend")
       expect(response.body).to include("Total friends listed: 0")
     end
 
@@ -225,6 +253,15 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include("Edit playlist")
       expect(response.body).not_to include("New item")
       expect(response.body).not_to include("Delete")
+    end
+
+    it "redirects back to the profile playlist index when the playlist is missing" do
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :public)
+
+      get profile_playlist_path(owner.profile, "missing-playlist")
+
+      expect(response).to redirect_to(profile_playlists_path(owner.profile))
     end
 
     it "rejects editing another user's playlist" do

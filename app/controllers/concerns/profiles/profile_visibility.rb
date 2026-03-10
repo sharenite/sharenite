@@ -26,13 +26,14 @@ module Profiles
 
     def build_profile_stats
       profile_user_id = @profile.user_id
-      visible_friend_user_ids = Profile.where.not(privacy: :private)
-                                       .where(user_id: accepted_friend_user_ids_scope(profile_user_id))
+      visible_friend_user_ids = apply_profile_visibility_scope(
+        Profile.where(user_id: accepted_friend_user_ids_for(profile_user_id))
+      )
 
       {
         games_count: games_count_value(@profile.user),
         games_played_count: @profile.user.games.where.not(last_activity: nil).count,
-        playlists_count: Playlist.where(user_id: profile_user_id).count,
+        playlists_count: playlists_count_value(profile_user_id),
         active_friends_count: visible_friend_user_ids.count
       }
     end
@@ -65,7 +66,14 @@ module Profiles
       user.games.count
     end
 
-    def accepted_friend_user_ids_scope(user_id)
+    def playlists_count_value(user_id)
+      scope = Playlist.where(user_id:)
+      return scope.count if profile_own?
+
+      scope.where(public: true).count
+    end
+
+    def accepted_friend_user_ids_for(user_id)
       quoted_user_id = ActiveRecord::Base.connection.quote(user_id)
       sql = "DISTINCT CASE WHEN inviter_id = #{quoted_user_id} THEN invitee_id ELSE inviter_id END"
       Friend.where(status: :accepted)
@@ -74,10 +82,19 @@ module Profiles
     end
 
     def visible_profiles_scope
-      base_scope = Profile.joins(:user)
-      return base_scope.where(privacy: :public) unless current_user
+      apply_profile_visibility_scope(Profile.joins(:user))
+    end
 
-      base_scope.where.not(privacy: :private)
+    def apply_profile_visibility_scope(scope, viewer: current_user)
+      return scope.where(privacy: :public) unless viewer
+
+      friend_user_ids = accepted_friend_user_ids_for(viewer.id)
+      scope.where(
+        "profiles.user_id = :viewer_id OR profiles.privacy IN (:broad_privacies) " \
+        "OR (profiles.privacy = 'friends' AND profiles.user_id IN (#{friend_user_ids.to_sql}))",
+        viewer_id: viewer.id,
+        broad_privacies: %w[public members]
+      )
     end
 
     def blocked_user_ids_for_current_user

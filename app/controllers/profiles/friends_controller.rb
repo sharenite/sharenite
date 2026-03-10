@@ -5,6 +5,8 @@ module Profiles
   # Profiles friends controller
   # rubocop:disable Metrics/ClassLength
   class FriendsController < BaseController
+    include ProfileVisibility
+
     TABS = %w[friends received sent declined blocked].freeze
     INVITATION_COLLECTION_CONFIG = [
       {
@@ -344,9 +346,8 @@ module Profiles
     end
 
     def base_friends_scope
-      scope = Profile.where(user_id: accepted_friend_user_ids_scope)
-                     .where.not(privacy: :private)
-                     .joins(:user)
+      scope = apply_profile_visibility_scope(Profile.where(user_id: accepted_friend_user_ids_scope))
+              .joins(:user)
       return scope.select("profiles.*, COALESCE(users.games_count, 0) AS games_count") if User.games_count_available?
 
       scope.left_joins(user: :games)

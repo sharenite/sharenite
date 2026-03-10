@@ -75,7 +75,7 @@ module Profiles
         # rubocop:disable Rails/I18nLocaleTexts
         flash[:notice] = "Playlist not found."
         # rubocop:enable all
-        redirect_to profile_playlists_path
+        redirect_to profile_playlists_path(@profile)
       end
 
       def redirect_to_profile_when_playlist_library_hidden
