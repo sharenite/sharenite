@@ -522,7 +522,7 @@ if Rails.env.development?
   playlist_seed_count.times do |index|
     sequence = index + 1
     playlist = Playlist.find_or_initialize_by(user: demo_user, name: format("Pagination Playlist %03d", sequence))
-    playlist.public = (sequence % 3) != 0
+    playlist.private_override = (sequence % 3).zero?
     playlist.save!
 
     items_count = sequence % 12

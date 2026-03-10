@@ -65,7 +65,7 @@ module Profiles
       end
 
       def playlist_public?
-        @playlist.public == true
+        !@playlist.private_override?
       end
 
       def redirect_to_playlists_with_notice
