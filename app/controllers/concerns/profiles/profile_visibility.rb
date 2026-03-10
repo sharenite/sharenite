@@ -158,32 +158,32 @@ module Profiles
     end
 
     def component_visibility_by_user_id(profiles, column, viewer: current_user)
+      visibility_context = {
+        accepted_friend_user_ids: viewer.present? ? accepted_friend_user_ids_list_for(viewer.id).to_set : Set.new,
+        blocked_user_ids: viewer.present? ? blocked_user_ids_for(viewer).to_set : Set.new
+      }
+
       Array(profiles).each_with_object({}) do |profile, visibility_by_user_id|
-        visibility_by_user_id[profile.user_id] = component_visible_to_viewer?(profile, column, viewer:)
+        visibility_by_user_id[profile.user_id] = component_visible_to_viewer?(
+          profile,
+          column,
+          viewer:,
+          visibility_context:
+        )
       end
     end
 
-    def component_visible_to_viewer?(profile, column, viewer:)
-      visibility_method = component_visibility_method_for(column)
-      return profile.public_send(visibility_method, viewer) if visibility_method
+    def component_visible_to_viewer?(profile, column, viewer:, visibility_context:)
+      accepted_friend_user_ids = visibility_context.fetch(:accepted_friend_user_ids)
+      return false if visibility_context.fetch(:blocked_user_ids).include?(profile.user_id)
+      return false unless privacy_setting_visible_to_viewer?(profile.privacy, profile.user_id, viewer, accepted_friend_user_ids)
 
-      accepted_friend_user_ids = viewer.present? ? accepted_friend_user_ids_list_for(viewer.id).to_set : Set.new
       privacy_setting_visible_to_viewer?(
         profile.public_send(column),
         profile.user_id,
         viewer,
         accepted_friend_user_ids
       )
-    end
-
-    def component_visibility_method_for(column)
-      {
-        privacy: :visible_to?,
-        game_library_privacy: :game_library_visible_to?,
-        friends_privacy: :friends_list_visible_to?,
-        gaming_activity_privacy: :gaming_activity_visible_to?,
-        playlists_privacy: :playlists_visible_to?
-      }[column.to_sym]
     end
 
     def privacy_setting_visible_to_viewer?(setting, profile_user_id, viewer, accepted_friend_user_ids)
