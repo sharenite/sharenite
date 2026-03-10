@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require "uri"
+
 # Profile model
+# rubocop:disable Metrics/ClassLength
 class Profile < ApplicationRecord
   extend FriendlyId
   friendly_id :vanity_url, use: :slugged
   attr_accessor :user_query
+  before_validation :normalize_vanity_url
   validates :vanity_url, uniqueness: { case_sensitive: false }, allow_nil: true
   validates :user_id, uniqueness: true
   belongs_to :user
@@ -105,4 +109,30 @@ class Profile < ApplicationRecord
   def own_profile_for?(viewer)
     viewer.present? && viewer.id == user_id
   end
+
+  def normalize_vanity_url
+    value = vanity_url.to_s.strip
+    self.vanity_url = value.presence
+    return if vanity_url.blank?
+
+    extracted_slug = vanity_slug_from_profile_url(vanity_url)
+    self.vanity_url = extracted_slug if extracted_slug.present?
+  end
+
+  def vanity_slug_from_profile_url(value)
+    normalized_value = value.to_s.strip
+    path = normalized_value
+
+    if normalized_value.match?(%r{\Ahttps?://}i)
+      path = URI.parse(normalized_value).path
+    elsif normalized_value.match?(%r{\A[\w.-]+/})
+      path = URI.parse("https://#{normalized_value}").path
+    end
+
+    match = path.match(%r{\A/profiles/([^/?#]+)})
+    match&.captures&.first.presence
+  rescue URI::InvalidURIError
+    nil
+  end
 end
+# rubocop:enable Metrics/ClassLength

@@ -30,4 +30,20 @@ RSpec.describe Profile do
     expect(owner.profile.visible_to?(viewer)).to be(false)
     expect(owner.profile.friends_with?(viewer)).to be(false)
   end
+
+  it "normalizes a full profile URL into the vanity slug" do
+    profile = build(:profile, vanity_url: "https://www.sharenite.link/profiles/xenor")
+
+    profile.valid?
+
+    expect(profile.vanity_url).to eq("xenor")
+  end
+
+  it "normalizes a bare host profile URL into the vanity slug" do
+    profile = build(:profile, vanity_url: "www.sharenite.link/profiles/xenor")
+
+    profile.valid?
+
+    expect(profile.vanity_url).to eq("xenor")
+  end
 end
