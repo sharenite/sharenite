@@ -2,6 +2,25 @@
 
 # Games helper
 module GamesHelper
+  SORT_OPTIONS = [
+    ["Last Activity (Newest first)", "last_activity_desc"],
+    ["Last Activity (Oldest first)", "last_activity_asc"],
+    ["Title (A-Z)", "name_asc"],
+    ["Title (Z-A)", "name_desc"],
+    ["Source (A-Z)", "source_asc"],
+    ["Source (Z-A)", "source_desc"],
+    ["Status (A-Z)", "status_asc"],
+    ["Status (Z-A)", "status_desc"],
+    ["Playtime (Highest first)", "playtime_desc"],
+    ["Playtime (Lowest first)", "playtime_asc"],
+    ["Plays (Highest first)", "play_count_desc"],
+    ["Plays (Lowest first)", "play_count_asc"]
+  ].freeze
+
+  def games_sort_options
+    SORT_OPTIONS
+  end
+
   def games_sort_link(profile, label, current_sort, sort_keys)
     asc_key = sort_keys.fetch(:asc)
     desc_key = sort_keys.fetch(:desc)

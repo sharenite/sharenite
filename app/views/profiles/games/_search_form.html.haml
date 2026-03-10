@@ -1,4 +1,5 @@
 = form_with(url: profile_games_path(@profile), method: :get, class: "games-search-form", data: { controller: "search-form", turbo_frame: "games", turbo_action: "replace" }) do |form|
+  - current_sort = params[:sort].presence || "last_activity_desc"
   .row.g-1
     .col-12
       = form.label :search_query, "Search", class: "form-label mb-1 small text-muted"
@@ -18,6 +19,9 @@
       data: { search_form_target: "advancedFilters", action: "shown.bs.collapse->search-form#rememberOpen hidden.bs.collapse->search-form#rememberClosed" }
     }
       .row.g-1
+        .col-12.d-lg-none
+          = form.label :sort, "Sort", class: "form-label mb-1 small text-muted"
+          = form.select :sort, options_for_select(games_sort_options, current_sort), {}, class: "form-select", data: { action: "change->search-form#search" }
         .col-12.col-md-6.col-xl-2
           = form.label :source_ids, "Source", class: "form-label mb-1 small text-muted"
           = form.select :source_ids, options_for_select([["No source", Profiles::GamesController::NONE_FILTER_VALUE]] + @source_options.to_a, Array(params[:source_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
