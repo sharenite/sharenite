@@ -3,21 +3,15 @@
 .profiles-search-form.mb-3
   = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
     .row.g-2
-      .col-12.col-md-6
+      .col-12
         = form.label :search_name, "Search name", class: "form-label mb-1 small text-muted"
         = form.text_field :search_name, value: params[:search_name], class: "form-control", placeholder: "Friend name...", data: { action: "input->search-form#search" }
-      .col-6.col-md-3
-        = form.label :games_from, "Games from", class: "form-label mb-1 small text-muted"
-        = form.number_field :games_from, value: params[:games_from], min: 0, class: "form-control", placeholder: "0", data: { action: "input->search-form#search" }
-      .col-6.col-md-3
-        = form.label :games_to, "Games to", class: "form-label mb-1 small text-muted"
-        = form.number_field :games_to, value: params[:games_to], min: 0, class: "form-control", placeholder: "No max", data: { action: "input->search-form#search" }
       .col-12.d-flex.justify-content-end.gap-2
         = link_to "Reset", profile_friends_path(@profile), class: "btn btn-outline-secondary"
         = form.submit "Apply", class: "btn btn-primary"
 
 = turbo_frame_tag "friends_list" do
-  - filter_params = request.query_parameters.slice("search_name", "games_from", "games_to")
+  - filter_params = request.query_parameters.slice("search_name")
   - tab_path = ->(tab_name) { profile_friends_path(@profile, filter_params.merge(tab: tab_name)) }
   .card.profiles-section-card.mt-3
     .card-body

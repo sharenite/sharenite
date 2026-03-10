@@ -270,7 +270,7 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include(profile_games_path(hidden_library_friend.profile))
     end
 
-    it "does not allow filtering hidden-library friends by their game count" do
+    it "ignores games count params when listing hidden-library friends" do
       owner = create(:user)
       viewer = create(:user)
       hidden_library_friend = create(:user)
@@ -283,11 +283,11 @@ RSpec.describe "Profiles requests", type: :request do
       get profile_friends_path(owner.profile, games_from: 1)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).not_to include("Hidden Library Friend")
-      expect(response.body).to include("Total friends listed: 0")
+      expect(response.body).to include("Hidden Library Friend")
+      expect(response.body).to include("Total friends listed: 1")
     end
 
-    it "does not count visible friends with zero games when filtering from one game" do
+    it "ignores games count params when listing visible friends with zero games" do
       owner = create(:user)
       zero_games_friend = create(:user)
       owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
@@ -300,8 +300,8 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML(response.body)
       listed_names = document.css(".profiles-table tbody td.fw-semibold, .profiles-mobile-card .fw-semibold").map(&:text)
-      expect(listed_names).not_to include("Zero Games Friend")
-      expect(response.body).to include("Total friends listed: 0")
+      expect(listed_names).to include("Zero Games Friend")
+      expect(response.body).to include("Total friends listed: 1")
     end
 
     it "redirects when friends list privacy blocks access" do

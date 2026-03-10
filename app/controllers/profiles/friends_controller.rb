@@ -211,13 +211,8 @@ module Profiles
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
 
-      games_from = parse_games_count_param(:games_from)
-      games_to = parse_games_count_param(:games_to)
-
-      scope = apply_games_count_filter(scope, games_from:, games_to:)
-
       ordered_scope = scope.order("profiles.name ASC")
-      @friends_total_count = normalize_count_result(ordered_scope.except(:select, :order).count)
+      @friends_total_count = ordered_scope.except(:order).count
       @friends = if @active_tab == "friends"
                    ordered_scope.page(params[:page]).per(25)
                  else
@@ -230,37 +225,63 @@ module Profiles
       return reset_invitations unless @own_profile
 
       filter_options = invitation_filter_options
+      return set_unfiltered_invitation_counts if !filter_options[:any_filter] && @active_tab == "friends"
+
       invitation_collections(filter_options).each do |config|
         assign_invitation_collection(**config)
       end
     end
 
-    def parse_games_count_param(key)
-      value = params[key].to_s.strip
-      return if value.blank?
-
-      parsed = Integer(value, 10)
-      parsed.negative? ? nil : parsed
-    rescue ArgumentError
-      nil
-    end
-
-    def filtered_user_ids_for_invitation_filters(name_query:, games_from:, games_to:)
+    def filtered_user_ids_for_invitation_filters(name_query:)
       scope = User.joins(:profile)
                   .select(:id)
 
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
-      apply_user_games_count_filter(scope, games_from:, games_to:)
+      scope
     end
 
     def invitation_filter_options
       name_query = params[:search_name].to_s.strip
-      games_from = parse_games_count_param(:games_from)
-      games_to = parse_games_count_param(:games_to)
-      any_filter = name_query.present? || games_from.present? || games_to.present?
-      filtered_user_ids = any_filter ? filtered_user_ids_for_invitation_filters(name_query:, games_from:, games_to:) : nil
+      any_filter = name_query.present?
+      filtered_user_ids = any_filter ? filtered_user_ids_for_invitation_filters(name_query:) : nil
 
       { any_filter:, filtered_user_ids: }
+    end
+
+    def set_unfiltered_invitation_counts
+      counts = unfiltered_invitation_counts
+      @invitations_received_count = counts.fetch(:received, 0)
+      @invitations_sent_count = counts.fetch(:sent, 0)
+      @invitations_declined_count = counts.fetch(:declined, 0)
+      @blocked_count = counts.fetch(:blocked, 0)
+      @invitations_received = []
+      @invitations_sent = []
+      @invitations_declined = []
+      @blocked_relations = []
+    end
+
+    def unfiltered_invitation_counts
+      user_id = @profile.user.id
+      row = Friend.where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
+                  .pick(*unfiltered_invitation_count_expressions(user_id))
+
+      {
+        received: row&.[](0).to_i,
+        sent: row&.[](1).to_i,
+        declined: row&.[](2).to_i,
+        blocked: row&.[](3).to_i
+      }
+    end
+
+    def unfiltered_invitation_count_expressions(user_id)
+      quoted_user_id = ActiveRecord::Base.connection.quote(user_id)
+
+      [
+        "COALESCE(SUM(CASE WHEN status = 'invited' AND invitee_id = #{quoted_user_id} THEN 1 ELSE 0 END), 0)",
+        "COALESCE(SUM(CASE WHEN status = 'invited' AND inviter_id = #{quoted_user_id} THEN 1 ELSE 0 END), 0)",
+        "COALESCE(SUM(CASE WHEN status = 'declined' THEN 1 ELSE 0 END), 0)",
+        "COALESCE(SUM(CASE WHEN status = 'blocked' AND inviter_id = #{quoted_user_id} THEN 1 ELSE 0 END), 0)"
+      ].map { |expression| Arel.sql(expression) }
     end
 
     def assign_invitation_collection(count_ivar:, records_ivar:, tab_name:, scope:)
@@ -353,44 +374,8 @@ module Profiles
     end
 
     def base_friends_scope
-      visible_games_count_sql = visible_game_count_sql
-      games_join_sql = visible_games_join_sql
-      scope = apply_profile_visibility_scope(Profile.where(user_id: accepted_friend_user_ids_scope))
-              .joins(:user)
-              .joins(games_join_sql)
-      scope.select("profiles.*, #{visible_games_count_sql} AS games_count")
-           .group("profiles.id")
-    end
-
-    def apply_games_count_filter(scope, games_from:, games_to:)
-      return scope if games_from.nil? && games_to.nil?
-
-      apply_games_count_bounds(scope, comparator: visible_game_count_sql, games_from:, games_to:)
-    end
-
-    def apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
-      scope = scope.having("#{comparator} >= ?", games_from) unless games_from.nil?
-      return scope.having("#{comparator} <= ?", games_to) unless games_to.nil?
-
-      scope
-    end
-
-    def apply_user_games_count_filter(scope, games_from:, games_to:)
-      return scope if games_from.nil? && games_to.nil?
-
-      visible_games_count_sql = visible_game_count_sql(viewer: current_user)
-      join_sql = visible_games_join_sql(viewer: current_user)
-      apply_games_count_bounds(
-        scope.joins(join_sql)
-             .group("users.id"),
-        comparator: visible_games_count_sql,
-        games_from:,
-        games_to:
-      )
-    end
-
-    def normalize_count_result(result)
-      result.is_a?(Hash) ? result.size : result
+      apply_profile_visibility_scope(Profile.where(user_id: accepted_friend_user_ids_scope))
+        .joins(:user)
     end
 
     def preload_friend_list_metadata
