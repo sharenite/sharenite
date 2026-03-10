@@ -45,6 +45,20 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("Hidden Friends Profile")
     end
+
+    it "links invite-received states to the signed-in viewer friends page even without a vanity URL" do
+      viewer = create(:user)
+      inviter = create(:user)
+      viewer.profile.update!(privacy: :public, vanity_url: nil)
+      inviter.profile.update!(privacy: :public, name: "Inviter")
+      Friend.create!(inviter:, invitee: viewer, status: :invited)
+
+      sign_in viewer
+      get profiles_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(profile_friends_path(viewer.profile, tab: "received"))
+    end
   end
 
   describe "GET /profiles/:id" do
@@ -91,6 +105,18 @@ RSpec.describe "Profiles requests", type: :request do
       relation = Friend.find_by(inviter: viewer, invitee: owner)
       expect(relation).to be_present
       expect(relation.status).to eq("blocked")
+    end
+
+    it "hides played games stats when gaming activity privacy blocks the viewer" do
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, game_library_privacy: :public, gaming_activity_privacy: :private)
+      owner.games.create!(name: "Played Game", last_activity: Time.current)
+
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Games")
+      expect(response.body).not_to include("Played Games")
     end
 
     it "rejects editing another user's profile" do

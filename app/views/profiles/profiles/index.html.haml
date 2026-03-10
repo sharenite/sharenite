@@ -46,7 +46,7 @@
                     = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
-                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile_slug, tab: "received"), class: profile_friendship_state_class(friendship_state), data: { turbo_frame: "_top" }
+                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile, tab: "received"), class: profile_friendship_state_class(friendship_state), data: { turbo_frame: "_top" }
                     - elsif friendship_state.present? && friendship_state.to_sym != :you_declined
                       %span{class: profile_friendship_state_class(friendship_state)}= profile_friendship_state_label(friendship_state)
                     - else
@@ -80,7 +80,7 @@
                     = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
-                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile_slug, tab: "received"), class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm", data: { turbo_frame: "_top" }
+                      = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile, tab: "received"), class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm", data: { turbo_frame: "_top" }
                     - elsif friendship_state.present? && friendship_state.to_sym != :you_declined
                       %span{class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm"}= profile_friendship_state_label(friendship_state)
                     - else

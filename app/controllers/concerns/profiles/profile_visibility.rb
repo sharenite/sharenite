@@ -32,7 +32,7 @@ module Profiles
 
       {
         games_count: games_count_value(@profile.user),
-        games_played_count: @profile.user.games.where.not(last_activity: nil).count,
+        games_played_count: @profile.gaming_activity_visible_to?(current_user) ? @profile.user.games.where.not(last_activity: nil).count : nil,
         playlists_count: playlists_count_value(profile_user_id),
         active_friends_count: visible_friend_user_ids.count
       }

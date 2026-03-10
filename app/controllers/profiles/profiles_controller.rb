@@ -10,7 +10,7 @@ module Profiles
       @profiles = profiles_scope.page(params[:page])
       @friendship_states_by_user_id = friendship_states_for_user_ids(@profiles.map(&:user_id))
       @current_user_id = current_user&.id
-      @current_profile_slug = current_profile&.slug
+      @current_profile = current_profile
     end
 
     def show

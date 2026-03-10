@@ -9,7 +9,7 @@ RSpec.describe "profiles/profiles/index" do
     assign(:profiles, Profile.where(id: [profile_one.id, profile_two.id]).page(1))
     assign(:friendship_states_by_user_id, {})
     assign(:current_user_id, nil)
-    assign(:current_profile_slug, nil)
+    assign(:current_profile, nil)
 
     allow(view).to receive(:paginate).and_return("")
   end
