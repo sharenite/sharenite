@@ -351,6 +351,43 @@ RSpec.describe "Profiles requests", type: :request do
   end
 
   describe "GET /profiles/:profile_id/playlists" do
+    it "marks My Playlists active in the main nav for owned playlist pages and item forms" do
+      owner = create(:user)
+      sign_in owner
+      playlist = create(:playlist, user: owner, private_override: false)
+      playlist_item = create(:playlist_item, playlist:, order: 1)
+
+      get profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      playlists_link = document.at_css("a[href='#{profile_playlists_path(owner.profile)}']")
+      expect(playlists_link).to be_present
+      expect(playlists_link.text.strip).to eq("My Playlists")
+      expect(playlists_link["class"]).to include("active")
+
+      get edit_profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      playlists_link = document.at_css("a[href='#{profile_playlists_path(owner.profile)}']")
+      expect(playlists_link["class"]).to include("active")
+
+      get new_profile_playlist_playlist_item_path(owner.profile, playlist)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      playlists_link = document.at_css("a[href='#{profile_playlists_path(owner.profile)}']")
+      expect(playlists_link["class"]).to include("active")
+
+      get edit_profile_playlist_playlist_item_path(owner.profile, playlist, playlist_item)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      playlists_link = document.at_css("a[href='#{profile_playlists_path(owner.profile)}']")
+      expect(playlists_link["class"]).to include("active")
+    end
+
     it "redirects when playlist privacy blocks playlist access" do
       owner = create(:user)
       owner.profile.update!(privacy: :public, playlists_privacy: :private)

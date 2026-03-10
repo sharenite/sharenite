@@ -7,24 +7,28 @@
         - profile = current_profile
         - viewed_profile = local_assigns.fetch(:profile, nil) || instance_variable_get(:@profile)
         - own_viewed_profile = current_user.present? && viewed_profile.present? && viewed_profile.user_id == current_user.id
+        - my_profile_active = own_viewed_profile && controller_path == "profiles/profiles"
+        - my_games_active = own_viewed_profile && controller_path == "profiles/games"
+        - my_friends_active = own_viewed_profile && controller_path == "profiles/friends"
+        - my_playlists_active = own_viewed_profile && controller_path.start_with?("profiles/playlists/")
         - active_nav_class = ->(active, default_color = "text-white") { "nav-link px-2 #{active ? 'active text-white' : default_color}" }
         %ul.nav.col-10.col-sm-auto.me-sm-auto.mb-2.justify-content-center.mb-md-0
           %li
             = link_to 'Home', root_path, class: active_nav_class.call(current_page?(root_path), "text-secondary")
           - if current_user
             %li
-              = link_to 'My Profile', profile_path(profile), class: active_nav_class.call(current_page?(profile_path(profile)))
+              = link_to 'My Profile', profile_path(profile), class: active_nav_class.call(my_profile_active)
             %li
-              = link_to 'My Games', profile_games_path(profile), class: active_nav_class.call(current_page?(profile_games_path(profile)))
+              = link_to 'My Games', profile_games_path(profile), class: active_nav_class.call(my_games_active)
             %li
-              = link_to profile_friends_path(profile, tab: "friends"), class: active_nav_class.call(current_page?(profile_friends_path(profile, tab: "friends"))) do
+              = link_to profile_friends_path(profile, tab: "friends"), class: active_nav_class.call(my_friends_active) do
                 %span My Friends
                 - if pending_count.positive?
                   %span.badge.rounded-pill.text-bg-danger.ms-1.align-middle
                     %i.bi.bi-bell-fill.me-1
                     = pending_count_label
             %li
-              = link_to 'My Playlists', profile_playlists_path(profile), class: active_nav_class.call(current_page?(profile_playlists_path(profile)))
+              = link_to 'My Playlists', profile_playlists_path(profile), class: active_nav_class.call(my_playlists_active)
           %li
             - community_active = current_page?(profiles_path) || (viewed_profile.present? && !own_viewed_profile)
             = link_to 'Community', profiles_path, class: active_nav_class.call(community_active)

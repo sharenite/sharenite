@@ -76,6 +76,27 @@ RSpec.describe "Games" do
       expect(response.body).not_to include(edit_profile_game_path(user.profile, game))
     end
 
+    it "marks My Games active in the main nav on owned game show and edit pages" do
+      sign_in user
+
+      get profile_game_path(user.profile, game)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      games_link = document.at_css("a[href='#{profile_games_path(user.profile)}']")
+      expect(games_link).to be_present
+      expect(games_link.text.strip).to eq("My Games")
+      expect(games_link["class"]).to include("active")
+
+      get edit_profile_game_path(user.profile, game)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      games_link = document.at_css("a[href='#{profile_games_path(user.profile)}']")
+      expect(games_link).to be_present
+      expect(games_link["class"]).to include("active")
+    end
+
     it "does not expose games when profile privacy is private even if games are public" do
       user.profile.update!(privacy: :private, game_library_privacy: :public)
 
