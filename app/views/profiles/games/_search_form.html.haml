@@ -1,5 +1,8 @@
 = form_with(url: profile_games_path(@profile), method: :get, class: "games-search-form", data: { controller: "search-form", turbo_frame: "games", turbo_action: "replace" }) do |form|
-  - current_sort = params[:sort].presence || (@can_view_gaming_activity ? "last_activity_desc" : "name_asc")
+  - sort_options = games_sort_options(can_view_gaming_activity: @can_view_gaming_activity)
+  - allowed_sort_values = sort_options.map(&:last)
+  - current_sort = params[:sort].presence
+  - current_sort = (@can_view_gaming_activity ? "last_activity_desc" : "name_asc") if current_sort.blank? || !allowed_sort_values.include?(current_sort)
   .row.g-1
     .col-12
       = form.label :search_query, "Search", class: "form-label mb-1 small text-muted"
@@ -21,7 +24,7 @@
       .row.g-1
         .col-12.d-lg-none
           = form.label :sort, "Sort", class: "form-label mb-1 small text-muted"
-          = form.select :sort, options_for_select(games_sort_options, current_sort), {}, class: "form-select", data: { action: "change->search-form#search" }
+          = form.select :sort, options_for_select(sort_options, current_sort), {}, class: "form-select", data: { action: "change->search-form#search" }
         .col-12.col-md-6.col-xl-4
           = form.label :source_ids, "Source", class: "form-label mb-1 small text-muted"
           = form.select :source_ids, options_for_select([["No source", Profiles::GamesController::NONE_FILTER_VALUE]] + @source_options.to_a, Array(params[:source_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
@@ -37,15 +40,16 @@
         .col-12.col-xl-6
           = form.label :category_ids, "Categories", class: "form-label mb-1 small text-muted"
           = form.select :category_ids, options_for_select([["No category", Profiles::GamesController::NONE_FILTER_VALUE]] + @category_options.to_a, Array(params[:category_ids])), {}, multiple: true, class: "form-select", data: { controller: "choice", action: "change->search-form#search" }
-        .col-12.col-lg-4
-          = form.label :last_activity_from, "Last played from", class: "form-label mb-1 small text-muted"
-          = form.date_field :last_activity_from, value: params[:last_activity_from], class: "form-control", data: { action: "change->search-form#search" }
-        .col-12.col-lg-4
-          = form.label :last_activity_to, "Last played to", class: "form-label mb-1 small text-muted"
-          = form.date_field :last_activity_to, value: params[:last_activity_to], class: "form-control", data: { action: "change->search-form#search" }
-        .col-12.col-lg-4
-          = form.label :activity_state, "Activity", class: "form-label mb-1 small text-muted"
-          = form.select :activity_state, options_for_select([["All", ""], ["Played", "played"], ["Unplayed", "unplayed"]], params[:activity_state]), {}, class: "form-select", data: { action: "change->search-form#search" }
+        - if @can_view_gaming_activity
+          .col-12.col-lg-4
+            = form.label :last_activity_from, "Last played from", class: "form-label mb-1 small text-muted"
+            = form.date_field :last_activity_from, value: params[:last_activity_from], class: "form-control", data: { action: "change->search-form#search" }
+          .col-12.col-lg-4
+            = form.label :last_activity_to, "Last played to", class: "form-label mb-1 small text-muted"
+            = form.date_field :last_activity_to, value: params[:last_activity_to], class: "form-control", data: { action: "change->search-form#search" }
+          .col-12.col-lg-4
+            = form.label :activity_state, "Activity", class: "form-label mb-1 small text-muted"
+            = form.select :activity_state, options_for_select([["All", ""], ["Played", "played"], ["Unplayed", "unplayed"]], params[:activity_state]), {}, class: "form-select", data: { action: "change->search-form#search" }
         .col-12.d-flex.align-items-end
           .games-search-options.d-flex.flex-wrap.align-items-center.gap-3.w-100
             .form-check.m-0.d-flex.align-items-center.gap-2

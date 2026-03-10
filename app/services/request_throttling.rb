@@ -44,7 +44,13 @@ module RequestThrottling
 
   module_function
 
+  def enabled?
+    default = !Rails.env.test?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch("REQUEST_THROTTLING_ENABLED", default))
+  end
+
   def rules_for(request, actor:)
+    return [] unless enabled?
     return [] if ignored_path?(request.path)
 
     applicable_rules = []
@@ -565,6 +571,8 @@ module RequestThrottling
     end
 
     def call(env)
+      return @app.call(env) unless RequestThrottling.enabled?
+
       request = ActionDispatch::Request.new(env)
       decision = Limiter.new(request: request, env: env).call
       return @app.call(env) if decision.allowed?

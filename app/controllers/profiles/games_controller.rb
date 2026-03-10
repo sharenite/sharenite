@@ -341,7 +341,7 @@ module Profiles
       return requested_sort || "last_activity_desc" if @can_view_gaming_activity
 
       return "name_asc" if requested_sort.blank?
-      return requested_sort unless requested_sort.start_with?("last_activity_", "playtime_")
+      return requested_sort unless requested_sort.start_with?("last_activity_", "playtime_", "play_count_")
 
       "name_asc"
     end

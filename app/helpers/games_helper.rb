@@ -16,9 +16,19 @@ module GamesHelper
     ["Plays (Highest first)", "play_count_desc"],
     ["Plays (Lowest first)", "play_count_asc"]
   ].freeze
+  ACTIVITY_SORT_VALUES = %w[
+    last_activity_desc
+    last_activity_asc
+    playtime_desc
+    playtime_asc
+    play_count_desc
+    play_count_asc
+  ].freeze
 
-  def games_sort_options
-    SORT_OPTIONS
+  def games_sort_options(can_view_gaming_activity: true)
+    return SORT_OPTIONS if can_view_gaming_activity
+
+    SORT_OPTIONS.reject { |(_, value)| ACTIVITY_SORT_VALUES.include?(value) }
   end
 
   def games_sort_link(profile, label, current_sort, sort_keys)

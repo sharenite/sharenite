@@ -125,6 +125,7 @@ RSpec.describe "Games" do
       expect(response.body.index("Alpha")).to be < response.body.index("Zeta")
       expect(response.body).not_to include("games-sort-link\">Last Activity")
       expect(response.body).not_to include("games-sort-link\">Playtime")
+      expect(response.body).not_to include("games-sort-link\">Plays")
     end
 
     it "defaults the mobile sort control to title order when gaming activity is hidden" do
@@ -135,6 +136,24 @@ RSpec.describe "Games" do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('<option selected="selected" value="name_asc">Title (A-Z)</option>')
       expect(response.body).not_to include('<option selected="selected" value="last_activity_desc">Last Activity (Newest first)</option>')
+      expect(response.body).not_to include('value="play_count_desc">Plays (Highest first)</option>')
+    end
+
+    it "hides play counts from another viewer when gaming activity is hidden" do
+      user.profile.update!(gaming_activity_privacy: :private)
+      game.update!(play_count: 42)
+
+      get profile_games_path(user.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(">Plays<")
+      expect(response.body).not_to include(">42<")
+
+      get profile_game_path(user.profile, game)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Play count")
+      expect(response.body).not_to include(">42<")
     end
   end
 end

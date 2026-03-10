@@ -71,10 +71,11 @@
                 .game-details__stat
                   .game-details__stat-label Playtime
                   .game-details__stat-value= playtime_label
-            .col-6.col-md-3
-              .game-details__stat
-                .game-details__stat-label Play count
-                .game-details__stat-value= game.play_count.to_i
+            - if can_view_gaming_activity
+              .col-6.col-md-3
+                .game-details__stat
+                  .game-details__stat-label Play count
+                  .game-details__stat-value= game.play_count.to_i
             .col-6.col-md-3
               .game-details__stat
                 .game-details__stat-label Last updated

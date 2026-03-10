@@ -83,7 +83,8 @@
           - else
             Never
         %td= playtime_label
-      %td= game.play_count.to_i
+      - if @can_view_gaming_activity
+        %td= game.play_count.to_i
       %td.text-end
         .d-inline-flex.gap-2
           - if current_user == @profile.user
@@ -117,9 +118,10 @@
             .col-6
               .text-muted Playtime
               %div= playtime_label
-          .col-6
-            .text-muted Plays
-            %div= game.play_count.to_i
+          - if @can_view_gaming_activity
+            .col-6
+              .text-muted Plays
+              %div= game.play_count.to_i
           .col-12
             .games-meta-stack
               - if game.source&.name.present?

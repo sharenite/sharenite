@@ -70,9 +70,13 @@ RSpec.describe "Request throttling", type: :request do
 
   let(:user) { create(:user) }
 
+  before do
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch).with("REQUEST_THROTTLING_ENABLED", anything).and_return("true")
+  end
+
   describe "authenticated API requests" do
     before do
-      allow(ENV).to receive(:fetch).and_call_original
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_API_AUTH_LIMIT", anything).and_return("2")
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_API_AUTH_PERIOD", anything).and_return("60")
       reset_request_throttling_rules!
@@ -101,7 +105,6 @@ RSpec.describe "Request throttling", type: :request do
 
   describe "unauthenticated auth requests" do
     before do
-      allow(ENV).to receive(:fetch).and_call_original
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_AUTH_GUEST_LIMIT", anything).and_return("1")
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_AUTH_GUEST_PERIOD", anything).and_return("60")
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_AUTH_GUEST_TEMP_BLOCK_THRESHOLD", anything).and_return("2")
@@ -159,7 +162,6 @@ RSpec.describe "Request throttling", type: :request do
 
     before do
       profile_owner.profile.update!(privacy: :public, game_library_privacy: :public)
-      allow(ENV).to receive(:fetch).and_call_original
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_WEB_SHOW_GUEST_LIMIT", anything).and_return("1")
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_WEB_SHOW_GUEST_PERIOD", anything).and_return("60")
       allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GUEST_BLOCK_THRESHOLD", anything).and_return("2")
