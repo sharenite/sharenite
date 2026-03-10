@@ -2,10 +2,10 @@
 
 require "rails_helper"
 
-RSpec.describe Game, type: :model do
+RSpec.describe Playlist, type: :model do
   describe "private override" do
     it "defaults to disabled" do
-      expect(Game.new.private_override).to be(false)
+      expect(build(:playlist).private_override).to be(false)
     end
   end
 end

@@ -1,7 +1,11 @@
-%h1 Editing game '#{@game.name}'
-= render "form", game: @game
-%br/
-%div
-  = link_to "Show this game", [@profile, @game]
-  |
-  = "#{link_to "Back to games", profile_games_path}"
+= render "profiles/profiles/profile_nav", current_section: :games
+
+.card.profiles-section-card
+  .card-body
+    .d-flex.flex-wrap.align-items-start.justify-content-between.gap-3.mb-3
+      .min-w-0
+        %h1.h4.mb-1 Edit game
+        %p.text-muted.mb-0.text-break= @game.name
+      = link_to "View game", profile_game_path(@profile, @game), class: "games-action-pill games-action-pill-primary"
+
+    = render "form", game: @game

@@ -10,7 +10,7 @@ class Playlist < ApplicationRecord
   validates :name, presence: true
 
   def self.ransackable_attributes(_auth_object = nil)
-    ["id", "name", "user_id", "public", "created_at", "updated_at"]
+    ["id", "name", "user_id", "private_override", "created_at", "updated_at"]
   end
 
   def self.ransackable_associations(_auth_object = nil)

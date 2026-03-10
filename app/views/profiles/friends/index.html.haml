@@ -63,7 +63,7 @@
                   %tbody
                     - if @friends.any?
                       - @friends.each do |friend|
-                        - games_count = friend.read_attribute(:games_count).to_i
+                        - games_count = (@friend_games_count_by_user_id || {}).fetch(friend.user_id, 0)
                         - can_view_games = @friend_game_library_visibility_by_user_id.fetch(friend.user_id, false)
                         - relation = @friend_relations_by_user_id[friend.user_id]
                         %tr
@@ -89,7 +89,7 @@
               .row.g-2
                 - if @friends.any?
                   - @friends.each do |friend|
-                    - games_count = friend.read_attribute(:games_count).to_i
+                    - games_count = (@friend_games_count_by_user_id || {}).fetch(friend.user_id, 0)
                     - can_view_games = @friend_game_library_visibility_by_user_id.fetch(friend.user_id, false)
                     - relation = @friend_relations_by_user_id[friend.user_id]
                     .col-12

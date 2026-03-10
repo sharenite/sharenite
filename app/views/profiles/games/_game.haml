@@ -13,6 +13,8 @@
           - if game.favorite
             %i.bi.bi-star-fill.text-warning
           %strong= game.name
+          - if current_user == @profile.user && game.private_override?
+            %span.games-state-pill.games-state-pill--private.ms-1 Private
           - if game.is_installed
             %span.games-state-pill.games-state-pill--installed.ms-1 Installed
           - if @can_view_gaming_activity
@@ -95,6 +97,8 @@
             - if game.favorite
               %i.bi.bi-star-fill.text-warning
             %strong= game.name
+            - if current_user == @profile.user && game.private_override?
+              %span.games-state-pill.games-state-pill--private Private
           .d-flex.flex-wrap.justify-content-end.gap-2
             - if game.is_installed
               %span.games-state-pill.games-state-pill--installed Installed

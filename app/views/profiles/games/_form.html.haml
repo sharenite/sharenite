@@ -1,12 +1,32 @@
 = form_for [@profile, @game] do |f|
-  = turbo_frame_tag :profile_errors
-  = f.fields_for @igdb_cache do |igdb_cache|
-    .mb-3
-      = igdb_cache.label :igdb_id, {class: 'form-label'}
-      = igdb_cache.text_field :igdb_id, {class: 'form-control', "aria-describedby" => "name_help"}
-      .form-text#igdb_id IGDB ID of game to connect.
-    .mb-3
-      = igdb_cache.label :name, {class: 'form-label'}
-      = igdb_cache.text_field :name, {class: 'form-control', "aria-describedby" => "name_help", readonly: true}
-      .form-text#name Read only: name of IGDB entry.
-  = f.submit
+  = turbo_frame_tag :profile_errors do
+    = render "game_errors"
+
+  .row.g-3
+    .col-12.col-xl-7
+      .card.profiles-section-card.h-100
+        .card-body
+          %h2.h5.mb-3 IGDB Mapping
+          = f.fields_for @igdb_cache do |igdb_cache|
+            .mb-3
+              = igdb_cache.label :igdb_id, class: "form-label"
+              = igdb_cache.text_field :igdb_id, class: "form-control", aria: { describedby: "game_igdb_id_help" }
+              .form-text#game_igdb_id_help Enter the IGDB ID to reconnect this game to an IGDB entry.
+            .mb-0
+              = igdb_cache.label :name, class: "form-label"
+              = igdb_cache.text_field :name, class: "form-control", aria: { describedby: "game_igdb_name_help" }, readonly: true
+              .form-text#game_igdb_name_help Read-only preview of the matched IGDB entry name.
+
+    .col-12.col-xl-5
+      .card.profiles-section-card.h-100
+        .card-body
+          %h2.h5.mb-3 Visibility
+          .form-check
+            = f.check_box :private_override, class: "form-check-input"
+            = f.label :private_override, "Private override", class: "form-check-label"
+          .form-text.mt-2 Hide this game from other viewers even when your profile's game library is otherwise visible.
+
+  .d-flex.flex-wrap.gap-2.mt-3
+    = f.submit "Save game", class: "btn btn-primary"
+    = link_to "Back to game", profile_game_path(@profile, @game), class: "games-action-pill"
+    = link_to "Back to games", profile_games_path(@profile), class: "games-action-pill"

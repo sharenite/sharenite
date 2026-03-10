@@ -32,7 +32,7 @@
           %tr
             %th Name
             %th Games
-            %th Public
+            %th Private override
             %th.text-end Actions
         %tbody
           - if @playlists.any?
@@ -41,7 +41,7 @@
               %tr
                 %td.fw-semibold= playlist.name
                 %td= items_count
-                %td= playlist.public? ? "Yes" : "No"
+                %td= playlist.private_override? ? "Yes" : "No"
                 %td.text-end
                   .d-inline-flex.gap-2
                     = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
@@ -65,7 +65,7 @@
                     .fw-semibold.text-break= playlist.name
                     .small.text-muted
                       = "Games: #{items_count}"
-                      = " | Public: #{playlist.public? ? 'Yes' : 'No'}"
+                      = " | Private override: #{playlist.private_override? ? 'Yes' : 'No'}"
                   .d-inline-flex.gap-1.flex-wrap.flex-shrink-0.justify-content-end
                     = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                     - if own_profile

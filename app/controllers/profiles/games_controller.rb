@@ -5,13 +5,6 @@ module Profiles
   # Profiles games controller
   class GamesController < BaseController # rubocop:disable Metrics/ClassLength
     NONE_FILTER_VALUE = "__none__"
-    SEARCH_OPTION_ASSOCIATIONS = {
-      source_options: :sources,
-      completion_status_options: :completion_statuses,
-      tag_options: :tags,
-      category_options: :categories,
-      platform_options: :platforms
-    }.freeze
     SORT_ORDERS = {
       "name_asc" => { name: :asc },
       "name_desc" => { name: :desc },
@@ -53,25 +46,15 @@ module Profiles
       @igdb_cache = @game.igdb_cache || @game.build_igdb_cache
     end
 
-    # rubocop:disable Metrics/AbcSize, Metrics/BlockLength
     def update
-      should_update_igdb_cache = igdb_cache_update_requested?
-      igdb_cache = resolved_igdb_cache_from_params if should_update_igdb_cache
       respond_to do |format|
-        if should_update_igdb_cache && igdb_cache_not_found?(igdb_cache)
-          add_igdb_not_found_error(@game, params.dig(:game, :igdb_cache, :igdb_id))
-          updated = false
-        else
-          updated = should_update_igdb_cache ? @game.update(igdb_cache:) : true
-        end
-        if updated
+        if update_game_record
           format.turbo_stream { redirect_to profile_game_path(@profile, @game) }
         else
           format.turbo_stream { render turbo_stream: turbo_stream.replace("profile_errors", partial: "game_errors") }
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/BlockLength
 
     def destroy
     end
@@ -102,7 +85,7 @@ module Profiles
 
     def game
       set_profile if @profile.blank?
-      @game = @profile.user.games.find_by(id: params[:id])
+      @game = visible_games_scope.find_by(id: params[:id])
       @game ||= redirect_to_games_with_notice # defined in app controller
     rescue ActiveRecord::RecordNotFound
       redirect_to_games_with_notice
@@ -247,10 +230,11 @@ module Profiles
     end
 
     def set_search_options
-      SEARCH_OPTION_ASSOCIATIONS.each do |option_name, association|
-        records = @profile.user.public_send(association).order(:name).pluck(:name, :id)
-        instance_variable_set(:"@#{option_name}", records)
-      end
+      @source_options = belongs_to_search_options(:source, Source)
+      @completion_status_options = belongs_to_search_options(:completion_status, CompletionStatus)
+      @tag_options = collection_search_options(Tag)
+      @category_options = collection_search_options(Category)
+      @platform_options = collection_search_options(Platform)
     end
 
     def selected_filter_ids(key)
@@ -303,12 +287,53 @@ module Profiles
       record.errors.add(:base, "IGDB entry was not found for ID #{igdb_id}.")
     end
 
+    def update_game_record
+      attributes = game_params.except(:igdb_cache)
+      return @game.update(attributes) unless igdb_cache_update_requested?
+
+      igdb_cache = resolved_igdb_cache_from_params
+      return false if add_missing_igdb_error(igdb_cache)
+
+      @game.update(attributes.merge(igdb_cache:))
+    end
+
+    def add_missing_igdb_error(igdb_cache)
+      return false unless igdb_cache_not_found?(igdb_cache)
+
+      add_igdb_not_found_error(@game, params.dig(:game, :igdb_cache, :igdb_id))
+      true
+    end
+
     def set_games
-      @games = @profile.user.games.includes(:source, :completion_status, :tags, :categories, :platforms)
+      @games = visible_games_scope.includes(:source, :completion_status, :tags, :categories, :platforms)
       filter_games
       sort_games
       @games_count = @games.count
       @games = @games.page params[:page]
+    end
+
+    def visible_games_scope
+      scope = @profile.user.games
+      return scope if profile_own?
+
+      scope.where(private_override: false)
+    end
+
+    def belongs_to_search_options(association, klass)
+      table_name = klass.table_name
+
+      visible_games_scope.joins(association)
+                         .distinct
+                         .order("#{table_name}.name ASC")
+                         .pluck("#{table_name}.name", "#{table_name}.id")
+    end
+
+    def collection_search_options(klass)
+      klass.joins(:games)
+           .merge(visible_games_scope)
+           .distinct
+           .order(:name)
+           .pluck(:name, :id)
     end
 
     def effective_sort_key
@@ -322,7 +347,7 @@ module Profiles
     end
 
     def game_params
-      params.require(:game).permit(igdb_cache: [:igdb_id])
+      params.require(:game).permit(:private_override, igdb_cache: [:igdb_id])
     end
 
     def redirect_to_games_with_notice

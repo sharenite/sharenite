@@ -312,11 +312,11 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response).to redirect_to(profile_path(owner.profile))
     end
 
-    it "shows non-public playlists to an accepted friend when playlist privacy allows it" do
+    it "shows playlists without a private override to an accepted friend when playlist privacy allows it" do
       owner = create(:user)
       viewer = create(:user)
       owner.profile.update!(privacy: :public, playlists_privacy: :friends)
-      playlist = create(:playlist, user: owner, name: "Friends Playlist", public: false)
+      playlist = create(:playlist, user: owner, name: "Friends Playlist", private_override: false)
       Friend.create!(inviter: owner, invitee: viewer, status: :accepted)
 
       sign_in viewer
@@ -331,11 +331,29 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include("Friends Playlist")
     end
 
+    it "hides playlists with a private override from other allowed viewers" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :friends)
+      playlist = create(:playlist, user: owner, name: "Private Override Playlist", private_override: true)
+      Friend.create!(inviter: owner, invitee: viewer, status: :accepted)
+
+      sign_in viewer
+      get profile_playlists_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Private Override Playlist")
+
+      get profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to redirect_to(profile_playlists_path(owner.profile))
+    end
+
     it "hides playlist owner actions for another viewer" do
       owner = create(:user)
       viewer = create(:user)
       owner.profile.update!(privacy: :public, playlists_privacy: :public)
-      playlist = create(:playlist, user: owner, name: "Visible Playlist", public: true)
+      playlist = create(:playlist, user: owner, name: "Visible Playlist", private_override: false)
       create(:playlist_item, playlist:, order: 1)
 
       sign_in viewer
@@ -361,7 +379,7 @@ RSpec.describe "Profiles requests", type: :request do
       owner = create(:user)
       viewer = create(:user)
       owner.profile.update!(privacy: :public, playlists_privacy: :public)
-      playlist = create(:playlist, user: owner, public: true)
+      playlist = create(:playlist, user: owner, private_override: false)
 
       sign_in viewer
       get edit_profile_playlist_path(owner.profile, playlist)
@@ -374,7 +392,7 @@ RSpec.describe "Profiles requests", type: :request do
       viewer = create(:user)
       sign_in viewer
 
-      post profile_playlists_path(owner.profile), params: { playlist: { name: "Bad", public: true } }, as: :turbo_stream
+      post profile_playlists_path(owner.profile), params: { playlist: { name: "Bad", private_override: "0" } }, as: :turbo_stream
 
       expect(response).to redirect_to(profiles_path)
       expect(owner.playlists.where(name: "Bad")).to be_empty
@@ -399,20 +417,37 @@ RSpec.describe "Profiles requests", type: :request do
   end
 
   describe "profile stats" do
-    it "counts all playlists when playlist privacy allows the viewer" do
+    it "excludes privately overridden games from visible profile stats and activity" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, game_library_privacy: :friends, gaming_activity_privacy: :friends)
+      Friend.create!(inviter: owner, invitee: viewer, status: :accepted)
+      owner.games.create!(name: "Visible Game", private_override: false, last_activity: 1.day.ago)
+      owner.games.create!(name: "Hidden Game", private_override: true, last_activity: Time.current)
+
+      sign_in viewer
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(">1<")
+      expect(response.body).to include("Visible Game")
+      expect(response.body).not_to include("Hidden Game")
+    end
+
+    it "counts only playlists without a private override when playlist privacy allows the viewer" do
       owner = create(:user)
       viewer = create(:user)
       owner.profile.update!(privacy: :public, playlists_privacy: :friends)
       Friend.create!(inviter: owner, invitee: viewer, status: :accepted)
-      create(:playlist, user: owner, public: true)
-      create(:playlist, user: owner, public: false)
+      create(:playlist, user: owner, private_override: false)
+      create(:playlist, user: owner, private_override: true)
 
       sign_in viewer
       get profile_path(owner.profile)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Playlists")
-      expect(response.body).to include(">2<")
+      expect(response.body).to include(">1<")
     end
 
     it "does not count blocked friends in the visible friends stat" do

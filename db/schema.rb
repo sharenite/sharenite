@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_10_202010) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_10_234000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -193,6 +193,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_202010) do
     t.boolean "override_install_state"
     t.datetime "recent_activity"
     t.uuid "igdb_cache_id"
+    t.boolean "private_override", default: false, null: false
     t.index ["completion_status_id"], name: "index_games_on_completion_status_id"
     t.index ["created_at"], name: "index_games_on_created_at"
     t.index ["igdb_cache_id"], name: "index_games_on_igdb_cache_id"
@@ -299,7 +300,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_202010) do
     t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "public", default: false, null: false
+    t.boolean "private_override", default: false, null: false
     t.uuid "user_id", null: false
     t.index ["user_id"], name: "index_playlists_on_user_id"
   end

@@ -8,9 +8,9 @@
     .form-text#playlist_name_help Name of the playlist.
 
   .form-check.mb-3
-    = f.check_box :public, class: "form-check-input"
-    = f.label :public, class: "form-check-label"
-    .form-text Playlist visible publicly.
+    = f.check_box :private_override, class: "form-check-input"
+    = f.label :private_override, "Private override", class: "form-check-label"
+    .form-text Hide this playlist even when the profile's global playlist privacy would otherwise allow access.
 
   .d-flex.flex-wrap.gap-2.mt-3
     = f.submit "Save playlist", class: "btn btn-primary"

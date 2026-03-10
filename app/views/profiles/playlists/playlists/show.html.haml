@@ -10,8 +10,8 @@
         %h1.mb-1.text-break= @playlist.name
         .d-flex.flex-wrap.gap-2
           %span.profiles-show-badge
-            Public:
-            %strong.ms-1= @playlist.public? ? "Yes" : "No"
+            Private override:
+            %strong.ms-1= @playlist.private_override? ? "Yes" : "No"
       .d-flex.flex-wrap.gap-2
         - if own_profile
           = link_to "New item", new_profile_playlist_playlist_item_path(@profile, @playlist), class: "profiles-action-pill profiles-action-pill-primary"
@@ -47,16 +47,24 @@
           %th Owned
           %th Statuses
           %th.text-end Actions
-      %tbody{data: (own_profile ? { controller: "playlist-sort", playlist_sort_url_value: reorder_profile_playlist_playlist_items_path(@profile, @playlist) } : {})}
+      %tbody{
+        data: (
+    if own_profile
+      {
+        controller: "playlist-sort",
+        playlist_sort_url_value:
+          reorder_profile_playlist_playlist_items_path(@profile, @playlist),
+      }
+    else
+      {}
+    end
+  )
+      }
         - if @playlist_items.any?
           - @playlist_items.each do |playlist_item|
             - owned_count = (@owned_counts_by_igdb_cache_id || {})[playlist_item.igdb_cache_id].to_i
             - statuses = (@owned_statuses_by_igdb_cache_id || {})[playlist_item.igdb_cache_id] || []
-            %tr{
-              data: { playlist_sort_target: "row", playlist_item_id: playlist_item.id },
-              class: "playlist-sort-row",
-              "data-action" => "dragover->playlist-sort#over drop->playlist-sort#over"
-            }
+            %tr{data: { playlist_sort_target: "row", playlist_item_id: playlist_item.id }, class: "playlist-sort-row", "data-action": "dragover->playlist-sort#over drop->playlist-sort#over"}
               %td
                 - if own_profile
                   %button.btn.btn-sm.profiles-action-pill.profiles-action-pill-sm.playlist-sort-grab{
@@ -64,7 +72,7 @@
                     draggable: true,
                     title: "Drag to reorder",
                     aria: { label: "Drag to reorder item" },
-                    "data-action" => "dragstart->playlist-sort#start dragend->playlist-sort#end"
+                    "data-action": "dragstart->playlist-sort#start dragend->playlist-sort#end"
                   }
                     %i.bi.bi-grip-vertical
                     %span.ms-1.d-none.d-xl-inline Drag
@@ -90,15 +98,25 @@
 .profiles-list-mobile.d-lg-none
   - if own_profile && @playlist_items.any?
     %p.small.text-muted.mb-2 Use the grab handle to reorder playlist items.
-  .row.g-2{data: (own_profile ? { controller: "playlist-sort", playlist_sort_url_value: reorder_profile_playlist_playlist_items_path(@profile, @playlist) } : {})}
+  .row.g-2{
+    data: (
+    if own_profile
+      {
+        controller: "playlist-sort",
+        playlist_sort_url_value:
+          reorder_profile_playlist_playlist_items_path(@profile, @playlist),
+      }
+    else
+      {}
+    end
+  )
+  }
     - if @playlist_items.any?
       - @playlist_items.each do |playlist_item|
         - owned_count = (@owned_counts_by_igdb_cache_id || {})[playlist_item.igdb_cache_id].to_i
         - statuses = (@owned_statuses_by_igdb_cache_id || {})[playlist_item.igdb_cache_id] || []
         .col-12
-          .card.profiles-mobile-card.playlist-sort-row{
-            data: { playlist_sort_target: "row", playlist_item_id: playlist_item.id },
-            "data-action" => "dragover->playlist-sort#over drop->playlist-sort#over"
+          .card.profiles-mobile-card.playlist-sort-row{data: { playlist_sort_target: "row", playlist_item_id: playlist_item.id }, "data-action": "dragover->playlist-sort#over drop->playlist-sort#over"
           }
             .card-body.py-2.px-3
               .d-flex.justify-content-between.align-items-start.gap-2
@@ -119,7 +137,7 @@
                       draggable: true,
                       title: "Drag to reorder",
                       aria: { label: "Drag to reorder item" },
-                      "data-action" => "dragstart->playlist-sort#start dragend->playlist-sort#end"
+                      "data-action": "dragstart->playlist-sort#start dragend->playlist-sort#end"
                     }
                       %i.bi.bi-grip-vertical
                     = link_to "Edit", edit_profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), class: "profiles-action-pill profiles-action-pill-sm"

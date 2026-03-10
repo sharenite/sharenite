@@ -350,6 +350,12 @@ header .nav-link.active {
   color: #fff;
 }
 
+.games-state-pill--private {
+  background: #e5e7eb;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
 .games-activity-pill--playing {
   background: rgba(34, 197, 94, 0.16);
   border-color: rgba(34, 197, 94, 0.32);

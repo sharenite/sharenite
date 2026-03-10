@@ -68,7 +68,7 @@ module Profiles
       end
 
       def playlist_params
-        params.require(:playlist).permit(:name, :public)
+        params.require(:playlist).permit(:name, :private_override)
       end
 
       def redirect_to_playlists_with_notice

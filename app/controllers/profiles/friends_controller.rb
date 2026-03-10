@@ -354,28 +354,18 @@ module Profiles
     def base_friends_scope
       scope = apply_profile_visibility_scope(Profile.where(user_id: accepted_friend_user_ids_scope))
               .joins(:user)
-      return scope.select("profiles.*, COALESCE(users.games_count, 0) AS games_count") if User.games_count_available?
-
-      scope.left_joins(user: :games)
-           .select("profiles.*, COUNT(games.id) AS games_count")
+              .joins("LEFT JOIN games AS visible_games ON visible_games.user_id = users.id AND visible_games.private_override = FALSE")
+      scope.select("profiles.*, COUNT(visible_games.id) AS games_count")
            .group("profiles.id")
     end
 
     def apply_games_count_filter(scope, games_from:, games_to:)
       return scope if games_from.nil? && games_to.nil?
 
-      comparator = User.games_count_available? ? "COALESCE(users.games_count, 0)" : "COUNT(games.id)"
-      apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
+      apply_games_count_bounds(scope, comparator: "COUNT(visible_games.id)", games_from:, games_to:)
     end
 
     def apply_games_count_bounds(scope, comparator:, games_from:, games_to:)
-      if User.games_count_available?
-        scope = scope.where("#{comparator} >= ?", games_from) unless games_from.nil?
-        return scope.where("#{comparator} <= ?", games_to) unless games_to.nil?
-
-        return scope
-      end
-
       scope = scope.having("#{comparator} >= ?", games_from) unless games_from.nil?
       return scope.having("#{comparator} <= ?", games_to) unless games_to.nil?
 
@@ -385,18 +375,10 @@ module Profiles
     def apply_user_games_count_filter(scope, games_from:, games_to:)
       return scope if games_from.nil? && games_to.nil?
 
-      if User.games_count_available?
-        return apply_games_count_bounds(
-          scope,
-          comparator: "COALESCE(users.games_count, 0)",
-          games_from:,
-          games_to:
-        )
-      end
-
       apply_games_count_bounds(
-        scope.left_joins(:games).group("users.id"),
-        comparator: "COUNT(games.id)",
+        scope.joins("LEFT JOIN games AS visible_games ON visible_games.user_id = users.id AND visible_games.private_override = FALSE")
+             .group("users.id"),
+        comparator: "COUNT(visible_games.id)",
         games_from:,
         games_to:
       )
@@ -408,6 +390,7 @@ module Profiles
 
     def preload_friend_list_metadata
       friend_user_ids = @friends.map(&:user_id)
+      @friend_games_count_by_user_id = visible_games_count_by_user_id(@friends)
       @friend_game_library_visibility_by_user_id = component_visibility_by_user_id(@friends, :game_library_privacy)
       @friend_relations_by_user_id = if @own_profile && friend_user_ids.any?
                                        accepted_friend_relations_by_user_id(friend_user_ids)

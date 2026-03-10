@@ -7,7 +7,7 @@ ActiveAdmin.register Playlist do
   belongs_to :user, optional: true
   includes :user, :playlist_items
 
-  permit_params :name, :user_id, :public
+  permit_params :name, :user_id, :private_override
 
   collection_action :user_options, method: :get do
     query = params[:q].to_s.strip
@@ -28,16 +28,15 @@ ActiveAdmin.register Playlist do
     private
 
     def normalize_playlist_user_param
-      return unless params[:playlist].is_a?(ActionController::Parameters) || params[:playlist].is_a?(Hash)
+      playlist_params = params[:playlist]
+      return unless playlist_params.is_a?(ActionController::Parameters) || playlist_params.is_a?(Hash)
+      return if playlist_params[:user_id].present?
 
-      user_id = params.dig(:playlist, :user_id).presence
-      return if user_id.present?
-
-      user_query = params.dig(:playlist, :user_query).to_s.strip
+      user_query = playlist_params[:user_query].to_s.strip
       return if user_query.blank?
 
       user = User.find_by("users.email ILIKE ?", user_query)
-      params[:playlist][:user_id] = user.id if user
+      playlist_params[:user_id] = user.id if user
     end
   end
 
@@ -45,7 +44,7 @@ ActiveAdmin.register Playlist do
     id_column
     column :user
     column :name
-    column :public
+    column :private_override
     column "Items" do |playlist|
       link_to "View items (#{playlist.playlist_items.size})", admin_playlist_items_path(q: { playlist_id_eq: playlist.id })
     end
@@ -81,7 +80,7 @@ ActiveAdmin.register Playlist do
       f.input :user_id, as: :hidden, input_html: { id: "playlist-user-id" }
 
       f.input :name
-      f.input :public
+      f.input :private_override
     end
     f.actions
   end

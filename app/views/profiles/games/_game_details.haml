@@ -29,6 +29,8 @@
         = game.name
       - if game.favorite
         %span.games-state-pill.games-state-pill--favorite Favorite
+      - if own_profile && game.private_override?
+        %span.games-state-pill.games-state-pill--private Private
       - if game.is_installed
         %span.games-state-pill.games-state-pill--installed Installed
       - if can_view_gaming_activity
@@ -211,6 +213,8 @@
               %dd= game.sorting_name || "N/A"
               %dt Hidden
               %dd= game.hidden ? "Yes" : "No"
+              %dt Private override
+              %dd= game.private_override ? "Yes" : "No"
               %dt Include library plugin action
               %dd= game.include_library_plugin_action ? "Yes" : "No"
               %dt Install directory

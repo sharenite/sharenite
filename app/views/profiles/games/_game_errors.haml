@@ -1,6 +1,6 @@
 - if @game.errors.any?
-  #error_explanation
-    %h2 #{pluralize(@game.errors.count, "error")} prohibited this game from being saved:
-    %ul
+  .alert.alert-danger.mb-3
+    %h2.h6.mb-2 #{pluralize(@game.errors.count, "error")} prevented this game from being saved:
+    %ul.mb-0
       - @game.errors.full_messages.each do |message|
         %li= message

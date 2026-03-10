@@ -35,44 +35,59 @@ module Profiles
 
       {
         games_count: games_count_value(@profile.user),
-        games_played_count: @profile.gaming_activity_visible_to?(current_user) ? @profile.user.games.where.not(last_activity: nil).count : nil,
+        games_played_count: @profile.gaming_activity_visible_to?(current_user) ? visible_games_scope_for(@profile.user).where.not(last_activity: nil).count : nil,
         playlists_count: playlists_count_value,
         active_friends_count: visible_friend_user_ids.count
       }
     end
 
     def active_games_scope
-      @profile.user.games.where(
+      visible_games_scope_for(@profile.user).where(
         "is_launching = :active OR is_running = :active OR is_installing = :active OR is_uninstalling = :active",
         active: true
       ).order(Arel.sql("LOWER(name) ASC"))
     end
 
     def recent_games_scope
-      @profile.user.games.where.not(last_activity: nil).order(last_activity: :desc)
+      visible_games_scope_for(@profile.user).where.not(last_activity: nil).order(last_activity: :desc)
     end
 
     def base_profiles_scope
       scope = visible_profiles_scope
       blocked_ids = blocked_user_ids_for(current_user)
       scope = scope.where.not(user_id: blocked_ids) if blocked_ids.any?
-      return scope.select("profiles.*, COALESCE(users.games_count, 0) AS games_count") if User.games_count_available?
-
-      scope.left_joins(user: :games)
-           .select("profiles.*, COUNT(games.id) AS games_count")
-           .group("profiles.id")
+      scope
     end
 
     def games_count_value(user)
-      return user.games_count.to_i if User.games_count_available?
-
-      user.games.count
+      visible_games_scope_for(user).count
     end
 
     def playlists_count_value
-      return @profile.user.playlists.count if @profile.playlists_visible_to?(current_user)
+      return @profile.user.playlists.where(private_override: false).count if @profile.playlists_visible_to?(current_user)
 
       0
+    end
+
+    def visible_games_scope_for(user, viewer: current_user)
+      scope = user.games
+      return scope if viewer&.id == user.id
+
+      scope.where(private_override: false)
+    end
+
+    def visible_games_count_by_user_id(profiles, viewer: current_user)
+      user_ids = Array(profiles).filter_map(&:user_id).uniq
+      return {} if user_ids.empty?
+
+      scope = Game.where(user_id: user_ids)
+      scope = if viewer
+                scope.where("games.user_id = :viewer_id OR games.private_override = FALSE", viewer_id: viewer.id)
+              else
+                scope.where(private_override: false)
+              end
+
+      scope.group(:user_id).count
     end
 
     def accepted_friend_user_ids_for(user_id)

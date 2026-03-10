@@ -67,6 +67,44 @@ RSpec.describe "Games" do
       expect(response).to redirect_to(profiles_path)
     end
 
+    it "hides privately overridden games from another viewer in the index and show pages" do
+      viewer = create(:user)
+      game.update!(private_override: true)
+
+      sign_in viewer
+      get profile_games_path(user.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("JSON Ready Game")
+
+      get profile_game_path(user.profile, game)
+
+      expect(response).to redirect_to(profile_games_path(user.profile))
+    end
+
+    it "still shows privately overridden games to the owner" do
+      sign_in user
+      game.update!(private_override: true)
+
+      get profile_games_path(user.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("JSON Ready Game")
+      expect(response.body).to include("Private")
+    end
+
+    it "does not expose filter options derived only from privately overridden games" do
+      visible_source = user.sources.create!(name: "Visible Source")
+      hidden_source = user.sources.create!(name: "Hidden Source")
+      game.update!(source: visible_source)
+      user.games.create!(name: "Secret Source Game", source: hidden_source, private_override: true)
+
+      get profile_games_path(user.profile)
+
+      expect(response.body).to include("Visible Source")
+      expect(response.body).not_to include("Hidden Source")
+    end
+
     it "rejects editing another user's game" do
       viewer = create(:user)
       sign_in viewer
