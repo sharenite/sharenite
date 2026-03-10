@@ -50,7 +50,7 @@
                     - elsif friendship_state.present? && friendship_state.to_sym != :you_declined
                       %span{class: profile_friendship_state_class(friendship_state)}= profile_friendship_state_label(friendship_state)
                     - else
-                      = link_to 'Invite', profile_invite_friend_path(profile, tab: invite_tab), class: "profiles-action-pill", data: invite_data
+                      = button_to "Invite", profile_invite_friend_path(profile, tab: invite_tab), method: :post, class: "profiles-action-pill", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: invite_data.except(:turbo_frame)
 
   .profiles-list-mobile.d-md-none
     .row.g-2
@@ -84,7 +84,7 @@
                     - elsif friendship_state.present? && friendship_state.to_sym != :you_declined
                       %span{class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm"}= profile_friendship_state_label(friendship_state)
                     - else
-                      = link_to 'Invite', profile_invite_friend_path(profile, tab: invite_tab), class: "profiles-action-pill profiles-action-pill-sm", data: invite_data
+                      = button_to "Invite", profile_invite_friend_path(profile, tab: invite_tab), method: :post, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: invite_data.except(:turbo_frame)
 
   .d-flex.align-items-center.justify-content-end.mt-3
     = paginate @profiles, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"

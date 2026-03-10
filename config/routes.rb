@@ -21,14 +21,14 @@ Rails.application.routes.draw do
         collection { patch :reorder }
       end
     end
-    get "friends/invite", to: "profiles/friends#invite", as: :invite_friend
-    get "friends/block", to: "profiles/friends#block_profile", as: :block_profile_friend
-    get "friends/:id/accept", to: "profiles/friends#accept", as: :accept_friend
-    get "friends/:id/decline", to: "profiles/friends#decline", as: :decline_friend
-    get "friends/:id/cancel", to: "profiles/friends#cancel", as: :cancel_friend
-    get "friends/:id/unfriend", to: "profiles/friends#unfriend", as: :unfriend_friend
-    get "friends/:id/block", to: "profiles/friends#block", as: :block_friend
-    get "friends/:id/unblock", to: "profiles/friends#unblock", as: :unblock_friend
+    post "friends/invite", to: "profiles/friends#invite", as: :invite_friend
+    post "friends/block", to: "profiles/friends#block_profile", as: :block_profile_friend
+    patch "friends/:id/accept", to: "profiles/friends#accept", as: :accept_friend
+    patch "friends/:id/decline", to: "profiles/friends#decline", as: :decline_friend
+    delete "friends/:id/cancel", to: "profiles/friends#cancel", as: :cancel_friend
+    delete "friends/:id/unfriend", to: "profiles/friends#unfriend", as: :unfriend_friend
+    patch "friends/:id/block", to: "profiles/friends#block", as: :block_friend
+    delete "friends/:id/unblock", to: "profiles/friends#unblock", as: :unblock_friend
   end
   # rubocop:enable all
   root "static_pages#landing_page"

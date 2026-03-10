@@ -79,8 +79,8 @@
                                 = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
                               = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
                               - if relation.present?
-                                = link_to "Unfriend", profile_unfriend_friend_path(@profile, id: relation.id, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "Remove this friend?" }
-                                = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
+                                = button_to "Unfriend", profile_unfriend_friend_path(@profile, id: relation.id, tab: "friends"), method: :delete, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Remove this friend?" }
+                                = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :patch, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Block this user? You and this user will become invisible to each other." }
                     - else
                       %tr
                         %td.text-muted{colspan: 3} No friends match current filters.
@@ -108,8 +108,8 @@
                                 = link_to "Games", profile_games_path(friend), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
                               = link_to "Show", friend, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                               - if relation.present?
-                                = link_to "Unfriend", profile_unfriend_friend_path(@profile, id: relation.id, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "Remove this friend?" }
-                                = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
+                                = button_to "Unfriend", profile_unfriend_friend_path(@profile, id: relation.id, tab: "friends"), method: :delete, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Remove this friend?" }
+                                = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :patch, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Block this user? You and this user will become invisible to each other." }
                 - else
                   .col-12
                     .text-muted No friends match current filters.
@@ -135,9 +135,9 @@
                         %td.text-end
                           .d-inline-flex.gap-1.flex-wrap.justify-content-end
                             = link_to "Show", invitation_received.inviter.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
-                            = link_to "Accept", profile_accept_friend_path(@profile, id: invitation_received.id, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
-                            = link_to "Decline", profile_decline_friend_path(@profile, id: invitation_received.id, tab: "declined"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
-                            = button_to "Block", profile_block_friend_path(@profile, id: invitation_received.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
+                            = button_to "Accept", profile_accept_friend_path(@profile, id: invitation_received.id, tab: "friends"), method: :patch, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
+                            = button_to "Decline", profile_decline_friend_path(@profile, id: invitation_received.id, tab: "declined"), method: :patch, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
+                            = button_to "Block", profile_block_friend_path(@profile, id: invitation_received.id, tab: "blocked"), method: :patch, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Block this user? You and this user will become invisible to each other." }
             - else
               %p.text-muted.mb-0 No invitations received.
       - elsif @active_tab == "sent"
@@ -158,8 +158,8 @@
                         %td.text-end
                           .d-inline-flex.gap-1.flex-wrap.justify-content-end
                             = link_to "Show", invitation_sent.invitee.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
-                            = link_to "Cancel", profile_cancel_friend_path(@profile, id: invitation_sent.id, tab: "sent"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false }
-                            = button_to "Block", profile_block_friend_path(@profile, id: invitation_sent.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
+                            = button_to "Cancel", profile_cancel_friend_path(@profile, id: invitation_sent.id, tab: "sent"), method: :delete, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
+                            = button_to "Block", profile_block_friend_path(@profile, id: invitation_sent.id, tab: "blocked"), method: :patch, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Block this user? You and this user will become invisible to each other." }
             - else
               %p.text-muted.mb-0 No invitations sent.
       - else
@@ -194,8 +194,8 @@
                             - if other_profile.present?
                               = link_to "Show", other_profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
                             - if you_declined && other_profile.present?
-                              = link_to "Invite", profile_invite_friend_path(other_profile, tab: "friends"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" }
-                            = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
+                              = button_to "Invite", profile_invite_friend_path(other_profile, tab: "friends"), method: :post, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "You previously declined this invitation. Add this user back to friends?" }
+                            = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :patch, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Block this user? You and this user will become invisible to each other." }
             - elsif @active_tab == "blocked" && @blocked_relations.any?
               .table-responsive.profiles-table-wrap
                 %table.table.table-sm.align-middle.profiles-table.mb-0
@@ -210,6 +210,6 @@
                         %td.fw-semibold= blocked_profile&.name || relation.invitee.email
                         %td.text-end
                           .d-inline-flex.gap-1.flex-wrap.justify-content-end
-                            = link_to "Unblock", profile_unblock_friend_path(@profile, id: relation.id, tab: "blocked"), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "Unblock this user?" }
+                            = button_to "Unblock", profile_unblock_friend_path(@profile, id: relation.id, tab: "blocked"), method: :delete, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Unblock this user?" }
             - else
               %p.text-muted.mb-0= @active_tab == "blocked" ? "No blocked users." : "No declined invitations."

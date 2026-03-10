@@ -39,4 +39,4 @@
             = link_to "Edit profile", edit_profile_path(@profile), class: "profiles-action-pill"
             = link_to "Account settings", edit_user_registration_path, class: "profiles-action-pill"
           - elsif current_user.present? && @friendship_state&.to_sym != :blocked_by_you && @friendship_state&.to_sym != :blocked_you
-            = button_to "Block", profile_block_profile_friend_path(@profile, tab: "blocked"), method: :get, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_prefetch: false, turbo_confirm: "Block this user? You and this user will become invisible to each other." }
+            = button_to "Block", profile_block_profile_friend_path(@profile, tab: "blocked"), method: :post, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Block this user? You and this user will become invisible to each other." }

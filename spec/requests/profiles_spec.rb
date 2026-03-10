@@ -85,7 +85,7 @@ RSpec.describe "Profiles requests", type: :request do
       owner.profile.update!(privacy: :public, name: "Block Me")
 
       sign_in viewer
-      get profile_block_profile_friend_path(owner.profile)
+      post profile_block_profile_friend_path(owner.profile)
 
       expect(response).to redirect_to(profile_friends_path(viewer.profile, tab: "blocked"))
       relation = Friend.find_by(inviter: viewer, invitee: owner)
@@ -214,7 +214,7 @@ RSpec.describe "Profiles requests", type: :request do
       invitation = Friend.create!(inviter:, invitee: owner, status: :invited)
 
       sign_in viewer
-      get profile_accept_friend_path(owner.profile, id: invitation.id)
+      patch profile_accept_friend_path(owner.profile, id: invitation.id)
 
       expect(response).to redirect_to(profiles_path)
       expect(invitation.reload.status).to eq("invited")
@@ -227,7 +227,7 @@ RSpec.describe "Profiles requests", type: :request do
       invitation = Friend.create!(inviter: owner, invitee:, status: :invited)
 
       sign_in viewer
-      get profile_cancel_friend_path(owner.profile, id: invitation.id)
+      delete profile_cancel_friend_path(owner.profile, id: invitation.id)
 
       expect(response).to redirect_to(profiles_path)
       expect(invitation.reload).to be_present
@@ -239,7 +239,7 @@ RSpec.describe "Profiles requests", type: :request do
       relation = Friend.create!(inviter: owner, invitee: friend_user, status: :accepted)
 
       sign_in owner
-      get profile_unfriend_friend_path(owner.profile, id: relation.id)
+      delete profile_unfriend_friend_path(owner.profile, id: relation.id)
 
       expect(response).to redirect_to(profile_friends_path(owner.profile, tab: "friends"))
       expect(Friend.where(id: relation.id)).to be_empty
@@ -252,7 +252,7 @@ RSpec.describe "Profiles requests", type: :request do
       relation = Friend.create!(inviter: owner, invitee: friend_user, status: :accepted)
 
       sign_in owner
-      get profile_block_friend_path(owner.profile, id: relation.id)
+      patch profile_block_friend_path(owner.profile, id: relation.id)
 
       expect(response).to redirect_to(profile_friends_path(owner.profile, tab: "blocked"))
       blocked_relation = Friend.find_by(inviter: owner, invitee: friend_user)
@@ -269,7 +269,7 @@ RSpec.describe "Profiles requests", type: :request do
       relation = Friend.create!(inviter: owner, invitee: blocked_user, status: :blocked)
 
       sign_in owner
-      get profile_unblock_friend_path(owner.profile, id: relation.id)
+      delete profile_unblock_friend_path(owner.profile, id: relation.id)
 
       expect(response).to redirect_to(profile_friends_path(owner.profile, tab: "blocked"))
       expect(Friend.where(id: relation.id)).to be_empty
