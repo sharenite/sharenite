@@ -27,9 +27,13 @@ module Profiles
     def update
       respond_to do |format|
         if @profile.update(profile_params)
-          format.turbo_stream { redirect_to profile_path(@profile) }
+          # rubocop:disable Rails/I18nLocaleTexts
+          format.turbo_stream { redirect_to edit_profile_path(@profile), notice: "Profile updated." }
+          format.html { redirect_to edit_profile_path(@profile), notice: "Profile updated." }
+          # rubocop:enable Rails/I18nLocaleTexts
         else
           format.turbo_stream { render turbo_stream: turbo_stream.replace("profile_errors", partial: "profile_errors") }
+          format.html { render :edit, status: :unprocessable_entity }
         end
       end
     end

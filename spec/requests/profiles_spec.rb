@@ -142,6 +142,22 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to redirect_to(profiles_path)
     end
+
+    it "redirects back to the edit form after saving profile changes" do
+      owner = create(:user)
+      sign_in owner
+
+      patch profile_path(owner.profile),
+            params: { profile: { name: "Updated Name" } },
+            as: :turbo_stream
+
+      expect(response).to redirect_to(edit_profile_path(owner.profile))
+      follow_redirect!
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Edit profile")
+      expect(response.body).to include("Updated Name")
+      expect(owner.profile.reload.name).to eq("Updated Name")
+    end
   end
 
   describe "GET /profiles/:profile_id/friends" do
