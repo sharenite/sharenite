@@ -1,7 +1,7 @@
 - own_profile = user_signed_in? && current_user == @profile.user
 = render "profiles/profiles/profile_nav", current_section: :playlists
 - if own_profile
-  %p.mb-3= link_to "New playlist", new_profile_playlist_path, class: "btn btn-primary"
+  %p.mb-3= link_to "New playlist", new_profile_playlist_path(@profile), class: "btn btn-primary"
 
 .profiles-search-form.mb-3
   = form_with url: profile_playlists_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "playlists_list", turbo_action: "replace" } do |form|

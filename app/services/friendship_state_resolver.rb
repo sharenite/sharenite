@@ -3,13 +3,13 @@
 # Resolves relationship states between users based on Friend relations.
 class FriendshipStateResolver
   STATE_PRIORITY = {
-    blocked_you: 5,
-    blocked_by_you: 6,
     you_declined: 10,
     invite_declined: 20,
     invite_received: 30,
     invite_sent: 40,
-    friends: 50
+    friends: 50,
+    blocked_you: 60,
+    blocked_by_you: 70
   }.freeze
   PRIORITY_STATE = STATE_PRIORITY.invert.freeze
 
