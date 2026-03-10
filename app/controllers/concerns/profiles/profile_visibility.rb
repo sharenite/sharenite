@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Profiles
   # Shared visibility and stats helpers for profile pages.
+  # rubocop:disable Metrics/ModuleLength
   module ProfileVisibility
     private
 
@@ -33,7 +36,7 @@ module Profiles
       {
         games_count: games_count_value(@profile.user),
         games_played_count: @profile.gaming_activity_visible_to?(current_user) ? @profile.user.games.where.not(last_activity: nil).count : nil,
-        playlists_count: playlists_count_value(profile_user_id),
+        playlists_count: playlists_count_value,
         active_friends_count: visible_friend_user_ids.count
       }
     end
@@ -66,11 +69,10 @@ module Profiles
       user.games.count
     end
 
-    def playlists_count_value(user_id)
-      scope = Playlist.where(user_id:)
-      return scope.count if profile_own?
+    def playlists_count_value
+      return @profile.user.playlists.count if @profile.playlists_visible_to?(current_user)
 
-      scope.where(public: true).count
+      0
     end
 
     def accepted_friend_user_ids_for(user_id)
@@ -112,5 +114,43 @@ module Profiles
            .uniq
            .excluding(viewer.id)
     end
+
+    def accepted_friend_user_ids_list_for(user_id)
+      Friend.where(status: :accepted)
+            .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
+            .pluck(:inviter_id, :invitee_id)
+            .flatten
+            .uniq
+            .excluding(user_id)
+    end
+
+    def component_visibility_by_user_id(profiles, column, viewer: current_user)
+      accepted_friend_user_ids = viewer.present? ? accepted_friend_user_ids_list_for(viewer.id).to_set : Set.new
+
+      profiles.index_with do |profile|
+        privacy_setting_visible_to_viewer?(
+          profile.public_send(column),
+          profile.user_id,
+          viewer,
+          accepted_friend_user_ids
+        )
+      end
+    end
+
+    def privacy_setting_visible_to_viewer?(setting, profile_user_id, viewer, accepted_friend_user_ids)
+      return true if viewer&.id == profile_user_id
+
+      case setting
+      when "public"
+        true
+      when "members"
+        viewer.present?
+      when "friends"
+        accepted_friend_user_ids.include?(profile_user_id)
+      else
+        false
+      end
+    end
   end
+  # rubocop:enable Metrics/ModuleLength
 end

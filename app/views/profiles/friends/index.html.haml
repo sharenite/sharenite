@@ -64,8 +64,8 @@
                     - if @friends.any?
                       - @friends.each do |friend|
                         - games_count = friend.read_attribute(:games_count).to_i
-                        - can_view_games = friend.game_library_visible_to?(current_user)
-                        - relation = @own_profile ? Friend.find_by(status: :accepted, inviter_id: [@profile.user.id, friend.user_id], invitee_id: [@profile.user.id, friend.user_id]) : nil
+                        - can_view_games = @friend_game_library_visibility_by_user_id.fetch(friend.user_id, false)
+                        - relation = @friend_relations_by_user_id[friend.user_id]
                         %tr
                           %td.fw-semibold= friend.name
                           %td
@@ -90,8 +90,8 @@
                 - if @friends.any?
                   - @friends.each do |friend|
                     - games_count = friend.read_attribute(:games_count).to_i
-                    - can_view_games = friend.game_library_visible_to?(current_user)
-                    - relation = @own_profile ? Friend.find_by(status: :accepted, inviter_id: [@profile.user.id, friend.user_id], invitee_id: [@profile.user.id, friend.user_id]) : nil
+                    - can_view_games = @friend_game_library_visibility_by_user_id.fetch(friend.user_id, false)
+                    - relation = @friend_relations_by_user_id[friend.user_id]
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3

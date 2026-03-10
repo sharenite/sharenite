@@ -9,6 +9,7 @@
         = form.submit "Apply", class: "btn btn-primary"
 
 = turbo_frame_tag "profiles_list" do
+  - game_library_visibility_by_user_id = @game_library_visibility_by_user_id || {}
   .d-flex.align-items-center.justify-content-end.mb-2
     = paginate @profiles, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
 
@@ -27,8 +28,7 @@
             - games_count = profile.read_attribute(:games_count).to_i
             - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
             - friendship_state = @friendship_states_by_user_id[profile.user_id]
-            - can_open_profile = profile.visible_to?(current_user)
-            - can_view_games = profile.game_library_visible_to?(current_user)
+            - can_view_games = game_library_visibility_by_user_id.fetch(profile.user_id, false)
             - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
             - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
             %tr
@@ -42,8 +42,7 @@
                 .d-inline-flex.gap-2
                   - if can_view_games
                     = link_to 'Games', profile_games_path(profile), class: "profiles-action-pill", data: { turbo_frame: "_top" }
-                  - if can_open_profile
-                    = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
+                  = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
                       = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile, tab: "received"), class: profile_friendship_state_class(friendship_state), data: { turbo_frame: "_top" }
@@ -58,8 +57,7 @@
         - games_count = profile.read_attribute(:games_count).to_i
         - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
         - friendship_state = @friendship_states_by_user_id[profile.user_id]
-        - can_open_profile = profile.visible_to?(current_user)
-        - can_view_games = profile.game_library_visible_to?(current_user)
+        - can_view_games = game_library_visibility_by_user_id.fetch(profile.user_id, false)
         - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
         - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
         .col-12
@@ -76,8 +74,7 @@
                 .d-inline-flex.gap-1.flex-shrink-0
                   - if can_view_games
                     = link_to 'Games', profile_games_path(profile), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
-                  - if can_open_profile
-                    = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
+                  = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                   - if user_signed_in? && !is_own_profile
                     - if friendship_state&.to_sym == :invite_received
                       = link_to profile_friendship_state_label(friendship_state), profile_friends_path(@current_profile, tab: "received"), class: "#{profile_friendship_state_class(friendship_state)} profiles-info-pill-sm", data: { turbo_frame: "_top" }

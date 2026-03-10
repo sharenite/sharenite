@@ -45,7 +45,7 @@ module Profiles
     end
 
     def playlist_hidden_for_viewer?
-      !profile_own? && (!@profile.playlists_visible_to?(current_user) || !@playlist.public?)
+      !profile_own? && !@profile.playlists_visible_to?(current_user)
     end
 
     def redirect_when_playlist_hidden
@@ -55,9 +55,8 @@ module Profiles
     end
 
     def playlists_scope_with_counts
-      scope = @profile.user.playlists
-      scope = scope.where(public: true) unless profile_own?
-      scope.left_joins(:playlist_items)
+      @profile.user.playlists
+              .left_joins(:playlist_items)
            .select("playlists.*, COUNT(playlist_items.id) AS items_count")
            .group("playlists.id")
     end

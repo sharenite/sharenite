@@ -222,6 +222,7 @@ module Profiles
                  else
                    Profile.none.page(params[:page]).per(25)
                  end
+      preload_friend_list_metadata
     end
 
     def set_invitations
@@ -403,6 +404,25 @@ module Profiles
 
     def normalize_count_result(result)
       result.is_a?(Hash) ? result.size : result
+    end
+
+    def preload_friend_list_metadata
+      friend_user_ids = @friends.map(&:user_id)
+      @friend_game_library_visibility_by_user_id = component_visibility_by_user_id(@friends, :game_library_privacy)
+      @friend_relations_by_user_id = if @own_profile && friend_user_ids.any?
+                                       accepted_friend_relations_by_user_id(friend_user_ids)
+                                     else
+                                       {}
+                                     end
+    end
+
+    def accepted_friend_relations_by_user_id(friend_user_ids)
+      Friend.where(status: :accepted)
+            .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: @profile.user.id)
+            .where("inviter_id IN (:friend_user_ids) OR invitee_id IN (:friend_user_ids)", friend_user_ids:)
+            .index_by do |relation|
+              relation.inviter_id == @profile.user.id ? relation.invitee_id : relation.inviter_id
+            end
     end
 
     def friendship_involves_current_user?(friend)

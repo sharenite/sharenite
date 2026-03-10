@@ -9,6 +9,7 @@ module Profiles
     def index
       @profiles = profiles_scope.page(params[:page])
       @friendship_states_by_user_id = friendship_states_for_user_ids(@profiles.map(&:user_id))
+      @game_library_visibility_by_user_id = component_visibility_by_user_id(@profiles, :game_library_privacy)
       @current_user_id = current_user&.id
       @current_profile = current_profile
     end

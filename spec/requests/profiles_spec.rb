@@ -303,13 +303,32 @@ RSpec.describe "Profiles requests", type: :request do
   end
 
   describe "GET /profiles/:profile_id/playlists" do
-    it "redirects when game library privacy blocks playlist access" do
+    it "redirects when playlist privacy blocks playlist access" do
       owner = create(:user)
       owner.profile.update!(privacy: :public, playlists_privacy: :private)
 
       get profile_playlists_path(owner.profile)
 
       expect(response).to redirect_to(profile_path(owner.profile))
+    end
+
+    it "shows non-public playlists to an accepted friend when playlist privacy allows it" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :friends)
+      playlist = create(:playlist, user: owner, name: "Friends Playlist", public: false)
+      Friend.create!(inviter: owner, invitee: viewer, status: :accepted)
+
+      sign_in viewer
+      get profile_playlists_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Friends Playlist")
+
+      get profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Friends Playlist")
     end
 
     it "hides playlist owner actions for another viewer" do
@@ -380,6 +399,22 @@ RSpec.describe "Profiles requests", type: :request do
   end
 
   describe "profile stats" do
+    it "counts all playlists when playlist privacy allows the viewer" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :friends)
+      Friend.create!(inviter: owner, invitee: viewer, status: :accepted)
+      create(:playlist, user: owner, public: true)
+      create(:playlist, user: owner, public: false)
+
+      sign_in viewer
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Playlists")
+      expect(response.body).to include(">2<")
+    end
+
     it "does not count blocked friends in the visible friends stat" do
       owner = create(:user)
       viewer = create(:user)
