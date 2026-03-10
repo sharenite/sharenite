@@ -6,12 +6,14 @@ module Profiles
     # Profiles playlists controller
     class PlaylistsController < ::Profiles::BaseController
       include PlaylistAccess
+      include ::Profiles::ProfileVisibility
 
       before_action :check_current_user_profile, only: %i[new create edit update destroy]
       before_action :check_playlist_library_access_profile, only: %i[index]
       before_action :playlist, only: %i[show edit update destroy]
 
       def index
+        assign_visibility_flags
         set_playlists
       end
 

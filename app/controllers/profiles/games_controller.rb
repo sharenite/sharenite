@@ -4,6 +4,8 @@
 module Profiles
   # Profiles games controller
   class GamesController < BaseController # rubocop:disable Metrics/ClassLength
+    include ProfileVisibility
+
     NONE_FILTER_VALUE = "__none__"
     SORT_ORDERS = {
       "name_asc" => { name: :asc },
@@ -24,13 +26,12 @@ module Profiles
     before_action :check_current_user_profile, only: %i[edit update destroy]
     before_action :check_game_library_access_profile, only: %i[index show]
     before_action :game, only: %i[show edit update destroy]
+    before_action :assign_visibility_flags, only: %i[index show edit]
     skip_before_action :check_general_access_profile, only: %i[index show]
 
     def index
-      @can_view_gaming_activity = @profile.gaming_activity_visible_to?(current_user)
       set_games
-      set_sync_jobs
-      set_search_options
+      prepare_full_page_state unless turbo_frame_request?
 
       if turbo_frame_request?
         render partial: "games", locals: { games: @games }
@@ -81,6 +82,11 @@ module Profiles
 
       @sync_jobs = @profile.user.sync_jobs.active.order(:created_at)
       @failed_sync_jobs = @profile.user.sync_jobs.recent_failures.limit(3)
+    end
+
+    def prepare_full_page_state
+      set_sync_jobs
+      set_search_options
     end
 
     def game
@@ -305,11 +311,11 @@ module Profiles
     end
 
     def set_games
-      @games = visible_games_scope.includes(:source, :completion_status, :tags, :categories, :platforms)
+      @games = visible_games_scope
       filter_games
       sort_games
       @games_count = @games.count
-      @games = @games.page params[:page]
+      @games = @games.page(params[:page]).preload(:source, :completion_status, :tags, :categories, :platforms)
     end
 
     def visible_games_scope

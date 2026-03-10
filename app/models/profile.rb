@@ -33,39 +33,42 @@ class Profile < ApplicationRecord
   end
 
   def visible_to?(viewer)
-    return false if blocked_with?(viewer)
-
-    privacy_allows?(privacy, viewer)
+    visibility_cache_for(:profile_visibility)[visibility_cache_key(viewer)] ||= blocked_with?(viewer) ? false : privacy_allows?(privacy, viewer)
+    
   end
 
   def game_library_visible_to?(viewer)
-    visible_to?(viewer) && privacy_allows?(game_library_privacy, viewer)
+    visibility_cache_for(:game_library_visibility)[visibility_cache_key(viewer)] ||= visible_to?(viewer) && privacy_allows?(game_library_privacy, viewer)
   end
 
   def friends_list_visible_to?(viewer)
-    visible_to?(viewer) && privacy_allows?(friends_privacy, viewer)
+    visibility_cache_for(:friends_list_visibility)[visibility_cache_key(viewer)] ||= visible_to?(viewer) && privacy_allows?(friends_privacy, viewer)
   end
 
   def gaming_activity_visible_to?(viewer)
-    visible_to?(viewer) && privacy_allows?(gaming_activity_privacy, viewer)
+    visibility_cache_for(:gaming_activity_visibility)[visibility_cache_key(viewer)] ||= visible_to?(viewer) && privacy_allows?(gaming_activity_privacy, viewer)
   end
 
   def playlists_visible_to?(viewer)
-    visible_to?(viewer) && privacy_allows?(playlists_privacy, viewer)
+    visibility_cache_for(:playlists_visibility)[visibility_cache_key(viewer)] ||= visible_to?(viewer) && privacy_allows?(playlists_privacy, viewer)
   end
 
   def friends_with?(viewer)
     return false unless viewer
-    return false if blocked_with?(viewer)
 
-    Friend.where(status: :accepted).exists?(
-      ["(inviter_id = :viewer_id AND invitee_id = :profile_user_id) OR " \
-       "(invitee_id = :viewer_id AND inviter_id = :profile_user_id)",
-       {
-         viewer_id: viewer.id,
-         profile_user_id: user_id
-       }]
-    )
+    visibility_cache_for(:friendship)[visibility_cache_key(viewer)] ||= if blocked_with?(viewer)
+        false
+      else
+        Friend.where(status: :accepted).exists?(
+          ["(inviter_id = :viewer_id AND invitee_id = :profile_user_id) OR " \
+           "(invitee_id = :viewer_id AND inviter_id = :profile_user_id)",
+           {
+             viewer_id: viewer.id,
+             profile_user_id: user_id
+           }]
+        )
+      end
+    
   end
 
   private
@@ -73,7 +76,7 @@ class Profile < ApplicationRecord
   def blocked_with?(viewer)
     return false unless viewer
 
-    Friend.where(status: :blocked).exists?(
+    visibility_cache_for(:blocked)[visibility_cache_key(viewer)] ||= Friend.where(status: :blocked).exists?(
       ["(inviter_id = :viewer_id AND invitee_id = :profile_user_id) OR " \
        "(invitee_id = :viewer_id AND inviter_id = :profile_user_id)",
        {
@@ -108,6 +111,15 @@ class Profile < ApplicationRecord
 
   def own_profile_for?(viewer)
     viewer.present? && viewer.id == user_id
+  end
+
+  def visibility_cache_key(viewer)
+    viewer&.id || :guest
+  end
+
+  def visibility_cache_for(name)
+    @visibility_cache ||= {}
+    @visibility_cache[name] ||= {}
   end
 
   def normalize_vanity_url

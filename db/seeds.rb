@@ -503,6 +503,7 @@ if Rails.env.development?
   end
 
   explicit_visibility_showcase = friend_visibility_showcase + [
+    { slug: "profile-seed-001", privacy: :public, game_library_privacy: :public, gaming_activity_privacy: :public, playlists_privacy: :public, friends_privacy: :public },
     { slug: "profile-seed-020", privacy: :members, game_library_privacy: :members, gaming_activity_privacy: :friends, playlists_privacy: :friends, friends_privacy: :members },
     { slug: "profile-seed-021", privacy: :members, game_library_privacy: :friends, gaming_activity_privacy: :private, playlists_privacy: :members, friends_privacy: :friends }
   ]

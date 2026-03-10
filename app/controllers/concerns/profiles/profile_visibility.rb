@@ -140,21 +140,23 @@ module Profiles
     def blocked_user_ids_for(viewer)
       return [] unless viewer
 
-      Friend.where(status: :blocked)
-           .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: viewer.id)
-           .pluck(:inviter_id, :invitee_id)
-           .flatten
-           .uniq
-           .excluding(viewer.id)
+      @blocked_user_ids_by_viewer_id ||= {}
+      @blocked_user_ids_by_viewer_id[viewer.id] ||= Friend.where(status: :blocked)
+                                                          .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: viewer.id)
+                                                          .pluck(:inviter_id, :invitee_id)
+                                                          .flatten
+                                                          .uniq
+                                                          .excluding(viewer.id)
     end
 
     def accepted_friend_user_ids_list_for(user_id)
-      Friend.where(status: :accepted)
-            .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
-            .pluck(:inviter_id, :invitee_id)
-            .flatten
-            .uniq
-            .excluding(user_id)
+      @accepted_friend_user_ids_list_by_user_id ||= {}
+      @accepted_friend_user_ids_list_by_user_id[user_id] ||= Friend.where(status: :accepted)
+                                                                 .where("inviter_id = :user_id OR invitee_id = :user_id", user_id:)
+                                                                 .pluck(:inviter_id, :invitee_id)
+                                                                 .flatten
+                                                                 .uniq
+                                                                 .excluding(user_id)
     end
 
     def component_visibility_by_user_id(profiles, column, viewer: current_user)

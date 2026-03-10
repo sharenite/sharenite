@@ -41,6 +41,7 @@ module Profiles
 
     def index
       @own_profile = profile_own?
+      assign_visibility_flags
       @active_tab = @own_profile ? active_tab : "friends"
       set_friends
       set_invitations

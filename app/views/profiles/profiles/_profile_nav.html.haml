@@ -5,7 +5,11 @@
 - member_since_label = "#{time_ago_in_words(@profile.created_at)} ago"
 - last_active_at = @profile.user.last_sign_in_at || @profile.user.current_sign_in_at
 - last_active_label = last_active_at ? "#{time_ago_in_words(last_active_at)} ago" : "N/A"
-- running_game_label = profile_running_game_summary(@profile, current_user)
+- can_view_games = defined?(@can_view_games) ? @can_view_games : @profile.game_library_visible_to?(current_user)
+- can_view_gaming_activity = defined?(@can_view_gaming_activity) ? @can_view_gaming_activity : @profile.gaming_activity_visible_to?(current_user)
+- can_view_playlists = defined?(@can_view_playlists) ? @can_view_playlists : @profile.playlists_visible_to?(current_user)
+- can_view_friends = defined?(@can_view_friends) ? @can_view_friends : @profile.friends_list_visible_to?(current_user)
+- running_game_label = profile_running_game_summary(@profile, current_user, can_view_gaming_activity:)
 - nav_link_class = ->(active) { "profiles-action-pill#{active ? ' profiles-action-pill-primary' : ''}" }
 
 - unless hide_nav
@@ -29,11 +33,11 @@
                   %strong.profiles-show-badge-activity= running_game_label
         .profiles-show-header-actions.d-flex.flex-wrap.gap-2
           = link_to "Profile", profile_path(@profile), class: nav_link_class.call(current_section == :profile)
-          - if @profile.game_library_visible_to?(current_user)
+          - if can_view_games
             = link_to "Games", profile_games_path(@profile), class: nav_link_class.call(current_section == :games)
-          - if @profile.playlists_visible_to?(current_user) || own_profile
+          - if can_view_playlists || own_profile
             = link_to "Playlists", profile_playlists_path(@profile), class: nav_link_class.call(current_section == :playlists)
-          - if @profile.friends_list_visible_to?(current_user) || own_profile
+          - if can_view_friends || own_profile
             = link_to "Friends", profile_friends_path(@profile, tab: "friends"), class: nav_link_class.call(current_section == :friends)
           - if own_profile
             = link_to "Edit profile", edit_profile_path(@profile), class: "profiles-action-pill"

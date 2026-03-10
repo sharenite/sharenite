@@ -44,8 +44,9 @@ module ProfilesHelper
     "games-activity-pill games-activity-pill--#{tone}"
   end
 
-  def profile_running_game_summary(profile, viewer)
-    return unless profile.gaming_activity_visible_to?(viewer)
+  def profile_running_game_summary(profile, viewer, can_view_gaming_activity: nil)
+    can_view_gaming_activity = profile.gaming_activity_visible_to?(viewer) if can_view_gaming_activity.nil?
+    return unless can_view_gaming_activity
 
     summaries = profile_running_game_summaries(profile, viewer)
     total_count = summaries.length
