@@ -11,6 +11,7 @@ class FriendshipStateResolver
     invite_sent: 40,
     friends: 50
   }.freeze
+  PRIORITY_STATE = STATE_PRIORITY.invert.freeze
 
   class << self
     def relations_scope(current_user_id:, user_ids:)
@@ -60,15 +61,7 @@ class FriendshipStateResolver
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def state_from_priority(priority)
-      case priority.to_i
-      when STATE_PRIORITY[:blocked_by_you] then :blocked_by_you
-      when STATE_PRIORITY[:blocked_you] then :blocked_you
-      when STATE_PRIORITY[:friends] then :friends
-      when STATE_PRIORITY[:invite_sent] then :invite_sent
-      when STATE_PRIORITY[:invite_received] then :invite_received
-      when STATE_PRIORITY[:invite_declined] then :invite_declined
-      when STATE_PRIORITY[:you_declined] then :you_declined
-      end
+      PRIORITY_STATE[priority.to_i]
     end
 
     private

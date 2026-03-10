@@ -21,19 +21,34 @@ ActiveAdmin.register Profile do
     private
 
     def normalize_profile_user_param
-      return unless params[:profile].is_a?(ActionController::Parameters) || params[:profile].is_a?(Hash)
+      profile_params = params[:profile]
+      return unless profile_params.is_a?(ActionController::Parameters) || profile_params.is_a?(Hash)
+      return if extract_profile_user_id(profile_params).present?
 
-      user_id = params.dig(:profile, :user_id).presence || params.dig(:profile, "user_id").presence
-      return if user_id.present?
-
-      user_query = params.dig(:profile, :user_query).to_s.strip
-      return if user_query.blank?
-
-      user = User.find_by("users.email ILIKE ?", user_query)
+      user = find_profile_user(profile_params)
       return unless user
 
-      params[:profile][:user_id] = user.id
-      params[:profile]["user_id"] = user.id
+      assign_profile_user_id(profile_params, user.id)
+    end
+
+    def extract_profile_user_id(profile_params)
+      profile_params[:user_id].presence || profile_params["user_id"].presence
+    end
+
+    def assign_profile_user_id(profile_params, user_id)
+      profile_params[:user_id] = user_id
+      profile_params["user_id"] = user_id
+    end
+
+    def find_profile_user(profile_params)
+      user_query = profile_user_query(profile_params)
+      return if user_query.blank?
+
+      User.find_by("users.email ILIKE ?", user_query)
+    end
+
+    def profile_user_query(profile_params)
+      profile_params[:user_query].to_s.strip.presence || profile_params["user_query"].to_s.strip.presence
     end
   end
 

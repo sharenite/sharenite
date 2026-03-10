@@ -6,6 +6,32 @@ module Profiles
   # rubocop:disable Metrics/ClassLength
   class FriendsController < BaseController
     TABS = %w[friends received sent declined blocked].freeze
+    INVITATION_COLLECTION_CONFIG = [
+      {
+        count_ivar: :@invitations_received_count,
+        records_ivar: :@invitations_received,
+        tab_name: "received",
+        scope_method: :invitation_received_scope
+      },
+      {
+        count_ivar: :@invitations_sent_count,
+        records_ivar: :@invitations_sent,
+        tab_name: "sent",
+        scope_method: :invitation_sent_scope
+      },
+      {
+        count_ivar: :@invitations_declined_count,
+        records_ivar: :@invitations_declined,
+        tab_name: "declined",
+        scope_method: :invitation_declined_scope
+      },
+      {
+        count_ivar: :@blocked_count,
+        records_ivar: :@blocked_relations,
+        tab_name: "blocked",
+        scope_method: :blocked_scope
+      }
+    ].freeze
 
     before_action :check_friends_index_access_profile, only: %i[index]
     before_action :check_current_user_profile, only: %i[accept decline cancel unfriend block unblock]
@@ -197,39 +223,12 @@ module Profiles
     end
 
     def set_invitations
-      unless @own_profile
-        @invitations_received_count = 0
-        @invitations_received = []
-        @invitations_sent_count = 0
-        @invitations_sent = []
-        @invitations_declined_count = 0
-        @invitations_declined = []
-        @blocked_count = 0
-        @blocked_relations = []
-        return
+      return reset_invitations unless @own_profile
+
+      filter_options = invitation_filter_options
+      invitation_collections(filter_options).each do |config|
+        assign_invitation_collection(**config)
       end
-
-      name_query = params[:search_name].to_s.strip
-      games_from = parse_games_count_param(:games_from)
-      games_to = parse_games_count_param(:games_to)
-      any_filter = name_query.present? || games_from.present? || games_to.present?
-      filtered_user_ids = any_filter ? filtered_user_ids_for_invitation_filters(name_query:, games_from:, games_to:) : nil
-
-      received_scope = invitation_received_scope(any_filter:, filtered_user_ids:)
-      @invitations_received_count = received_scope.count
-      @invitations_received = @active_tab == "received" ? received_scope.load : []
-
-      sent_scope = invitation_sent_scope(any_filter:, filtered_user_ids:)
-      @invitations_sent_count = sent_scope.count
-      @invitations_sent = @active_tab == "sent" ? sent_scope.load : []
-
-      declined_scope = invitation_declined_scope(any_filter:, filtered_user_ids:)
-      @invitations_declined_count = declined_scope.count
-      @invitations_declined = @active_tab == "declined" ? declined_scope.load : []
-
-      blocked_scope = blocked_scope(any_filter:, filtered_user_ids:)
-      @blocked_count = blocked_scope.count
-      @blocked_relations = @active_tab == "blocked" ? blocked_scope.load : []
     end
 
     def parse_games_count_param(key)
@@ -248,6 +247,39 @@ module Profiles
 
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
       apply_user_games_count_filter(scope, games_from:, games_to:)
+    end
+
+    def invitation_filter_options
+      name_query = params[:search_name].to_s.strip
+      games_from = parse_games_count_param(:games_from)
+      games_to = parse_games_count_param(:games_to)
+      any_filter = name_query.present? || games_from.present? || games_to.present?
+      filtered_user_ids = any_filter ? filtered_user_ids_for_invitation_filters(name_query:, games_from:, games_to:) : nil
+
+      { any_filter:, filtered_user_ids: }
+    end
+
+    def assign_invitation_collection(count_ivar:, records_ivar:, tab_name:, scope:)
+      instance_variable_set(count_ivar, scope.count)
+      records = @active_tab == tab_name ? scope.load : []
+      instance_variable_set(records_ivar, records)
+    end
+
+    def invitation_collections(filter_options)
+      INVITATION_COLLECTION_CONFIG.map do |config|
+        config.merge(scope: public_send(config[:scope_method], **filter_options))
+      end
+    end
+
+    def reset_invitations
+      @invitations_received_count = 0
+      @invitations_received = []
+      @invitations_sent_count = 0
+      @invitations_sent = []
+      @invitations_declined_count = 0
+      @invitations_declined = []
+      @blocked_count = 0
+      @blocked_relations = []
     end
 
     def redirect_tab(default_tab)

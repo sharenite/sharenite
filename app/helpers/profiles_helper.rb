@@ -29,7 +29,7 @@ module ProfilesHelper
   end
 
   def game_activity_labels(game)
-    game_activity_states(game).map { |state| state[:label] }
+    game_activity_states(game).pluck(:label)
   end
 
   def game_activity_states(game)
@@ -85,7 +85,6 @@ module ProfilesHelper
   private
 
   def profile_running_game_summaries(profile)
-    @profile_running_game_summaries ||= {}
-    @profile_running_game_summaries[profile.id] ||= profile.user.games.where(is_running: true).order(Arel.sql("LOWER(name) ASC")).pluck(:name)
+    profile.user.games.where(is_running: true).order(Arel.sql("LOWER(name) ASC")).pluck(:name)
   end
 end
