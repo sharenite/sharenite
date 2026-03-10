@@ -255,6 +255,23 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include("Total friends listed: 0")
     end
 
+    it "does not count visible friends with zero games when filtering from one game" do
+      owner = create(:user)
+      zero_games_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      zero_games_friend.profile.update!(privacy: :public, game_library_privacy: :public, name: "Zero Games Friend")
+      Friend.create!(inviter: owner, invitee: zero_games_friend, status: :accepted)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, games_from: 1)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      listed_names = document.css(".profiles-table tbody td.fw-semibold, .profiles-mobile-card .fw-semibold").map(&:text)
+      expect(listed_names).not_to include("Zero Games Friend")
+      expect(response.body).to include("Total friends listed: 0")
+    end
+
     it "redirects when friends list privacy blocks access" do
       owner = create(:user)
       owner.profile.update!(privacy: :public, friends_privacy: :private)
@@ -395,6 +412,51 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include("Edit playlist")
       expect(response.body).not_to include("New item")
       expect(response.body).not_to include("Delete")
+    end
+
+    it "does not show owned playlist matches when the viewer cannot see the owner's library" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :public, game_library_privacy: :private)
+      playlist = create(:playlist, user: owner, name: "Visible Playlist", private_override: false)
+      create(:playlist_item, playlist:, order: 1, igdb_cache: create(:igdb_cache, name: "Matched Game"))
+      owner.games.create!(name: "Matched Game", igdb_cache: playlist.playlist_items.first.igdb_cache, private_override: false)
+
+      sign_in viewer
+      get profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Visible Playlist")
+      expect(response.body).not_to include("Owned matches")
+      expect(response.body).not_to include("Statuses")
+      expect(response.body).not_to include("Owned:")
+    end
+
+    it "shows only non-private owned playlist matches to allowed viewers" do
+      owner = create(:user)
+      viewer = create(:user)
+      owner.profile.update!(privacy: :public, playlists_privacy: :public, game_library_privacy: :public)
+      playlist = create(:playlist, user: owner, name: "Visible Playlist", private_override: false)
+      igdb_cache = create(:igdb_cache, name: "Matched Game")
+      create(:playlist_item, playlist:, order: 1, igdb_cache:)
+      status = create(:completion_status, user: owner, name: "Completed")
+      owner.games.create!(name: "Visible Match", igdb_cache:, private_override: false, completion_status: status)
+      owner.games.create!(name: "Hidden Match", igdb_cache:, private_override: true, completion_status: status)
+
+      sign_in viewer
+      get profile_playlist_path(owner.profile, playlist)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      playlist_stats = document.css(".profiles-section-card .card-body").each_with_object({}) do |card, stats|
+        label = card.at_css(".profiles-stat-label")&.text&.strip
+        value = card.at_css(".profiles-stat-value")&.text&.strip
+        stats[label] = value if label.present?
+      end
+
+      expect(playlist_stats["Owned matches"]).to eq("1")
+      expect(playlist_stats["Statuses"]).to eq("1")
+      expect(response.body).to include("Completed")
     end
 
     it "redirects back to the profile playlist index when the playlist is missing" do

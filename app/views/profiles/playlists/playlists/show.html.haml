@@ -2,6 +2,7 @@
 - owned_total = @playlist_items.sum { |item| (@owned_counts_by_igdb_cache_id || {})[item.igdb_cache_id].to_i }
 - unique_status_count = (@owned_statuses_by_igdb_cache_id || {}).values.flatten.uniq.size
 - own_profile = user_signed_in? && current_user == @profile.user
+- can_view_playlist_game_matches = @can_view_playlist_game_matches
 
 .profiles-show-header.card.profiles-section-card.mb-3
   .card-body
@@ -19,21 +20,22 @@
         = link_to "Back to playlists", profile_playlists_path(@profile), class: "profiles-action-pill"
 
 .row.g-3.mb-3
-  .col-12.col-md-4
+  .col-12{class: can_view_playlist_game_matches ? "col-md-4" : "col-md-12"}
     .card.profiles-section-card.h-100
       .card-body
         .profiles-stat-label Items
         .profiles-stat-value= items_count
-  .col-12.col-md-4
-    .card.profiles-section-card.h-100
-      .card-body
-        .profiles-stat-label Owned matches
-        .profiles-stat-value= owned_total
-  .col-12.col-md-4
-    .card.profiles-section-card.h-100
-      .card-body
-        .profiles-stat-label Statuses
-        .profiles-stat-value= unique_status_count
+  - if can_view_playlist_game_matches
+    .col-12.col-md-4
+      .card.profiles-section-card.h-100
+        .card-body
+          .profiles-stat-label Owned matches
+          .profiles-stat-value= owned_total
+    .col-12.col-md-4
+      .card.profiles-section-card.h-100
+        .card-body
+          .profiles-stat-label Statuses
+          .profiles-stat-value= unique_status_count
 
 .profiles-list-desktop.d-none.d-lg-block
   - if own_profile && @playlist_items.any?
@@ -44,8 +46,9 @@
         %tr
           %th Order
           %th Name
-          %th Owned
-          %th Statuses
+          - if can_view_playlist_game_matches
+            %th Owned
+            %th Statuses
           %th.text-end Actions
       %tbody{
         data: (
@@ -78,14 +81,15 @@
                     %span.ms-1.d-none.d-xl-inline Drag
                 %span.ms-2{data: { playlist_sort_order: true }}= playlist_item.order
               %td.fw-semibold= playlist_item.igdb_cache&.name || "N/A"
-              %td= owned_count
-              %td
-                - if statuses.any?
-                  .d-inline-flex.flex-wrap.gap-1
-                    - statuses.each do |status|
-                      %span.profiles-info-pill.profiles-info-pill-sm= status
-                - else
-                  %span.text-muted None
+              - if can_view_playlist_game_matches
+                %td= owned_count
+                %td
+                  - if statuses.any?
+                    .d-inline-flex.flex-wrap.gap-1
+                      - statuses.each do |status|
+                        %span.profiles-info-pill.profiles-info-pill-sm= status
+                  - else
+                    %span.text-muted None
               %td.text-end
                 .d-inline-flex.gap-2
                   - if own_profile
@@ -93,7 +97,7 @@
                     = button_to "Delete", profile_playlist_playlist_item_path(@profile, @playlist, playlist_item), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline"
         - else
           %tr
-            %td.text-muted{colspan: 5} No playlist items yet.
+            %td.text-muted{colspan: (can_view_playlist_game_matches ? 5 : 3)} No playlist items yet.
 
 .profiles-list-mobile.d-lg-none
   - if own_profile && @playlist_items.any?
@@ -125,8 +129,9 @@
                   .small.text-muted
                     Order:
                     %span{data: { playlist_sort_order: true }}= playlist_item.order
-                    = " | Owned: #{owned_count}"
-                  - if statuses.any?
+                    - if can_view_playlist_game_matches
+                      = " | Owned: #{owned_count}"
+                  - if can_view_playlist_game_matches && statuses.any?
                     .d-inline-flex.flex-wrap.gap-1.mt-1
                       - statuses.each do |status|
                         %span.profiles-info-pill.profiles-info-pill-sm= status

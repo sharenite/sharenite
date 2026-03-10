@@ -91,9 +91,21 @@ module Profiles
       scope.group(:user_id).count
     end
 
+    # Keep the keyword signature aligned with callers that pass viewer/profile table context.
+    # rubocop:disable Lint/UnusedMethodArgument
     def visible_game_count_sql(viewer: current_user, profiles_table: "profiles")
+      "COUNT(visible_games.id)"
+    end
+    # rubocop:enable Lint/UnusedMethodArgument
+
+    def visible_games_join_sql(viewer: current_user, profiles_table: "profiles", users_table: "users")
       visibility_sql = visible_game_library_condition_sql(viewer:, profiles_table:)
-      "SUM(CASE WHEN #{visibility_sql} THEN 1 ELSE 0 END)"
+      <<~SQL.squish
+        LEFT JOIN games AS visible_games
+          ON visible_games.user_id = #{users_table}.id
+         AND visible_games.private_override = FALSE
+         AND (#{visibility_sql})
+      SQL
     end
 
     def accepted_friend_user_ids_for(user_id)

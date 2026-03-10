@@ -38,6 +38,7 @@ module Profiles
 
     def set_playlist_overview
       @playlist_items = @playlist.playlist_items.includes(:igdb_cache).order(:order)
+      @can_view_playlist_game_matches = @profile.game_library_visible_to?(current_user)
       igdb_cache_ids = @playlist_items.filter_map(&:igdb_cache_id).uniq
       return if igdb_cache_ids.empty?
 
@@ -77,9 +78,14 @@ module Profiles
     end
 
     def owned_playlist_games(igdb_cache_ids)
-      @profile.user.games
-              .includes(:completion_status)
-              .where(igdb_cache_id: igdb_cache_ids)
+      return Game.none unless @can_view_playlist_game_matches
+
+      scope = @profile.user.games
+                      .includes(:completion_status)
+                      .where(igdb_cache_id: igdb_cache_ids)
+      return scope if profile_own?
+
+      scope.where(private_override: false)
     end
 
     def append_owned_playlist_statuses(owned_games)
