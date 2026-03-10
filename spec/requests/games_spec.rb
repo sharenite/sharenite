@@ -3,6 +3,23 @@
 require "rails_helper"
 
 RSpec.describe "Games" do
+  around do |example|
+    original_perform_caching = ActionController::Base.perform_caching
+    original_cache_store = ActionController::Base.cache_store
+
+    ActionController::Base.perform_caching = true
+    ActionController::Base.cache_store = ActiveSupport::Cache::MemoryStore.new
+    Rails.cache = ActionController::Base.cache_store
+    Rails.cache.clear
+
+    example.run
+  ensure
+    Rails.cache.clear if Rails.cache.respond_to?(:clear)
+    ActionController::Base.perform_caching = original_perform_caching
+    ActionController::Base.cache_store = original_cache_store
+    Rails.cache = original_cache_store
+  end
+
   describe "GET /index" do
     it "redirects unauthenticated users to profiles list through profile access guard" do
       user = create(:user)
@@ -91,6 +108,26 @@ RSpec.describe "Games" do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("JSON Ready Game")
       expect(response.body).to include("Private")
+    end
+
+    it "does not leak owner-only cached game rows to another viewer" do
+      viewer = create(:user)
+      game.update!(private_override: true)
+
+      sign_in user
+      get profile_games_path(user.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(edit_profile_game_path(user.profile, game))
+      expect(response.body).to include("Private")
+
+      sign_out user
+      sign_in viewer
+      get profile_games_path(user.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(edit_profile_game_path(user.profile, game))
+      expect(response.body).not_to include("Private")
     end
 
     it "does not expose filter options derived only from privately overridden games" do

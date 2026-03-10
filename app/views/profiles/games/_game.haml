@@ -1,4 +1,5 @@
-- row_cache_key = ["games-row-v3", view_mode, @can_view_gaming_activity, game.cache_key_with_version]
+- owner_view = current_user == @profile.user
+- row_cache_key = ["games-row-v4", view_mode, @can_view_gaming_activity, owner_view, game.cache_key_with_version]
 
 - cache row_cache_key do
   - tag_names = game.tags.map(&:name).sort
@@ -13,7 +14,7 @@
           - if game.favorite
             %i.bi.bi-star-fill.text-warning
           %strong= game.name
-          - if current_user == @profile.user && game.private_override?
+          - if owner_view && game.private_override?
             %span.games-state-pill.games-state-pill--private.ms-1 Private
           - if game.is_installed
             %span.games-state-pill.games-state-pill--installed.ms-1 Installed
@@ -87,7 +88,7 @@
         %td= game.play_count.to_i
       %td.text-end
         .d-inline-flex.gap-2
-          - if current_user == @profile.user
+          - if owner_view
             = link_to "Edit", edit_profile_game_path(@profile, game), class: "games-action-pill", data: { turbo_frame: "_top" }
           = link_to "Show", profile_game_path(@profile, game), class: "games-action-pill games-action-pill-primary", data: { turbo_frame: "_top" }
   - else
@@ -98,7 +99,7 @@
             - if game.favorite
               %i.bi.bi-star-fill.text-warning
             %strong= game.name
-            - if current_user == @profile.user && game.private_override?
+            - if owner_view && game.private_override?
               %span.games-state-pill.games-state-pill--private Private
           .d-flex.flex-wrap.justify-content-end.gap-2
             - if game.is_installed
@@ -148,6 +149,6 @@
               - else
                 %span.games-value-pill.games-value-pill--platform.games-value-pill--muted No platform
         .d-flex.gap-3.mt-2
-          - if current_user == @profile.user
+          - if owner_view
             = link_to "Edit", edit_profile_game_path(@profile, game), class: "games-action-pill", data: { turbo_frame: "_top" }
           = link_to "Show", profile_game_path(@profile, game), class: "games-action-pill games-action-pill-primary", data: { turbo_frame: "_top" }
