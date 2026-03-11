@@ -227,7 +227,7 @@ module Profiles
 
       @friends_total_count = scope.except(:order).count
       @friends = if @active_tab == "friends"
-                   paginate_sorted_friends(scope.load)
+                   ordered_friends_scope(scope).page(params[:page]).per(25).preload(:user)
                  else
                    Profile.none.page(params[:page]).per(25)
                  end
@@ -431,42 +431,129 @@ module Profiles
       allowed_sorts.include?(requested_sort) ? requested_sort : DEFAULT_SORT_BY_TAB.fetch(@active_tab, DEFAULT_SORT_BY_TAB.fetch("friends"))
     end
 
-    def paginate_sorted_friends(friends)
-      sorted_friends = sort_friends(friends)
-      Kaminari.paginate_array(sorted_friends).page(params[:page]).per(25)
+    def ordered_friends_scope(scope)
+      scope.select(
+        "profiles.*",
+        "#{friend_visible_games_count_sql} AS visible_games_count_for_sort",
+        "#{friend_last_active_epoch_sql} AS last_active_epoch_for_sort",
+        "#{friendship_updated_at_epoch_sql} AS friendship_updated_at_epoch_for_sort"
+      ).order(Arel.sql(friend_order_clause))
     end
 
-    def sort_friends(friends)
-      sort_context = build_friend_sort_context(friends)
+    def friend_order_clause
+      return friend_games_order_clause if current_sort.start_with?("games_")
+      return friend_last_active_order_clause if current_sort.start_with?("last_active_")
+      return friend_since_order_clause if current_sort.start_with?("friends_since_")
+      return friend_name_order_sql(:desc) if current_sort == "name_desc"
 
-      friends.sort_by do |friend|
-        sort_value_for_friend(friend, sort_context)
-      end
+      friend_name_order_sql(:asc)
     end
 
-    def build_friend_sort_context(friends)
-      {
-        games_count_by_user_id: visible_games_count_by_user_id(friends),
-        last_active_at_by_user_id: latest_visible_last_active_by_user_id(friends),
-        game_library_visibility_by_user_id: component_visibility_by_user_id(friends, :game_library_privacy),
-        gaming_activity_visibility_by_user_id: component_visibility_by_user_id(friends, :gaming_activity_privacy),
-        relations_by_user_id: @own_profile ? accepted_friend_relations_by_user_id(friends.map(&:user_id)) : {}
-      }
+    def friend_games_order_clause
+      direction = current_sort == "games_desc" ? "DESC" : "ASC"
+      "#{hidden_component_sort_bucket_sql(:game_library_privacy)} ASC, visible_games_count_for_sort #{direction}, #{friend_name_order_sql(:asc)}"
     end
 
-    def sort_value_for_friend(friend, sort_context)
-      case current_sort
-      when "games_asc", "games_desc"
-        friend_games_sort_value(friend, sort_context)
-      when "last_active_asc", "last_active_desc"
-        friend_last_active_sort_value(friend, sort_context)
-      when "friends_since_asc", "friends_since_desc"
-        friend_since_sort_value(friend, sort_context)
-      when "name_desc"
-        descending_name_sort_value(friend.name, friend.user_id)
-      else
-        ascending_name_sort_value(friend.name, friend.user_id)
-      end
+    def friend_last_active_order_clause
+      direction = current_sort == "last_active_desc" ? "DESC" : "ASC"
+      "#{hidden_component_sort_bucket_sql(:gaming_activity_privacy)} ASC, last_active_epoch_for_sort #{direction}, #{friend_name_order_sql(:asc)}"
+    end
+
+    def friend_since_order_clause
+      direction = current_sort == "friends_since_desc" ? "DESC" : "ASC"
+      "friendship_updated_at_epoch_for_sort #{direction}, #{friend_name_order_sql(:asc)}"
+    end
+
+    def friend_name_order_sql(direction)
+      name_direction = direction == :desc ? "DESC" : "ASC"
+      "LOWER(COALESCE(profiles.name, '')) #{name_direction}, profiles.user_id ASC"
+    end
+
+    def hidden_component_sort_bucket_sql(column)
+      "CASE WHEN #{friend_component_visibility_sql(column)} THEN 0 ELSE 1 END"
+    end
+
+    def friend_visible_games_count_sql
+      <<~SQL.squish
+        CASE
+          WHEN #{friend_component_visibility_sql(:game_library_privacy)}
+          THEN (#{visible_games_count_subquery_sql})
+          ELSE 0
+        END
+      SQL
+    end
+
+    def friend_last_active_epoch_sql
+      <<~SQL.squish
+        CASE
+          WHEN #{friend_component_visibility_sql(:gaming_activity_privacy)}
+          THEN EXTRACT(EPOCH FROM GREATEST(
+            COALESCE(users.last_sign_in_at, TO_TIMESTAMP(0)),
+            COALESCE(users.current_sign_in_at, TO_TIMESTAMP(0)),
+            COALESCE((#{latest_visible_game_activity_subquery_sql}), TO_TIMESTAMP(0))
+          ))
+          ELSE 0
+        END
+      SQL
+    end
+
+    def friendship_updated_at_epoch_sql
+      "COALESCE(EXTRACT(EPOCH FROM (#{friendship_updated_at_subquery_sql})), 0)"
+    end
+
+    def visible_games_count_subquery_sql
+      <<~SQL.squish
+        SELECT COUNT(*)
+        FROM games
+        WHERE games.user_id = users.id
+          AND (#{game_record_visible_to_viewer_sql})
+      SQL
+    end
+
+    def latest_visible_game_activity_subquery_sql
+      <<~SQL.squish
+        SELECT MAX(games.last_activity)
+        FROM games
+        WHERE games.user_id = users.id
+          AND games.last_activity IS NOT NULL
+          AND (#{game_record_visible_to_viewer_sql})
+      SQL
+    end
+
+    def friendship_updated_at_subquery_sql
+      user_id = ActiveRecord::Base.connection.quote(@profile.user.id)
+
+      <<~SQL.squish
+        SELECT MAX(friends.updated_at)
+        FROM friends
+        WHERE friends.status = 'accepted'
+          AND (
+            (friends.inviter_id = #{user_id} AND friends.invitee_id = profiles.user_id)
+            OR
+            (friends.invitee_id = #{user_id} AND friends.inviter_id = profiles.user_id)
+          )
+      SQL
+    end
+
+    def friend_component_visibility_sql(column)
+      privacy_column = "profiles.#{column}"
+      return "#{privacy_column} = 'public'" unless current_user
+
+      friend_user_ids_sql = accepted_friend_user_ids_for(current_user.id).to_sql
+      viewer_id = ActiveRecord::Base.connection.quote(current_user.id)
+
+      <<~SQL.squish
+        profiles.user_id = #{viewer_id}
+        OR #{privacy_column} IN ('public', 'members')
+        OR (#{privacy_column} = 'friends' AND profiles.user_id IN (#{friend_user_ids_sql}))
+      SQL
+    end
+
+    def game_record_visible_to_viewer_sql
+      return "games.private_override = FALSE" unless current_user
+
+      viewer_id = ActiveRecord::Base.connection.quote(current_user.id)
+      "(games.user_id = #{viewer_id} OR games.private_override = FALSE)"
     end
 
     def sorted_records_for_tab(records, tab_name)
@@ -486,42 +573,6 @@ module Profiles
       else
         [record.id]
       end
-    end
-
-    def friend_games_sort_value(friend, sort_context)
-      [
-        hidden_sort_bucket(sort_context[:game_library_visibility_by_user_id].fetch(friend.user_id, false)),
-        privacy_aware_numeric_sort_value(
-          sort_context[:games_count_by_user_id].fetch(friend.user_id, 0),
-          descending: current_sort == "games_desc"
-        ),
-        friend.name.to_s.downcase,
-        friend.user_id
-      ]
-    end
-
-    def friend_last_active_sort_value(friend, sort_context)
-      [
-        hidden_sort_bucket(sort_context[:gaming_activity_visibility_by_user_id].fetch(friend.user_id, false)),
-        privacy_aware_time_sort_value(
-          sort_context[:last_active_at_by_user_id][friend.user_id],
-          descending: current_sort == "last_active_desc"
-        ),
-        friend.name.to_s.downcase,
-        friend.user_id
-      ]
-    end
-
-    def friend_since_sort_value(friend, sort_context)
-      relation = sort_context[:relations_by_user_id][friend.user_id]
-      [
-        privacy_aware_time_sort_value(
-          relation&.updated_at,
-          descending: current_sort == "friends_since_desc"
-        ),
-        friend.name.to_s.downcase,
-        friend.user_id
-      ]
     end
 
     def received_record_sort_value(record)
@@ -585,14 +636,6 @@ module Profiles
 
     def safe_profile_name(user)
       user.profile&.name.presence || "Unknown user"
-    end
-
-    def hidden_sort_bucket(visible)
-      visible ? 0 : 1
-    end
-
-    def privacy_aware_numeric_sort_value(value, descending:)
-      descending ? -value.to_i : value.to_i
     end
 
     def privacy_aware_time_sort_value(value, descending:)
