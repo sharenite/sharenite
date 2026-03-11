@@ -14,30 +14,29 @@
 
 = turbo_frame_tag "friends_list" do
   - filter_params = request.query_parameters.slice("search_name", "sort")
-  - current_sort = params[:sort].presence || "last_active_desc"
-  - tab_path = ->(tab_name) { profile_friends_path(@profile, filter_params.merge(tab: tab_name)) }
+  - current_sort = friends_resolved_sort(@active_tab)
   .card.profiles-section-card.mt-3
     .card-body
       - if @own_profile
         %ul.nav.nav-tabs.profiles-friends-tabs.mb-3{role: "tablist"}
           %li.nav-item{role: "presentation"}
-            = link_to tab_path.call("friends"), class: "nav-link #{'active' if @active_tab == 'friends'}", role: "tab", aria: { selected: (@active_tab == "friends").to_s }, data: { turbo_action: "advance" } do
+            = link_to friends_tab_path(@profile, "friends", filter_params), class: "nav-link #{'active' if @active_tab == 'friends'}", role: "tab", aria: { selected: (@active_tab == "friends").to_s }, data: { turbo_action: "advance" } do
               Friends
               %span.badge.rounded-pill.text-bg-secondary.ms-1= @friends_total_count
           %li.nav-item{role: "presentation"}
-            = link_to tab_path.call("received"), class: "nav-link #{'active' if @active_tab == 'received'}", role: "tab", aria: { selected: (@active_tab == "received").to_s }, data: { turbo_action: "advance" } do
+            = link_to friends_tab_path(@profile, "received", filter_params), class: "nav-link #{'active' if @active_tab == 'received'}", role: "tab", aria: { selected: (@active_tab == "received").to_s }, data: { turbo_action: "advance" } do
               Received
               %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_received_count
           %li.nav-item{role: "presentation"}
-            = link_to tab_path.call("sent"), class: "nav-link #{'active' if @active_tab == 'sent'}", role: "tab", aria: { selected: (@active_tab == "sent").to_s }, data: { turbo_action: "advance" } do
+            = link_to friends_tab_path(@profile, "sent", filter_params), class: "nav-link #{'active' if @active_tab == 'sent'}", role: "tab", aria: { selected: (@active_tab == "sent").to_s }, data: { turbo_action: "advance" } do
               Sent
               %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_sent_count
           %li.nav-item{role: "presentation"}
-            = link_to tab_path.call("declined"), class: "nav-link #{'active' if @active_tab == 'declined'}", role: "tab", aria: { selected: (@active_tab == "declined").to_s }, data: { turbo_action: "advance" } do
+            = link_to friends_tab_path(@profile, "declined", filter_params), class: "nav-link #{'active' if @active_tab == 'declined'}", role: "tab", aria: { selected: (@active_tab == "declined").to_s }, data: { turbo_action: "advance" } do
               Declined
               %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_declined_count
           %li.nav-item{role: "presentation"}
-            = link_to tab_path.call("blocked"), class: "nav-link #{'active' if @active_tab == 'blocked'}", role: "tab", aria: { selected: (@active_tab == "blocked").to_s }, data: { turbo_action: "advance" } do
+            = link_to friends_tab_path(@profile, "blocked", filter_params), class: "nav-link #{'active' if @active_tab == 'blocked'}", role: "tab", aria: { selected: (@active_tab == "blocked").to_s }, data: { turbo_action: "advance" } do
               Blocked
               %span.badge.rounded-pill.text-bg-secondary.ms-1= @blocked_count
       - if @active_tab == "friends"

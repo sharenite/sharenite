@@ -71,6 +71,20 @@ RSpec.describe "Admin smoke", type: :request do
     attributes[:games_count] = 7 if SyncJob.columns_hash.key?("games_count")
     SyncJob.create!(attributes)
   end
+  let!(:other_sync_job) do
+    attributes = {
+      user: invitee,
+      name: "GameSyncJob",
+      status: :failed,
+      payload_size_bytes: 1_234,
+      payload_chunks: 1,
+      payload_chunk_index: 0,
+      waiting_time: 5,
+      processing_time: 10
+    }
+    attributes[:games_count] = 2 if SyncJob.columns_hash.key?("games_count")
+    SyncJob.create!(attributes)
+  end
 
   before do
     game.tags << tag
@@ -198,6 +212,16 @@ RSpec.describe "Admin smoke", type: :request do
     get "/admin/sync_jobs/#{sync_job.id}"
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include("Edit Sync Job")
+  end
+
+  it "shows nested sync job scope badges using the nested user scope" do
+    get "/admin/users/#{owner.id}/sync_jobs"
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("All (1)")
+    expect(response.body).to include("Finished (1)")
+    expect(response.body).to include("Failed (0)")
+    expect(response.body).not_to include("All (2)")
   end
 
   it "preserves filters after delete when return_to is provided" do

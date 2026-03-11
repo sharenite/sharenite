@@ -48,6 +48,14 @@ RSpec.describe ProfilesHelper do
   end
 
   describe "#profile_last_active_at" do
+    it "uses the newest sign-in timestamp when it is newer than last_sign_in_at" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      user.update_columns(last_sign_in_at: 3.days.ago, current_sign_in_at: 1.day.ago)
+
+      expect(helper.profile_last_active_at(user.profile, nil)).to be_within(1.second).of(1.day.ago)
+    end
+
     it "returns the newer value between sign-in and visible game activity" do
       user = create(:user)
       user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
@@ -96,6 +104,16 @@ RSpec.describe ProfilesHelper do
 
     it "returns default class for unknown states" do
       expect(helper.profile_friendship_state_class(:unknown)).to eq("profiles-info-pill")
+    end
+  end
+
+  describe "#friends_resolved_sort" do
+    it "falls back to the tab default sort when no sort is provided" do
+      expect(helper.friends_resolved_sort("blocked", nil)).to eq("blocked_desc")
+    end
+
+    it "falls back to the tab default sort when the provided sort is invalid for that tab" do
+      expect(helper.friends_resolved_sort("received", "last_active_desc")).to eq("sent_desc")
     end
   end
 end

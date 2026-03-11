@@ -617,7 +617,7 @@ module Profiles
       profiles.each_with_object({}) do |profile, result|
         next unless gaming_activity_visibility_by_user_id[profile.user_id]
 
-        latest_auth_activity_at = profile.user.last_sign_in_at || profile.user.current_sign_in_at
+        latest_auth_activity_at = [profile.user.last_sign_in_at, profile.user.current_sign_in_at].compact.max
         latest_game_activity_at = latest_game_activity_by_user_id[profile.user_id]
         result[profile.user_id] = [latest_auth_activity_at, latest_game_activity_at].compact.max
       end

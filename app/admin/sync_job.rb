@@ -115,18 +115,63 @@ ActiveAdmin.register SyncJob do
     private
 
     def sync_job_scope_counts
-      Rails.cache.fetch("admin/sync_jobs/scope_counts/v1", expires_in: 1.minute) do
-        status_counts = SyncJob.group(:status).count
+      return cached_sync_job_scope_counts if sync_job_scope_counts_globally_cacheable?
 
-        {
-          all: status_counts.values.sum,
-          queued: status_counts.fetch("queued", 0),
-          running: status_counts.fetch("running", 0),
-          failed: status_counts.fetch("failed", 0),
-          finished: status_counts.fetch("finished", 0),
-          dead: status_counts.fetch("dead", 0)
-        }
+      relation = sync_job_scope_counts_relation
+      status_counts = relation.group(:status).count
+
+      build_sync_job_scope_counts(status_counts)
+    end
+
+    def cached_sync_job_scope_counts
+      Rails.cache.fetch("admin/sync_jobs/scope_counts/v1", expires_in: 1.minute) do
+        build_sync_job_scope_counts(SyncJob.group(:status).count)
       end
+    end
+
+    def build_sync_job_scope_counts(status_counts)
+      {
+        all: status_counts.values.sum,
+        queued: status_counts.fetch("queued", 0),
+        running: status_counts.fetch("running", 0),
+        failed: status_counts.fetch("failed", 0),
+        finished: status_counts.fetch("finished", 0),
+        dead: status_counts.fetch("dead", 0)
+      }
+    end
+
+    def sync_job_scope_counts_globally_cacheable?
+      params[:user_id].blank? && !sync_job_filters_active?
+    end
+
+    def sync_job_filters_active?
+      params[:user_query].present? || sync_job_query_params.to_h.compact_blank.present?
+    end
+
+    def sync_job_scope_counts_relation
+      relation = apply_authorization_scope(scoped_collection)
+      query = sync_job_scope_counts_query
+
+      relation = relation.ransack(query).result if query.present?
+      relation.unscope(:select, :order)
+    end
+
+    def sync_job_scope_counts_query
+      query = sync_job_query_params.to_h.compact_blank
+      normalize_sync_job_scope_count_name_filter!(query)
+      apply_sync_job_scope_count_user_query!(query)
+      query
+    end
+
+    def normalize_sync_job_scope_count_name_filter!(query)
+      query["name_start"] = "" if query["name_start"].to_s == "Any"
+    end
+
+    def apply_sync_job_scope_count_user_query!(query)
+      return if query["user_id_eq"].present?
+      return if params[:user_query].blank?
+
+      query["user_email_cont"] = params[:user_query].to_s.strip
     end
 
     # rubocop:disable Metrics/AbcSize

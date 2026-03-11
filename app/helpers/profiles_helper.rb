@@ -87,7 +87,7 @@ module ProfilesHelper
     can_view_gaming_activity = profile.gaming_activity_visible_to?(viewer) if can_view_gaming_activity.nil?
     return unless can_view_gaming_activity
 
-    latest_auth_activity_at = profile.user.last_sign_in_at || profile.user.current_sign_in_at
+    latest_auth_activity_at = [profile.user.last_sign_in_at, profile.user.current_sign_in_at].compact.max
     latest_visible_game_activity_at ||= profile_latest_visible_game_activity_at(profile, viewer)
 
     [latest_auth_activity_at, latest_visible_game_activity_at].compact.max
@@ -108,6 +108,26 @@ module ProfilesHelper
 
   def friends_sort_options(tab = "friends")
     FRIENDS_SORT_OPTIONS.fetch(tab.to_s, FRIENDS_SORT_OPTIONS.fetch("friends"))
+  end
+
+  def friends_default_sort(tab = "friends")
+    friends_sort_options(tab).first&.last
+  end
+
+  def friends_resolved_sort(tab, requested_sort = params[:sort])
+    options = friends_sort_options(tab)
+    requested_sort = requested_sort.to_s
+    allowed_values = options.map(&:last)
+
+    allowed_values.include?(requested_sort) ? requested_sort : friends_default_sort(tab)
+  end
+
+  def friends_tab_path(profile, tab, filter_params = request.query_parameters)
+    next_sort = filter_params["sort"].present? ? friends_resolved_sort(tab, filter_params["sort"]) : nil
+    next_params = filter_params.slice("search_name").merge(tab:)
+    next_params[:sort] = next_sort if next_sort.present? && next_sort != friends_default_sort(tab)
+
+    profile_friends_path(profile, next_params)
   end
 
   def friends_sort_link(profile, label, current_sort, sort_keys)
