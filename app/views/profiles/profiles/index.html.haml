@@ -10,6 +10,7 @@
 
 = turbo_frame_tag "profiles_list" do
   - game_library_visibility_by_user_id = @game_library_visibility_by_user_id || {}
+  - running_game_summary_by_user_id = @running_game_summary_by_user_id || {}
   .d-flex.align-items-center.justify-content-end.mb-2
     = paginate @profiles, theme: 'bootstrap-5', pagination_class: "flex-wrap justify-content-center"
 
@@ -29,10 +30,13 @@
             - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
             - friendship_state = @friendship_states_by_user_id[profile.user_id]
             - can_view_games = game_library_visibility_by_user_id.fetch(profile.user_id, false)
+            - running_game_summary = running_game_summary_by_user_id[profile.user_id]
             - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
             - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
             %tr
-              %td.fw-semibold= profile.name
+              %td
+                .fw-semibold= profile.name
+                = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
               %td
                 - if can_view_games
                   = games_count
@@ -58,6 +62,7 @@
         - is_own_profile = user_signed_in? && @current_user_id == profile.user_id
         - friendship_state = @friendship_states_by_user_id[profile.user_id]
         - can_view_games = game_library_visibility_by_user_id.fetch(profile.user_id, false)
+        - running_game_summary = running_game_summary_by_user_id[profile.user_id]
         - invite_tab = friendship_state&.to_sym == :you_declined ? "friends" : "sent"
         - invite_data = friendship_state&.to_sym == :you_declined ? { turbo_frame: "_top", turbo_prefetch: false, turbo_confirm: "You previously declined this invitation. Add this user back to friends?" } : { turbo_frame: "_top", turbo_prefetch: false }
         .col-12
@@ -66,6 +71,7 @@
               .profiles-friend-mobile-card
                 .profiles-friend-mobile-card__meta.min-w-0
                   .fw-semibold.text-break= profile.name
+                  = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                   .small.text-muted
                     - if can_view_games
                       = "Games: #{games_count}"

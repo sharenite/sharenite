@@ -75,6 +75,26 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include("Games: 1")
       expect(response.body).not_to include("Visible Library</td>\n<td>\n<span class='profiles-info-pill profiles-info-pill-muted'>Hidden</span>")
     end
+
+    it "shows visible in-game status on community and hides private activity" do
+      viewer = create(:user)
+      visible_owner = create(:user)
+      hidden_owner = create(:user)
+
+      visible_owner.profile.update!(privacy: :members, gaming_activity_privacy: :members, name: "Visible Activity")
+      hidden_owner.profile.update!(privacy: :members, gaming_activity_privacy: :private, name: "Hidden Activity")
+      visible_owner.games.create!(name: "Balatro", is_running: true, private_override: false)
+      hidden_owner.games.create!(name: "Secret Game", is_running: true, private_override: false)
+
+      sign_in viewer
+      get profiles_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Visible Activity")
+      expect(response.body).to include("Now playing: Balatro")
+      expect(response.body).to include("Hidden Activity")
+      expect(response.body).not_to include("Secret Game")
+    end
   end
 
   describe "GET /profiles/:id" do
@@ -328,7 +348,7 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML(response.body)
-      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      listed_names = document.css(".profiles-table tbody tr td .fw-semibold").map { |node| node.text.strip }
       expect(listed_names.first(2)).to eq(["Newer Inviter", "Older Inviter"])
     end
 
@@ -349,7 +369,7 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML(response.body)
-      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      listed_names = document.css(".profiles-table tbody tr td .fw-semibold").map { |node| node.text.strip }
       expect(listed_names.first(2)).to eq(["Newer Blocked", "Older Blocked"])
     end
 
@@ -464,7 +484,7 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML(response.body)
-      listed_names = document.css(".profiles-table tbody td.fw-semibold, .profiles-mobile-card .fw-semibold").map(&:text)
+      listed_names = document.css(".profiles-table tbody td .fw-semibold, .profiles-mobile-card .fw-semibold").map(&:text)
       expect(listed_names).to include("Zero Games Friend")
       expect(response.body).to include("Total friends listed: 1")
     end
@@ -493,6 +513,48 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include("Hidden")
     end
 
+    it "shows visible in-game statuses across owner tabs and hides blocked activity by privacy" do
+      owner = create(:user)
+      received_user = create(:user)
+      sent_user = create(:user)
+      declined_user = create(:user)
+      blocked_user = create(:user)
+
+      received_user.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Received Active")
+      sent_user.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Sent Active")
+      declined_user.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Declined Active")
+      blocked_user.profile.update!(privacy: :public, gaming_activity_privacy: :private, name: "Blocked Hidden")
+
+      received_user.games.create!(name: "Received Game", is_running: true, private_override: false)
+      sent_user.games.create!(name: "Sent Game", is_running: true, private_override: false)
+      declined_user.games.create!(name: "Declined Game", is_running: true, private_override: false)
+      blocked_user.games.create!(name: "Blocked Game", is_running: true, private_override: false)
+
+      Friend.create!(inviter: received_user, invitee: owner, status: :invited)
+      Friend.create!(inviter: owner, invitee: sent_user, status: :invited)
+      Friend.create!(inviter: owner, invitee: declined_user, status: :declined)
+      Friend.create!(inviter: owner, invitee: blocked_user, status: :blocked)
+
+      sign_in owner
+
+      get profile_friends_path(owner.profile, tab: "received")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Now playing: Received Game")
+
+      get profile_friends_path(owner.profile, tab: "sent")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Now playing: Sent Game")
+
+      get profile_friends_path(owner.profile, tab: "declined")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Now playing: Declined Game")
+
+      get profile_friends_path(owner.profile, tab: "blocked")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Blocked Hidden")
+      expect(response.body).not_to include("Blocked Game")
+    end
+
     it "sorts friends by privacy-aware last active descending by default" do
       owner = create(:user)
       older_friend = create(:user)
@@ -511,7 +573,7 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML(response.body)
-      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      listed_names = document.css(".profiles-table tbody tr td .fw-semibold").map { |node| node.text.strip }
       expect(listed_names.first(2)).to eq(["Newer Friend", "Older Friend"])
     end
 
@@ -542,7 +604,7 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include("Friends since")
       expect(response.body).not_to include("friends_since_desc")
       document = Nokogiri::HTML(response.body)
-      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      listed_names = document.css(".profiles-table tbody tr td .fw-semibold").map { |node| node.text.strip }
       expect(listed_names.first(2)).to eq(["Recent Activity Friend", "Older Activity Friend"])
     end
 
@@ -572,7 +634,7 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML(response.body)
-      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      listed_names = document.css(".profiles-table tbody tr td .fw-semibold").map { |node| node.text.strip }
       expect(listed_names.first(3)).to eq(["Visible Low", "Visible High", "Hidden Mid"])
     end
 

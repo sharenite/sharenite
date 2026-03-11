@@ -11,6 +11,11 @@ module Profiles
       @friendship_states_by_user_id = friendship_states_for_user_ids(@profiles.map(&:user_id))
       @games_count_by_user_id = visible_games_count_by_user_id(@profiles)
       @game_library_visibility_by_user_id = component_visibility_by_user_id(@profiles, :game_library_privacy)
+      @gaming_activity_visibility_by_user_id = component_visibility_by_user_id(@profiles, :gaming_activity_privacy)
+      @running_game_summary_by_user_id = running_game_summary_by_user_id_for_profiles(
+        @profiles,
+        gaming_activity_visibility_by_user_id: @gaming_activity_visibility_by_user_id
+      )
       @current_user_id = current_user&.id
       @current_profile = current_profile
     end

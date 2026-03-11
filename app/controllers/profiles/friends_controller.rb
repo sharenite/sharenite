@@ -238,11 +238,16 @@ module Profiles
       return reset_invitations unless @own_profile
 
       filter_options = invitation_filter_options
-      return set_unfiltered_invitation_counts if !filter_options[:any_filter] && @active_tab == "friends"
+      if !filter_options[:any_filter] && @active_tab == "friends"
+        set_unfiltered_invitation_counts
+        preload_active_tab_activity_metadata
+        return
+      end
 
       invitation_collections(filter_options).each do |config|
         assign_invitation_collection(**config)
       end
+      preload_active_tab_activity_metadata
     end
 
     def filtered_user_ids_for_invitation_filters(name_query:)
@@ -393,17 +398,59 @@ module Profiles
       @friend_games_count_by_user_id = visible_games_count_by_user_id(@friends)
       @friend_game_library_visibility_by_user_id = component_visibility_by_user_id(@friends, :game_library_privacy)
       @friend_gaming_activity_visibility_by_user_id = component_visibility_by_user_id(@friends, :gaming_activity_privacy)
+      preload_friend_running_game_summaries
       @friend_latest_game_activity_at_by_user_id = latest_visible_game_activity_by_user_id_for_profiles(@friends)
       @friend_last_active_at_by_user_id = latest_visible_last_active_by_user_id(
         @friends,
         gaming_activity_visibility_by_user_id: @friend_gaming_activity_visibility_by_user_id,
         latest_game_activity_by_user_id: @friend_latest_game_activity_at_by_user_id
       )
-      @friend_relations_by_user_id = if @own_profile && friend_user_ids.any?
-                                       accepted_friend_relations_by_user_id(friend_user_ids)
-                                     else
-                                       {}
-                                     end
+      @friend_relations_by_user_id = preload_friend_relations(friend_user_ids)
+    end
+
+    def preload_friend_running_game_summaries
+      @friend_running_game_summary_by_user_id = running_game_summary_by_user_id_for_profiles(
+        @friends,
+        gaming_activity_visibility_by_user_id: @friend_gaming_activity_visibility_by_user_id
+      )
+    end
+
+    def preload_friend_relations(friend_user_ids)
+      return {} unless @own_profile && friend_user_ids.any?
+
+      accepted_friend_relations_by_user_id(friend_user_ids)
+    end
+
+    def preload_active_tab_activity_metadata
+      profiles = profiles_for_active_tab_activity
+      @active_tab_gaming_activity_visibility_by_user_id = component_visibility_by_user_id(profiles, :gaming_activity_privacy)
+      @active_tab_running_game_summary_by_user_id = running_game_summary_by_user_id_for_profiles(
+        profiles,
+        gaming_activity_visibility_by_user_id: @active_tab_gaming_activity_visibility_by_user_id
+      )
+    end
+
+    def profiles_for_active_tab_activity
+      return invitation_profiles_for(@invitations_received, &:inviter) if @active_tab == "received"
+      return invitation_profiles_for(@invitations_sent, &:invitee) if @active_tab == "sent"
+      return declined_profiles_for_activity if @active_tab == "declined"
+      return invitation_profiles_for(@blocked_relations, &:invitee) if @active_tab == "blocked"
+
+      []
+    end
+
+    def invitation_profiles_for(records)
+      records.filter_map { |relation| yield(relation)&.profile }
+    end
+
+    def declined_profiles_for_activity
+      @invitations_declined.filter_map do |relation|
+        other_user_for_declined_relation(relation)&.profile
+      end
+    end
+
+    def other_user_for_declined_relation(relation)
+      relation.inviter_id == @profile.user.id ? relation.invitee : relation.inviter
     end
 
     def accepted_friend_relations_by_user_id(friend_user_ids)

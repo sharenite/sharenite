@@ -512,6 +512,34 @@ if Rails.env.development?
     Profile.find_by!(slug: config.fetch(:slug)).update!(config.except(:slug))
   end
 
+  visible_running_game_showcase = [
+    { slug: "profile-seed-001", game_names: ["Profile Seed 001 Game 01"] }, # public/community visible to demo
+    { slug: "profile-seed-002", game_names: ["Profile Seed 002 Game 01"] }, # accepted friend with friends-only activity
+    { slug: "profile-seed-006", game_names: ["Profile Seed 006 Game 01"] }, # accepted friend with activity privacy showcase
+    { slug: "profile-seed-015", game_names: ["Profile Seed 015 Game 01"] }, # received invitation visible to signed-in demo
+    { slug: "profile-seed-025", game_names: ["Profile Seed 025 Game 01"] }  # sent invitation visible to signed-in demo
+  ]
+
+  visible_running_game_showcase.each do |config|
+    seeded_user = Profile.find_by!(slug: config.fetch(:slug)).user
+    seeded_user.games.update_all(is_running: false, is_launching: false, is_installing: false, is_uninstalling: false)
+
+    Array(config.fetch(:game_names)).each_with_index do |game_name, index|
+      game = seeded_user.games.find_by(name: game_name)
+      next unless game
+
+      game.update!(
+        is_running: true,
+        is_launching: false,
+        is_installing: false,
+        is_uninstalling: false,
+        is_installed: true,
+        last_activity: index.minutes.ago,
+        private_override: false
+      )
+    end
+  end
+
   playlist_caches = 40.times.map do |index|
     igdb_id = 95_000 + index
     IgdbCache.find_or_create_by!(igdb_id:) do |record|

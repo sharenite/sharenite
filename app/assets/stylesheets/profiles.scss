@@ -325,6 +325,12 @@ a.profiles-info-pill.profiles-info-pill-muted:focus-visible {
   white-space: nowrap;
 }
 
+.profiles-show-badge-sm {
+  margin-top: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.78rem;
+}
+
 .profiles-activity-pill--playing {
   background: rgba(var(--bs-success-rgb), 0.18);
   border-color: rgba(var(--bs-success-rgb), 0.35);

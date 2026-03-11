@@ -91,6 +91,37 @@ module Profiles
       scope.group(:user_id).count
     end
 
+    def running_game_summary_by_user_id_for_profiles(profiles, gaming_activity_visibility_by_user_id: nil, viewer: current_user)
+      profiles = Array(profiles)
+      return {} if profiles.empty?
+
+      gaming_activity_visibility_by_user_id ||= component_visibility_by_user_id(profiles, :gaming_activity_privacy, viewer:)
+      visible_user_ids = visible_gaming_activity_user_ids(profiles, gaming_activity_visibility_by_user_id)
+      return {} if visible_user_ids.empty?
+
+      running_games_scope(visible_user_ids, viewer).group_by(&:user_id).transform_values do |games|
+        build_running_game_summary(games)
+      end
+    end
+
+    def visible_gaming_activity_user_ids(profiles, gaming_activity_visibility_by_user_id)
+      profiles.filter_map { |profile| profile.user_id if gaming_activity_visibility_by_user_id[profile.user_id] }
+    end
+
+    def running_games_scope(user_ids, viewer)
+      scope = Game.where(user_id: user_ids, is_running: true).order(Arel.sql("LOWER(name) ASC"))
+      return scope.where(private_override: false) if viewer.blank?
+
+      scope.where("games.user_id = :viewer_id OR games.private_override = FALSE", viewer_id: viewer.id)
+    end
+
+    def build_running_game_summary(games)
+      first_name = games.first.name
+      return "Now playing: #{first_name}" if games.one?
+
+      "Now playing: #{first_name} +#{games.length - 1} more"
+    end
+
     # Keep the keyword signature aligned with callers that pass viewer/profile table context.
     # rubocop:disable Lint/UnusedMethodArgument
     def visible_game_count_sql(viewer: current_user, profiles_table: "profiles")

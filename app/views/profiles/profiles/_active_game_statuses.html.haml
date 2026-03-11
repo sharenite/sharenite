@@ -1,0 +1,11 @@
+- summary = local_assigns[:summary].presence
+- size = local_assigns[:size] || :default
+- size_class = size == :small ? "profiles-show-badge-sm" : nil
+
+- if summary
+  %span{class: [
+    "profiles-show-badge",
+    "profiles-show-badge--activity",
+    size_class,
+  ].compact.join(" ")}
+    %span.profiles-show-badge-activity= summary

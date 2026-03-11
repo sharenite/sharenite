@@ -2,6 +2,7 @@
 
 - filter_params = request.query_parameters.slice("search_name", "sort")
 - current_sort = friends_resolved_sort(@active_tab, own_profile: @own_profile)
+- active_tab_running_game_summary_by_user_id = @active_tab_running_game_summary_by_user_id || {}
 .profiles-friends-page{data: { controller: "search-form" }}
   .profiles-search-form.mb-3
     = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { search_form_target: "form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
@@ -78,8 +79,11 @@
                         - last_active_label = profile_last_active_label(friend, current_user, can_view_gaming_activity:, last_active_at: (@friend_last_active_at_by_user_id || {})[friend.user_id])
                         - relation = @friend_relations_by_user_id[friend.user_id]
                         - friends_since_label = relation.present? ? profile_relation_time_label(relation.updated_at) : nil
+                        - running_game_summary = (@friend_running_game_summary_by_user_id || {})[friend.user_id]
                         %tr
-                          %td.fw-semibold= friend.name
+                          %td
+                            .fw-semibold= friend.name
+                            = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                           %td
                             - if can_view_games
                               = games_count
@@ -114,12 +118,14 @@
                     - last_active_label = profile_last_active_label(friend, current_user, can_view_gaming_activity:, last_active_at: (@friend_last_active_at_by_user_id || {})[friend.user_id])
                     - relation = @friend_relations_by_user_id[friend.user_id]
                     - friends_since_label = relation.present? ? profile_relation_time_label(relation.updated_at) : nil
+                    - running_game_summary = (@friend_running_game_summary_by_user_id || {})[friend.user_id]
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3
                           .profiles-friend-mobile-card
                             .profiles-friend-mobile-card__meta.min-w-0
                               .fw-semibold.text-break= friend.name
+                              = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                               .small.text-muted
                                 - if can_view_games
                                   = "Games: #{games_count}"
@@ -171,8 +177,11 @@
                     %tbody
                       - @invitations_received.each do |invitation_received|
                         - sent_label = profile_relation_time_label(invitation_received.created_at)
+                        - running_game_summary = active_tab_running_game_summary_by_user_id[invitation_received.inviter_id]
                         %tr
-                          %td.fw-semibold= public_profile_name(invitation_received.inviter)
+                          %td
+                            .fw-semibold= public_profile_name(invitation_received.inviter)
+                            = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                           %td= sent_label
                           %td.text-end
                             .d-inline-flex.gap-1.flex-wrap.justify-content-end
@@ -184,12 +193,14 @@
                 .row.g-2
                   - @invitations_received.each do |invitation_received|
                     - sent_label = profile_relation_time_label(invitation_received.created_at)
+                    - running_game_summary = active_tab_running_game_summary_by_user_id[invitation_received.inviter_id]
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3
                           .profiles-friend-mobile-card
                             .profiles-friend-mobile-card__meta.min-w-0
                               .fw-semibold.text-break= public_profile_name(invitation_received.inviter)
+                              = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                               .small.text-muted Received: #{sent_label}
                             .profiles-friend-mobile-card__actions
                               = link_to "Show", invitation_received.inviter.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
@@ -222,8 +233,11 @@
                     %tbody
                       - @invitations_sent.each do |invitation_sent|
                         - sent_label = profile_relation_time_label(invitation_sent.created_at)
+                        - running_game_summary = active_tab_running_game_summary_by_user_id[invitation_sent.invitee_id]
                         %tr
-                          %td.fw-semibold= public_profile_name(invitation_sent.invitee)
+                          %td
+                            .fw-semibold= public_profile_name(invitation_sent.invitee)
+                            = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                           %td= sent_label
                           %td.text-end
                             .d-inline-flex.gap-1.flex-wrap.justify-content-end
@@ -234,12 +248,14 @@
                 .row.g-2
                   - @invitations_sent.each do |invitation_sent|
                     - sent_label = profile_relation_time_label(invitation_sent.created_at)
+                    - running_game_summary = active_tab_running_game_summary_by_user_id[invitation_sent.invitee_id]
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3
                           .profiles-friend-mobile-card
                             .profiles-friend-mobile-card__meta.min-w-0
                               .fw-semibold.text-break= public_profile_name(invitation_sent.invitee)
+                              = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                               .small.text-muted Sent: #{sent_label}
                             .profiles-friend-mobile-card__actions
                               = link_to "Show", invitation_sent.invitee.profile, class: "profiles-action-pill profiles-action-pill-sm profiles-action-pill-primary", data: { turbo_frame: "_top" }
@@ -278,8 +294,11 @@
                         - other_profile = other_user.profile
                         - you_declined = relation.invitee_id == @profile.user.id
                         - declined_label = profile_relation_time_label(relation.updated_at)
+                        - running_game_summary = active_tab_running_game_summary_by_user_id[other_user.id]
                         %tr
-                          %td.fw-semibold= public_profile_name(other_user)
+                          %td
+                            .fw-semibold= public_profile_name(other_user)
+                            = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                           %td
                             - if you_declined
                               %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted You declined
@@ -300,12 +319,14 @@
                     - other_profile = other_user.profile
                     - you_declined = relation.invitee_id == @profile.user.id
                     - declined_label = profile_relation_time_label(relation.updated_at)
+                    - running_game_summary = active_tab_running_game_summary_by_user_id[other_user.id]
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3
                           .profiles-friend-mobile-card
                             .profiles-friend-mobile-card__meta.min-w-0
                               .fw-semibold.text-break= public_profile_name(other_user)
+                              = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                               .small.text-muted
                                 Status:
                                 - if you_declined
@@ -332,8 +353,11 @@
                       - @blocked_relations.each do |relation|
                         - blocked_profile = relation.invitee.profile
                         - blocked_since_label = profile_relation_time_label(relation.created_at)
+                        - running_game_summary = active_tab_running_game_summary_by_user_id[relation.invitee_id]
                         %tr
-                          %td.fw-semibold= public_profile_name(relation.invitee)
+                          %td
+                            .fw-semibold= public_profile_name(relation.invitee)
+                            = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                           %td= blocked_since_label
                           %td.text-end
                             .d-inline-flex.gap-1.flex-wrap.justify-content-end
@@ -343,12 +367,14 @@
                   - @blocked_relations.each do |relation|
                     - blocked_profile = relation.invitee.profile
                     - blocked_since_label = profile_relation_time_label(relation.created_at)
+                    - running_game_summary = active_tab_running_game_summary_by_user_id[relation.invitee_id]
                     .col-12
                       .card.profiles-mobile-card
                         .card-body.py-2.px-3
                           .profiles-friend-mobile-card
                             .profiles-friend-mobile-card__meta.min-w-0
                               .fw-semibold.text-break= public_profile_name(relation.invitee)
+                              = render "profiles/profiles/active_game_statuses", summary: running_game_summary, size: :small
                               .small.text-muted Blocked since: #{blocked_since_label}
                             .profiles-friend-mobile-card__actions
                               = button_to "Unblock", profile_unblock_friend_path(@profile, id: relation.id, tab: "blocked"), method: :delete, class: "profiles-action-pill profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Unblock this user?" }
