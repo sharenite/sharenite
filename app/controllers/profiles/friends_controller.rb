@@ -423,7 +423,11 @@ module Profiles
 
     def preload_active_tab_activity_metadata
       profiles = profiles_for_active_tab_activity
-      @active_tab_gaming_activity_visibility_by_user_id = component_visibility_by_user_id(profiles, :gaming_activity_privacy)
+      @active_tab_gaming_activity_visibility_by_user_id = component_visibility_by_user_id(
+        profiles,
+        :gaming_activity_privacy,
+        allow_blocked: @active_tab == "blocked"
+      )
       @active_tab_running_game_summary_by_user_id = running_game_summary_by_user_id_for_profiles(
         profiles,
         gaming_activity_visibility_by_user_id: @active_tab_gaming_activity_visibility_by_user_id

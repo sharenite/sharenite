@@ -190,10 +190,11 @@ module Profiles
                                                                  .excluding(user_id)
     end
 
-    def component_visibility_by_user_id(profiles, column, viewer: current_user)
+    def component_visibility_by_user_id(profiles, column, viewer: current_user, allow_blocked: false)
       visibility_context = {
         accepted_friend_user_ids: viewer.present? ? accepted_friend_user_ids_list_for(viewer.id).to_set : Set.new,
-        blocked_user_ids: viewer.present? ? blocked_user_ids_for(viewer).to_set : Set.new
+        blocked_user_ids: viewer.present? ? blocked_user_ids_for(viewer).to_set : Set.new,
+        allow_blocked:
       }
 
       Array(profiles).each_with_object({}) do |profile, visibility_by_user_id|
@@ -208,7 +209,7 @@ module Profiles
 
     def component_visible_to_viewer?(profile, column, viewer:, visibility_context:)
       accepted_friend_user_ids = visibility_context.fetch(:accepted_friend_user_ids)
-      return false if visibility_context.fetch(:blocked_user_ids).include?(profile.user_id)
+      return false if !visibility_context.fetch(:allow_blocked) && visibility_context.fetch(:blocked_user_ids).include?(profile.user_id)
       return false unless privacy_setting_visible_to_viewer?(profile.privacy, profile.user_id, viewer, accepted_friend_user_ids)
 
       privacy_setting_visible_to_viewer?(

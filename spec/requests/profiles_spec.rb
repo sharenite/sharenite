@@ -555,6 +555,22 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include("Blocked Game")
     end
 
+    it "shows blocked-tab activity summaries when the blocked user's privacy allows it" do
+      owner = create(:user)
+      blocked_user = create(:user)
+
+      blocked_user.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Blocked Visible")
+      blocked_user.games.create!(name: "Blocked Public Game", is_running: true, private_override: false)
+      Friend.create!(inviter: owner, invitee: blocked_user, status: :blocked)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, tab: "blocked")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Blocked Visible")
+      expect(response.body).to include("Now playing: Blocked Public Game")
+    end
+
     it "sorts friends by privacy-aware last active descending by default" do
       owner = create(:user)
       older_friend = create(:user)
