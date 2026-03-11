@@ -46,12 +46,11 @@
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, "friends"
+                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
                     = form.select :sort, options_for_select(friends_sort_options("friends", own_profile: @own_profile), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
-                  .col-12.d-flex.justify-content-end.gap-2
-                    = link_to "Reset", profile_friends_path(@profile, tab: "friends"), class: "btn btn-outline-secondary"
 
             - if @friends.total_pages > 1
               .d-flex.align-items-center.justify-content-end.mb-2
@@ -154,12 +153,11 @@
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, "received"
+                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
                     = form.select :sort, options_for_select(friends_sort_options("received"), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
-                  .col-12.d-flex.justify-content-end.gap-2
-                    = link_to "Reset", profile_friends_path(@profile, tab: "received"), class: "btn btn-outline-secondary"
             %p.profiles-section-summary Total received invitations listed: #{@invitations_received_count}
             - if @invitations_received.any?
               .profiles-list-desktop.d-none.d-md-block
@@ -206,12 +204,11 @@
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, "sent"
+                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
                     = form.select :sort, options_for_select(friends_sort_options("sent"), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
-                  .col-12.d-flex.justify-content-end.gap-2
-                    = link_to "Reset", profile_friends_path(@profile, tab: "sent"), class: "btn btn-outline-secondary"
             %p.profiles-section-summary Total sent invitations listed: #{@invitations_sent_count}
             - if @invitations_sent.any?
               .profiles-list-desktop.d-none.d-md-block
@@ -256,12 +253,11 @@
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, @active_tab
+                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
                     = form.select :sort, options_for_select(friends_sort_options(@active_tab), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
-                  .col-12.d-flex.justify-content-end.gap-2
-                    = link_to "Reset", profile_friends_path(@profile, tab: @active_tab), class: "btn btn-outline-secondary"
             - if @active_tab == "declined"
               %p.profiles-section-summary Total declined invitations listed: #{@invitations_declined_count}
             - else

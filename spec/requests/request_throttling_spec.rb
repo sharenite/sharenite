@@ -265,6 +265,41 @@ RSpec.describe "Request throttling", type: :request do
       expect(response.body).to include("192.0.2.1")
     end
 
+    it "treats Any select filter values as blank in ActiveAdmin filters" do
+      RequestThrottleEvent.create!(
+        event_type: "block",
+        rule_name: "api_games_unauthenticated",
+        actor_type: "ip",
+        actor_key: "ip:192.0.2.1",
+        ip_address: "192.0.2.1",
+        request_method: "GET",
+        request_path: "/api/v1/games",
+        limit_value: 8,
+        period_seconds: 60,
+        hit_count: 3,
+        peak_count: 12,
+        started_at: 2.days.ago,
+        last_seen_at: 2.days.ago,
+        expires_at: 1.day.ago
+      )
+
+      sign_in admin_user
+
+      get "/admin/request_throttle_events", params: {
+        q: {
+          event_type_eq: "block",
+          actor_type_eq: "Any",
+          request_method_eq: "Any",
+          permanent_eq: "Any"
+        }
+      }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("192.0.2.1")
+      expect(response.body).to include("All (1)")
+      expect(response.body).to include("Block events (1)")
+    end
+
     it "allows admins to add and lift manual IP blocks" do
       sign_in admin_user
 

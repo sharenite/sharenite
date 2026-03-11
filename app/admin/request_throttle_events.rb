@@ -15,6 +15,7 @@ ActiveAdmin.register RequestThrottleEvent do
 
   controller do
     helper_method :request_throttle_scope_label
+    before_action :normalize_request_throttle_filters, only: :index
 
     def request_throttle_scope_label(scope_name)
       count = request_throttle_scope_counts.fetch(scope_name.to_sym, 0)
@@ -23,24 +24,67 @@ ActiveAdmin.register RequestThrottleEvent do
 
     private
 
-    # rubocop:disable Metrics/AbcSize
-    def request_throttle_scope_counts
+        def request_throttle_scope_counts
+      return cached_request_throttle_scope_counts if request_throttle_scope_counts_globally_cacheable?
+
+      row = request_throttle_scope_counts_relation.pick(*request_throttle_scope_count_expressions)
+
+      build_request_throttle_scope_counts(row)
+    end
+        def cached_request_throttle_scope_counts
       cache_key = "admin/request_throttle_events/scope_counts/#{Time.current.to_i / 30}"
 
       Rails.cache.fetch(cache_key, expires_in: 35.seconds) do
         row = RequestThrottleEvent.pick(*request_throttle_scope_count_expressions)
-
-        {
-          all: row&.[](0).to_i,
-          current: row&.[](1).to_i,
-          historical: row&.[](2).to_i,
-          throttle_events: row&.[](3).to_i,
-          block_events: row&.[](4).to_i,
-          permanent_blocks: row&.[](5).to_i
-        }
+        build_request_throttle_scope_counts(row)
       end
     end
-    # rubocop:enable Metrics/AbcSize
+
+    def build_request_throttle_scope_counts(row)
+      {
+        all: row&.[](0).to_i,
+        current: row&.[](1).to_i,
+        historical: row&.[](2).to_i,
+        throttle_events: row&.[](3).to_i,
+        block_events: row&.[](4).to_i,
+        permanent_blocks: row&.[](5).to_i
+      }
+    end
+
+    def request_throttle_scope_counts_globally_cacheable?
+      request_throttle_active_scope.blank? && request_throttle_scope_counts_query.blank?
+    end
+
+    def request_throttle_scope_counts_relation
+      relation = apply_authorization_scope(scoped_collection)
+      relation = apply_scoping(relation)
+      query = request_throttle_scope_counts_query
+
+      relation = relation.ransack(query).result if query.present?
+      relation.unscope(:select, :order)
+    end
+
+    def request_throttle_scope_counts_query
+      request_throttle_query_params.to_unsafe_h.compact_blank
+    end
+
+    def request_throttle_active_scope
+      scope = params[:scope].to_s
+      scope unless scope.blank? || scope == "all"
+    end
+
+    def request_throttle_query_params
+      params[:q] = ActionController::Parameters.new unless params[:q].is_a?(ActionController::Parameters) || params[:q].is_a?(Hash)
+      params[:q]
+    end
+
+    def normalize_request_throttle_filters
+      q = request_throttle_query_params
+
+      %i[event_type_eq actor_type_eq request_method_eq permanent_eq].each do |key|
+        q[key] = "" if q[key].to_s == "Any" || q[key.to_s].to_s == "Any"
+      end
+    end
 
     def request_throttle_scope_count_expressions
       now = ActiveRecord::Base.connection.quote(Time.current)

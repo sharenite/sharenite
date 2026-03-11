@@ -224,6 +224,53 @@ RSpec.describe "Admin smoke", type: :request do
     expect(response.body).not_to include("All (2)")
   end
 
+  it "shows request throttle scope badges against the active filtered scope" do
+    RequestThrottleEvent.create!(
+      event_type: "throttle",
+      actor_type: "ip",
+      actor_key: "198.51.100.10",
+      ip_address: "198.51.100.10",
+      request_method: "GET",
+      request_path: "/one",
+      rule_name: "rule-one",
+      limit_value: 10,
+      period_seconds: 60,
+      hit_count: 11,
+      peak_count: 11,
+      escalation_value: 1,
+      started_at: 2.minutes.ago,
+      last_seen_at: 1.minute.ago,
+      expires_at: 10.minutes.from_now,
+      permanent: false
+    )
+    RequestThrottleEvent.create!(
+      event_type: "block",
+      actor_type: "ip",
+      actor_key: "198.51.100.20",
+      ip_address: "198.51.100.20",
+      request_method: "POST",
+      request_path: "/two",
+      rule_name: "rule-two",
+      limit_value: 10,
+      period_seconds: 60,
+      hit_count: 12,
+      peak_count: 12,
+      escalation_value: 2,
+      started_at: 2.days.ago,
+      last_seen_at: 2.days.ago,
+      expires_at: 1.day.ago,
+      permanent: false
+    )
+
+    get "/admin/request_throttle_events", params: { scope: "historical" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("All (1)")
+    expect(response.body).to include("Historical (1)")
+    expect(response.body).to include("Current (0)")
+    expect(response.body).not_to include("All (2)")
+  end
+
   it "preserves filters after delete when return_to is provided" do
     aggregate_failures do
       delete "/admin/friends/#{friend.id}", params: { return_to: "/admin/friends?q%5Binviter_query%5D=demo" }

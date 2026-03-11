@@ -144,7 +144,7 @@ module ProfilesHelper
       "#{label}#{indicator}",
       profile_friends_path(profile, request.query_parameters.merge(sort: next_sort, page: nil)),
       class: "games-sort-link#{' active' if direction.present?}",
-      data: { turbo_frame: "friends_list", turbo_action: "replace" }
+      data: { turbo_frame: "friends_list", turbo_action: "replace", action: "click->search-form#syncStateFromLink" }
     )
   end
 

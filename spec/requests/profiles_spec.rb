@@ -246,6 +246,20 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include(%(value="received"))
     end
 
+    it "keeps the desktop sort links wired to sync the shared search form state" do
+      owner = create(:user)
+      friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      friend.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Friend A")
+      Friend.create!(inviter: owner, invitee: friend, status: :accepted)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, sort: "name_asc")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("click-&gt;search-form#syncStateFromLink").or include("click->search-form#syncStateFromLink")
+    end
+
     it "shows friendship and invitation timestamps across tabs" do
       owner = create(:user)
       accepted_friend = create(:user)
@@ -337,6 +351,22 @@ RSpec.describe "Profiles requests", type: :request do
       document = Nokogiri::HTML(response.body)
       listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
       expect(listed_names.first(2)).to eq(["Newer Blocked", "Older Blocked"])
+    end
+
+    it "preserves the active search filter in mobile sort forms" do
+      owner = create(:user)
+      inviter = create(:user)
+      owner.profile.update!(name: "Owner Profile")
+      inviter.profile.update!(name: "Searchable Friend")
+      Friend.create!(inviter:, invitee: owner, status: :invited)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, tab: "received", search_name: "Search")
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      search_name_inputs = document.css('input[name="search_name"][value="Search"]')
+      expect(search_name_inputs.count).to be >= 2
     end
 
     it "does not render private accepted friends in the visible list" do
