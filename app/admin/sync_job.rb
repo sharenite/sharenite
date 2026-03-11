@@ -11,12 +11,12 @@ ActiveAdmin.register SyncJob do
   includes :user
   actions :index, :show, :destroy
 
-  scope :all, default: true
-  scope :status_queued
-  scope :status_running
-  scope :status_failed
-  scope :status_finished
-  scope :status_dead
+  scope(proc { sync_job_scope_label(:all) }, :all, default: true, show_count: false)
+  scope(proc { sync_job_scope_label(:queued) }, :status_queued, show_count: false)
+  scope(proc { sync_job_scope_label(:running) }, :status_running, show_count: false)
+  scope(proc { sync_job_scope_label(:failed) }, :status_failed, show_count: false)
+  scope(proc { sync_job_scope_label(:finished) }, :status_finished, show_count: false)
+  scope(proc { sync_job_scope_label(:dead) }, :status_dead, show_count: false)
   scope(
     proc { sync_request_gap_scope_label },
     :request_gap_good,
@@ -59,6 +59,7 @@ ActiveAdmin.register SyncJob do
   controller do
     helper_method :selected_sync_job_user
     helper_method :sync_job_name_options
+    helper_method :sync_job_scope_label
     helper_method :sync_request_gap_tone
     helper_method :sync_request_gap_scope_label
     before_action :normalize_sync_job_filters, only: :index
@@ -106,7 +107,27 @@ ActiveAdmin.register SyncJob do
       :bad
     end
 
+    def sync_job_scope_label(scope_name)
+      count = sync_job_scope_counts.fetch(scope_name.to_sym, 0)
+      "#{scope_name.to_s.humanize} (#{count})"
+    end
+
     private
+
+    def sync_job_scope_counts
+      Rails.cache.fetch("admin/sync_jobs/scope_counts/v1", expires_in: 1.minute) do
+        status_counts = SyncJob.group(:status).count
+
+        {
+          all: status_counts.values.sum,
+          queued: status_counts.fetch("queued", 0),
+          running: status_counts.fetch("running", 0),
+          failed: status_counts.fetch("failed", 0),
+          finished: status_counts.fetch("finished", 0),
+          dead: status_counts.fetch("dead", 0)
+        }
+      end
+    end
 
     # rubocop:disable Metrics/AbcSize
     def normalize_sync_job_filters

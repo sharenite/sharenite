@@ -6,12 +6,55 @@ ActiveAdmin.register RequestThrottleEvent do
   config.sort_order = "last_seen_at_desc"
   config.filters = false
 
-  scope :all, default: true
-  scope :current
-  scope :historical
-  scope :throttle_events
-  scope :block_events
-  scope :permanent_blocks
+  scope(proc { request_throttle_scope_label(:all) }, :all, default: true, show_count: false)
+  scope(proc { request_throttle_scope_label(:current) }, :current, show_count: false)
+  scope(proc { request_throttle_scope_label(:historical) }, :historical, show_count: false)
+  scope(proc { request_throttle_scope_label(:throttle_events) }, :throttle_events, show_count: false)
+  scope(proc { request_throttle_scope_label(:block_events) }, :block_events, show_count: false)
+  scope(proc { request_throttle_scope_label(:permanent_blocks) }, :permanent_blocks, show_count: false)
+
+  controller do
+    helper_method :request_throttle_scope_label
+
+    def request_throttle_scope_label(scope_name)
+      count = request_throttle_scope_counts.fetch(scope_name.to_sym, 0)
+      "#{scope_name.to_s.humanize} (#{count})"
+    end
+
+    private
+
+    # rubocop:disable Metrics/AbcSize
+    def request_throttle_scope_counts
+      cache_key = "admin/request_throttle_events/scope_counts/#{Time.current.to_i / 30}"
+
+      Rails.cache.fetch(cache_key, expires_in: 35.seconds) do
+        row = RequestThrottleEvent.pick(*request_throttle_scope_count_expressions)
+
+        {
+          all: row&.[](0).to_i,
+          current: row&.[](1).to_i,
+          historical: row&.[](2).to_i,
+          throttle_events: row&.[](3).to_i,
+          block_events: row&.[](4).to_i,
+          permanent_blocks: row&.[](5).to_i
+        }
+      end
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    def request_throttle_scope_count_expressions
+      now = ActiveRecord::Base.connection.quote(Time.current)
+
+      [
+        "COUNT(*)",
+        "COALESCE(SUM(CASE WHEN lifted_at IS NULL AND (permanent = TRUE OR expires_at > #{now}) THEN 1 ELSE 0 END), 0)",
+        "COALESCE(SUM(CASE WHEN lifted_at IS NOT NULL OR (permanent = FALSE AND expires_at <= #{now}) THEN 1 ELSE 0 END), 0)",
+        "COALESCE(SUM(CASE WHEN event_type = 'throttle' THEN 1 ELSE 0 END), 0)",
+        "COALESCE(SUM(CASE WHEN event_type = 'block' THEN 1 ELSE 0 END), 0)",
+        "COALESCE(SUM(CASE WHEN event_type = 'block' AND permanent = TRUE THEN 1 ELSE 0 END), 0)"
+      ].map { |expression| Arel.sql(expression) }
+    end
+  end
 
   index do
     id_column
@@ -83,21 +126,25 @@ ActiveAdmin.register RequestThrottleEvent do
   end
 
   member_action :lift, method: :put do
+    # rubocop:disable Rails/I18nLocaleTexts
     if RequestThrottling.lift_permanent_block!(resource)
       redirect_to resource_path(resource), notice: "Permanent block lifted."
     else
       redirect_to resource_path(resource), alert: "Could not lift block."
     end
+    # rubocop:enable Rails/I18nLocaleTexts
   end
 
   collection_action :manual_block, method: :post do
     ip_address = params[:ip_address].to_s.strip
 
+    # rubocop:disable Rails/I18nLocaleTexts
     if RequestThrottling.manually_block_ip!(ip_address)
       redirect_to collection_path(scope: params[:scope].presence), notice: "IP block added for #{ip_address}."
     else
       redirect_to collection_path(scope: params[:scope].presence), alert: "Could not block that IP."
     end
+    # rubocop:enable Rails/I18nLocaleTexts
   end
 
   action_item :lift, only: :show do
@@ -108,6 +155,7 @@ ActiveAdmin.register RequestThrottleEvent do
 
   sidebar "Filters", only: :index do
     q = params.fetch(:q, {})
+    request_method_options = %w[GET POST PUT PATCH DELETE]
 
     form action: collection_path, method: :get, class: "admin-custom-filter-form" do
       input type: "hidden", name: "scope", value: params[:scope] if params[:scope].present?
@@ -115,7 +163,7 @@ ActiveAdmin.register RequestThrottleEvent do
       div class: "filter_form_field" do
         label "Event type"
         select name: "q[event_type_eq]" do
-          text_node(%(<option value=""#{' selected="selected"' if q[:event_type_eq].blank?}>Any</option>).html_safe)
+          option "Any", value: "", selected: q[:event_type_eq].blank?
           RequestThrottleEvent::EVENT_TYPES.each do |event_type|
             option event_type.humanize, value: event_type, selected: q[:event_type_eq].to_s == event_type
           end
@@ -130,7 +178,7 @@ ActiveAdmin.register RequestThrottleEvent do
       div class: "filter_form_field" do
         label "Actor type"
         select name: "q[actor_type_eq]" do
-          text_node(%(<option value=""#{' selected="selected"' if q[:actor_type_eq].blank?}>Any</option>).html_safe)
+          option "Any", value: "", selected: q[:actor_type_eq].blank?
           RequestThrottleEvent::ACTOR_TYPES.each do |actor_type|
             option actor_type.humanize, value: actor_type, selected: q[:actor_type_eq].to_s == actor_type
           end
@@ -155,8 +203,8 @@ ActiveAdmin.register RequestThrottleEvent do
       div class: "filter_form_field" do
         label "Request method"
         select name: "q[request_method_eq]" do
-          text_node(%(<option value=""#{' selected="selected"' if q[:request_method_eq].blank?}>Any</option>).html_safe)
-          %w[GET POST PUT PATCH DELETE].each do |request_method|
+          option "Any", value: "", selected: q[:request_method_eq].blank?
+          request_method_options.each do |request_method|
             option request_method, value: request_method, selected: q[:request_method_eq].to_s == request_method
           end
         end
@@ -170,7 +218,7 @@ ActiveAdmin.register RequestThrottleEvent do
       div class: "filter_form_field" do
         label "Permanent"
         select name: "q[permanent_eq]" do
-          text_node(%(<option value=""#{' selected="selected"' if q[:permanent_eq].blank?}>Any</option>).html_safe)
+          option "Any", value: "", selected: q[:permanent_eq].blank?
           option "Yes", value: "true", selected: q[:permanent_eq].to_s == "true"
           option "No", value: "false", selected: q[:permanent_eq].to_s == "false"
         end
