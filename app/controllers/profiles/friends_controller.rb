@@ -427,7 +427,7 @@ module Profiles
 
     def current_sort
       requested_sort = params[:sort].to_s
-      allowed_sorts = SORT_VALUES_BY_TAB.fetch(@active_tab, SORT_VALUES_BY_TAB.fetch("friends"))
+      allowed_sorts = sort_values_for_tab(@active_tab)
       allowed_sorts.include?(requested_sort) ? requested_sort : DEFAULT_SORT_BY_TAB.fetch(@active_tab, DEFAULT_SORT_BY_TAB.fetch("friends"))
     end
 
@@ -450,7 +450,7 @@ module Profiles
         last_active_at_by_user_id: latest_visible_last_active_by_user_id(friends),
         game_library_visibility_by_user_id: component_visibility_by_user_id(friends, :game_library_privacy),
         gaming_activity_visibility_by_user_id: component_visibility_by_user_id(friends, :gaming_activity_privacy),
-        relations_by_user_id: accepted_friend_relations_by_user_id(friends.map(&:user_id))
+        relations_by_user_id: @own_profile ? accepted_friend_relations_by_user_id(friends.map(&:user_id)) : {}
       }
     end
 
@@ -644,6 +644,14 @@ module Profiles
               end
 
       scope.group(:user_id).maximum(:last_activity)
+    end
+
+    def sort_values_for_tab(tab)
+      tab = tab.to_s
+      values = SORT_VALUES_BY_TAB.fetch(tab, SORT_VALUES_BY_TAB.fetch("friends"))
+      return values if @own_profile || tab != "friends"
+
+      values.reject { |value| value.start_with?("friends_since_") }
     end
 
     # rubocop:enable Metrics/AbcSize

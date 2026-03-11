@@ -106,26 +106,29 @@ module ProfilesHelper
     last_active_at ? "#{time_ago_in_words(last_active_at)} ago" : "Never"
   end
 
-  def friends_sort_options(tab = "friends")
-    FRIENDS_SORT_OPTIONS.fetch(tab.to_s, FRIENDS_SORT_OPTIONS.fetch("friends"))
+  def friends_sort_options(tab = "friends", own_profile: false)
+    options = FRIENDS_SORT_OPTIONS.fetch(tab.to_s, FRIENDS_SORT_OPTIONS.fetch("friends"))
+    return options if own_profile || tab.to_s != "friends"
+
+    options.reject { |(_, value)| value.start_with?("friends_since_") }
   end
 
-  def friends_default_sort(tab = "friends")
-    friends_sort_options(tab).first&.last
+  def friends_default_sort(tab = "friends", own_profile: false)
+    friends_sort_options(tab, own_profile:).first&.last
   end
 
-  def friends_resolved_sort(tab, requested_sort = params[:sort])
-    options = friends_sort_options(tab)
+  def friends_resolved_sort(tab, requested_sort = params[:sort], own_profile: false)
+    options = friends_sort_options(tab, own_profile:)
     requested_sort = requested_sort.to_s
     allowed_values = options.map(&:last)
 
-    allowed_values.include?(requested_sort) ? requested_sort : friends_default_sort(tab)
+    allowed_values.include?(requested_sort) ? requested_sort : friends_default_sort(tab, own_profile:)
   end
 
-  def friends_tab_path(profile, tab, filter_params = request.query_parameters)
-    next_sort = filter_params["sort"].present? ? friends_resolved_sort(tab, filter_params["sort"]) : nil
+  def friends_tab_path(profile, tab, filter_params = request.query_parameters, own_profile: false)
+    next_sort = filter_params["sort"].present? ? friends_resolved_sort(tab, filter_params["sort"], own_profile:) : nil
     next_params = filter_params.slice("search_name").merge(tab:)
-    next_params[:sort] = next_sort if next_sort.present? && next_sort != friends_default_sort(tab)
+    next_params[:sort] = next_sort if next_sort.present? && next_sort != friends_default_sort(tab, own_profile:)
 
     profile_friends_path(profile, next_params)
   end

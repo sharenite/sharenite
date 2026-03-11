@@ -1,55 +1,57 @@
 = render "profiles/profiles/profile_nav", current_section: :friends
 
-.profiles-search-form.mb-3
-  = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
-    - if params[:sort].present?
-      = hidden_field_tag :sort, params[:sort]
-    .row.g-2
-      .col-12
-        = form.label :search_name, "Search name", class: "form-label mb-1 small text-muted"
-        = form.text_field :search_name, value: params[:search_name], class: "form-control", placeholder: "Friend name...", data: { action: "input->search-form#search" }
-      .col-12.d-flex.justify-content-end.gap-2
-        = link_to "Reset", profile_friends_path(@profile), class: "btn btn-outline-secondary"
-        = form.submit "Apply", class: "btn btn-primary"
+- filter_params = request.query_parameters.slice("search_name", "sort")
+- current_sort = friends_resolved_sort(@active_tab, own_profile: @own_profile)
+.profiles-friends-page{data: { controller: "search-form" }}
+  .profiles-search-form.mb-3
+    = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { search_form_target: "form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
+      = hidden_field_tag :tab, @active_tab, data: { search_form_target: "tabInput" }
+      = hidden_field_tag :sort, current_sort, data: { search_form_target: "sortInput" }
+      .row.g-2
+        .col-12
+          = form.label :search_name, "Search name", class: "form-label mb-1 small text-muted"
+          = form.text_field :search_name, value: params[:search_name], class: "form-control", placeholder: "Friend name...", data: { action: "input->search-form#search" }
+        .col-12.d-flex.justify-content-end.gap-2
+          = link_to "Reset", profile_friends_path(@profile, tab: @active_tab), class: "btn btn-outline-secondary"
+          = form.submit "Apply", class: "btn btn-primary"
 
-= turbo_frame_tag "friends_list" do
-  - filter_params = request.query_parameters.slice("search_name", "sort")
-  - current_sort = friends_resolved_sort(@active_tab)
-  .card.profiles-section-card.mt-3
-    .card-body
-      - if @own_profile
-        %ul.nav.nav-tabs.profiles-friends-tabs.mb-3{role: "tablist"}
-          %li.nav-item{role: "presentation"}
-            = link_to friends_tab_path(@profile, "friends", filter_params), class: "nav-link #{'active' if @active_tab == 'friends'}", role: "tab", aria: { selected: (@active_tab == "friends").to_s }, data: { turbo_action: "advance" } do
-              Friends
-              %span.badge.rounded-pill.text-bg-secondary.ms-1= @friends_total_count
-          %li.nav-item{role: "presentation"}
-            = link_to friends_tab_path(@profile, "received", filter_params), class: "nav-link #{'active' if @active_tab == 'received'}", role: "tab", aria: { selected: (@active_tab == "received").to_s }, data: { turbo_action: "advance" } do
-              Received
-              %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_received_count
-          %li.nav-item{role: "presentation"}
-            = link_to friends_tab_path(@profile, "sent", filter_params), class: "nav-link #{'active' if @active_tab == 'sent'}", role: "tab", aria: { selected: (@active_tab == "sent").to_s }, data: { turbo_action: "advance" } do
-              Sent
-              %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_sent_count
-          %li.nav-item{role: "presentation"}
-            = link_to friends_tab_path(@profile, "declined", filter_params), class: "nav-link #{'active' if @active_tab == 'declined'}", role: "tab", aria: { selected: (@active_tab == "declined").to_s }, data: { turbo_action: "advance" } do
-              Declined
-              %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_declined_count
-          %li.nav-item{role: "presentation"}
-            = link_to friends_tab_path(@profile, "blocked", filter_params), class: "nav-link #{'active' if @active_tab == 'blocked'}", role: "tab", aria: { selected: (@active_tab == "blocked").to_s }, data: { turbo_action: "advance" } do
-              Blocked
-              %span.badge.rounded-pill.text-bg-secondary.ms-1= @blocked_count
+  = turbo_frame_tag "friends_list" do
+    .card.profiles-section-card.mt-3
+      .card-body
+        - if @own_profile
+          %ul.nav.nav-tabs.profiles-friends-tabs.mb-3{role: "tablist"}
+            %li.nav-item{role: "presentation"}
+              = link_to friends_tab_path(@profile, "friends", filter_params, own_profile: @own_profile), class: "nav-link #{'active' if @active_tab == 'friends'}", role: "tab", aria: { selected: (@active_tab == "friends").to_s }, data: { turbo_action: "advance", action: "click->search-form#syncStateFromLink" } do
+                Friends
+                %span.badge.rounded-pill.text-bg-secondary.ms-1= @friends_total_count
+            %li.nav-item{role: "presentation"}
+              = link_to friends_tab_path(@profile, "received", filter_params, own_profile: @own_profile), class: "nav-link #{'active' if @active_tab == 'received'}", role: "tab", aria: { selected: (@active_tab == "received").to_s }, data: { turbo_action: "advance", action: "click->search-form#syncStateFromLink" } do
+                Received
+                %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_received_count
+            %li.nav-item{role: "presentation"}
+              = link_to friends_tab_path(@profile, "sent", filter_params, own_profile: @own_profile), class: "nav-link #{'active' if @active_tab == 'sent'}", role: "tab", aria: { selected: (@active_tab == "sent").to_s }, data: { turbo_action: "advance", action: "click->search-form#syncStateFromLink" } do
+                Sent
+                %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_sent_count
+            %li.nav-item{role: "presentation"}
+              = link_to friends_tab_path(@profile, "declined", filter_params, own_profile: @own_profile), class: "nav-link #{'active' if @active_tab == 'declined'}", role: "tab", aria: { selected: (@active_tab == "declined").to_s }, data: { turbo_action: "advance", action: "click->search-form#syncStateFromLink" } do
+                Declined
+                %span.badge.rounded-pill.text-bg-secondary.ms-1= @invitations_declined_count
+            %li.nav-item{role: "presentation"}
+              = link_to friends_tab_path(@profile, "blocked", filter_params, own_profile: @own_profile), class: "nav-link #{'active' if @active_tab == 'blocked'}", role: "tab", aria: { selected: (@active_tab == "blocked").to_s }, data: { turbo_action: "advance", action: "click->search-form#syncStateFromLink" } do
+                Blocked
+                %span.badge.rounded-pill.text-bg-secondary.ms-1= @blocked_count
       - if @active_tab == "friends"
         .tab-content
           .tab-pane.fade.show.active{role: "tabpanel"}
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, "friends"
-                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
-                    = form.select :sort, options_for_select(friends_sort_options("friends"), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
+                    = form.select :sort, options_for_select(friends_sort_options("friends", own_profile: @own_profile), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
+                  .col-12.d-flex.justify-content-end.gap-2
+                    = link_to "Reset", profile_friends_path(@profile, tab: "friends"), class: "btn btn-outline-secondary"
 
             - if @friends.total_pages > 1
               .d-flex.align-items-center.justify-content-end.mb-2
@@ -65,7 +67,8 @@
                       %th= friends_sort_link(@profile, "Name", current_sort, { asc: "name_asc", desc: "name_desc" })
                       %th= friends_sort_link(@profile, "Games", current_sort, { asc: "games_asc", desc: "games_desc" })
                       %th= friends_sort_link(@profile, "Last active", current_sort, { asc: "last_active_asc", desc: "last_active_desc" })
-                      %th= friends_sort_link(@profile, "Friends since", current_sort, { asc: "friends_since_asc", desc: "friends_since_desc" })
+                      - if @own_profile
+                        %th= friends_sort_link(@profile, "Friends since", current_sort, { asc: "friends_since_asc", desc: "friends_since_desc" })
                       %th.text-end Actions
                   %tbody
                     - if @friends.any?
@@ -88,7 +91,8 @@
                               %span.profiles-info-pill.profiles-info-pill-muted= last_active_label
                             - else
                               = last_active_label
-                          %td= friends_since_label
+                          - if @own_profile
+                            %td= friends_since_label
                           %td.text-end
                             .d-inline-flex.gap-1.flex-wrap.justify-content-end
                               - if can_view_games
@@ -99,7 +103,7 @@
                                 = button_to "Block", profile_block_friend_path(@profile, id: relation.id, tab: "blocked"), method: :patch, class: "profiles-action-pill profiles-action-pill-danger profiles-action-pill-sm", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: "Block this user? You and this user will become invisible to each other." }
                     - else
                       %tr
-                        %td.text-muted{colspan: 5} No friends match current filters.
+                        %td.text-muted{colspan: (@own_profile ? 5 : 4)} No friends match current filters.
 
             .profiles-list-mobile.d-md-none
               .row.g-2
@@ -128,7 +132,7 @@
                                   %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted.ms-1= last_active_label
                                 - else
                                   %span.ms-1= last_active_label
-                              - if friends_since_label.present?
+                              - if @own_profile && friends_since_label.present?
                                 .small.text-muted Friends since: #{friends_since_label}
                             .profiles-friend-mobile-card__actions
                               - if can_view_games
@@ -150,11 +154,12 @@
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, "received"
-                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
                     = form.select :sort, options_for_select(friends_sort_options("received"), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
+                  .col-12.d-flex.justify-content-end.gap-2
+                    = link_to "Reset", profile_friends_path(@profile, tab: "received"), class: "btn btn-outline-secondary"
             %p.profiles-section-summary Total received invitations listed: #{@invitations_received_count}
             - if @invitations_received.any?
               .profiles-list-desktop.d-none.d-md-block
@@ -201,11 +206,12 @@
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, "sent"
-                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
                     = form.select :sort, options_for_select(friends_sort_options("sent"), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
+                  .col-12.d-flex.justify-content-end.gap-2
+                    = link_to "Reset", profile_friends_path(@profile, tab: "sent"), class: "btn btn-outline-secondary"
             %p.profiles-section-summary Total sent invitations listed: #{@invitations_sent_count}
             - if @invitations_sent.any?
               .profiles-list-desktop.d-none.d-md-block
@@ -250,11 +256,12 @@
             .profiles-search-form.d-md-none.mb-3
               = form_with url: profile_friends_path(@profile), method: :get, local: true, data: { controller: "search-form", turbo_frame: "friends_list", turbo_action: "replace" } do |form|
                 = hidden_field_tag :tab, @active_tab
-                = hidden_field_tag :search_name, params[:search_name]
                 .row.g-2
                   .col-12
                     = form.label :sort, "Sort by", class: "form-label mb-1 small text-muted"
                     = form.select :sort, options_for_select(friends_sort_options(@active_tab), current_sort), {}, { class: "form-select", data: { action: "change->search-form#search" } }
+                  .col-12.d-flex.justify-content-end.gap-2
+                    = link_to "Reset", profile_friends_path(@profile, tab: @active_tab), class: "btn btn-outline-secondary"
             - if @active_tab == "declined"
               %p.profiles-section-summary Total declined invitations listed: #{@invitations_declined_count}
             - else

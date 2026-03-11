@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["advancedFilters", "mobileToggle"]
+  static targets = ["advancedFilters", "mobileToggle", "form", "tabInput", "sortInput"]
 
   connect() {
     this.restoreAdvancedFiltersState()
@@ -15,12 +15,31 @@ export default class extends Controller {
       if (params === this.lastSubmittedParams) return
 
       this.lastSubmittedParams = params
-      this.element.requestSubmit()
+      this.formElement.requestSubmit()
     }, 200)
   }
 
   currentParams() {
-    return new URLSearchParams(new FormData(this.element)).toString()
+    return new URLSearchParams(new FormData(this.formElement)).toString()
+  }
+
+  syncStateFromLink(event) {
+    const href = event.currentTarget?.getAttribute("href")
+    if (!href) return
+
+    const url = new URL(href, window.location.origin)
+    const tab = url.searchParams.get("tab")
+    const sort = url.searchParams.get("sort")
+
+    if (this.hasTabInputTarget && tab !== null) {
+      this.tabInputTarget.value = tab
+    }
+
+    if (this.hasSortInputTarget) {
+      this.sortInputTarget.value = sort || ""
+    }
+
+    this.lastSubmittedParams = this.currentParams()
   }
 
   rememberOpen() {
@@ -49,5 +68,9 @@ export default class extends Controller {
 
   isMobileViewport() {
     return window.matchMedia("(max-width: 991.98px)").matches
+  }
+
+  get formElement() {
+    return this.hasFormTarget ? this.formTarget : this.element
   }
 }

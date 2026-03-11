@@ -217,6 +217,8 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).to include("Accepted Friend")
       expect(response.body).not_to include("Received")
       expect(response.body).not_to include("Declined")
+      expect(response.body).not_to include("Friends since")
+      expect(response.body).not_to include("friends_since_desc")
     end
 
     it "renders the owner friends page with tab collections" do
@@ -229,6 +231,19 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Received")
+    end
+
+    it "preserves the active tab in the shared desktop search form" do
+      owner = create(:user)
+      inviter = create(:user)
+      Friend.create!(inviter:, invitee: owner, status: :invited)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, tab: "received")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(%(name="tab"))
+      expect(response.body).to include(%(value="received"))
     end
 
     it "shows friendship and invitation timestamps across tabs" do
@@ -468,6 +483,37 @@ RSpec.describe "Profiles requests", type: :request do
       document = Nokogiri::HTML(response.body)
       listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
       expect(listed_names.first(2)).to eq(["Newer Friend", "Older Friend"])
+    end
+
+    it "ignores friends-since sorting for non-owners" do
+      owner = create(:user)
+      viewer = create(:user)
+      recent_friend = create(:user)
+      older_friend = create(:user)
+
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      recent_friend.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Recent Activity Friend")
+      older_friend.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Older Activity Friend")
+
+      recent_friend.update_columns(last_sign_in_at: 10.days.ago, current_sign_in_at: 11.days.ago)
+      older_friend.update_columns(last_sign_in_at: 10.days.ago, current_sign_in_at: 11.days.ago)
+      recent_friend.games.create!(name: "Recent Game", last_activity: 1.hour.ago, private_override: false)
+      older_friend.games.create!(name: "Older Game", last_activity: 2.days.ago, private_override: false)
+
+      older_relation = Friend.create!(inviter: owner, invitee: older_friend, status: :accepted)
+      older_relation.update_column(:updated_at, 1.hour.ago)
+      recent_relation = Friend.create!(inviter: owner, invitee: recent_friend, status: :accepted)
+      recent_relation.update_column(:updated_at, 10.days.ago)
+
+      sign_in viewer
+      get profile_friends_path(owner.profile, sort: "friends_since_desc")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Friends since")
+      expect(response.body).not_to include("friends_since_desc")
+      document = Nokogiri::HTML(response.body)
+      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      expect(listed_names.first(2)).to eq(["Recent Activity Friend", "Older Activity Friend"])
     end
 
     it "keeps hidden games rows at the end when sorting by games" do
