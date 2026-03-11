@@ -3,10 +3,9 @@
 - hide_nav = own_profile && current_section != :profile
 - profile_title = own_profile ? "My profile" : @profile.name
 - member_since_label = "#{time_ago_in_words(@profile.created_at)} ago"
-- last_active_at = @profile.user.last_sign_in_at || @profile.user.current_sign_in_at
-- last_active_label = last_active_at ? "#{time_ago_in_words(last_active_at)} ago" : "N/A"
 - can_view_games = defined?(@can_view_games) ? @can_view_games : @profile.game_library_visible_to?(current_user)
 - can_view_gaming_activity = defined?(@can_view_gaming_activity) ? @can_view_gaming_activity : @profile.gaming_activity_visible_to?(current_user)
+- last_active_label = profile_last_active_label(@profile, current_user, can_view_gaming_activity:)
 - can_view_playlists = defined?(@can_view_playlists) ? @can_view_playlists : @profile.playlists_visible_to?(current_user)
 - can_view_friends = defined?(@can_view_friends) ? @can_view_friends : @profile.friends_list_visible_to?(current_user)
 - running_game_label = profile_running_game_summary(@profile, current_user, can_view_gaming_activity:)

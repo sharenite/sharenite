@@ -8,6 +8,20 @@ module Profiles
     include ProfileVisibility
 
     TABS = %w[friends received sent declined blocked].freeze
+    SORT_VALUES_BY_TAB = {
+      "friends" => %w[last_active_desc last_active_asc friends_since_desc friends_since_asc name_asc name_desc games_desc games_asc],
+      "received" => %w[sent_desc sent_asc name_asc name_desc],
+      "sent" => %w[sent_desc sent_asc name_asc name_desc],
+      "declined" => %w[declined_desc declined_asc name_asc name_desc status_asc status_desc],
+      "blocked" => %w[blocked_desc blocked_asc name_asc name_desc]
+    }.freeze
+    DEFAULT_SORT_BY_TAB = {
+      "friends" => "last_active_desc",
+      "received" => "sent_desc",
+      "sent" => "sent_desc",
+      "declined" => "declined_desc",
+      "blocked" => "blocked_desc"
+    }.freeze
     INVITATION_COLLECTION_CONFIG = [
       {
         count_ivar: :@invitations_received_count,
@@ -211,10 +225,9 @@ module Profiles
       name_query = params[:search_name].to_s.strip
       scope = scope.where("profiles.name ILIKE ?", "%#{name_query}%") if name_query.present?
 
-      ordered_scope = scope.order("profiles.name ASC")
-      @friends_total_count = ordered_scope.except(:order).count
+      @friends_total_count = scope.except(:order).count
       @friends = if @active_tab == "friends"
-                   ordered_scope.page(params[:page]).per(25)
+                   paginate_sorted_friends(scope.load)
                  else
                    Profile.none.page(params[:page]).per(25)
                  end
@@ -286,7 +299,7 @@ module Profiles
 
     def assign_invitation_collection(count_ivar:, records_ivar:, tab_name:, scope:)
       instance_variable_set(count_ivar, scope.count)
-      records = @active_tab == tab_name ? scope.load : []
+      records = @active_tab == tab_name ? sorted_records_for_tab(scope.load, tab_name) : []
       instance_variable_set(records_ivar, records)
     end
 
@@ -325,7 +338,6 @@ module Profiles
     def invitation_received_scope(any_filter:, filtered_user_ids:)
       scope = @profile.user.pending_inviters
                       .includes(inviter: :profile)
-                      .order(created_at: :desc)
       return scope unless any_filter
 
       scope.where(inviter_id: filtered_user_ids)
@@ -334,7 +346,6 @@ module Profiles
     def invitation_sent_scope(any_filter:, filtered_user_ids:)
       scope = @profile.user.pending_invitees
                       .includes(invitee: :profile)
-                      .order(created_at: :desc)
       return scope unless any_filter
 
       scope.where(invitee_id: filtered_user_ids)
@@ -344,7 +355,6 @@ module Profiles
       scope = Friend.where(status: :declined)
                     .where("inviter_id = :user_id OR invitee_id = :user_id", user_id: @profile.user.id)
                     .includes(inviter: :profile, invitee: :profile)
-                    .order(updated_at: :desc)
       return scope unless any_filter
 
       scope.where(
@@ -358,7 +368,6 @@ module Profiles
     def blocked_scope(any_filter:, filtered_user_ids:)
       scope = Friend.where(status: :blocked, inviter_id: @profile.user.id)
                     .includes(invitee: :profile)
-                    .order(updated_at: :desc)
       return scope unless any_filter
 
       scope.where(invitee_id: filtered_user_ids)
@@ -376,12 +385,20 @@ module Profiles
     def base_friends_scope
       apply_profile_visibility_scope(Profile.where(user_id: accepted_friend_user_ids_scope))
         .joins(:user)
+        .includes(:user)
     end
 
     def preload_friend_list_metadata
       friend_user_ids = @friends.map(&:user_id)
       @friend_games_count_by_user_id = visible_games_count_by_user_id(@friends)
       @friend_game_library_visibility_by_user_id = component_visibility_by_user_id(@friends, :game_library_privacy)
+      @friend_gaming_activity_visibility_by_user_id = component_visibility_by_user_id(@friends, :gaming_activity_privacy)
+      @friend_latest_game_activity_at_by_user_id = latest_visible_game_activity_by_user_id_for_profiles(@friends)
+      @friend_last_active_at_by_user_id = latest_visible_last_active_by_user_id(
+        @friends,
+        gaming_activity_visibility_by_user_id: @friend_gaming_activity_visibility_by_user_id,
+        latest_game_activity_by_user_id: @friend_latest_game_activity_at_by_user_id
+      )
       @friend_relations_by_user_id = if @own_profile && friend_user_ids.any?
                                        accepted_friend_relations_by_user_id(friend_user_ids)
                                      else
@@ -406,6 +423,227 @@ module Profiles
       return unless friend
 
       friend.inviter_id == current_user.id ? friend.invitee : friend.inviter
+    end
+
+    def current_sort
+      requested_sort = params[:sort].to_s
+      allowed_sorts = SORT_VALUES_BY_TAB.fetch(@active_tab, SORT_VALUES_BY_TAB.fetch("friends"))
+      allowed_sorts.include?(requested_sort) ? requested_sort : DEFAULT_SORT_BY_TAB.fetch(@active_tab, DEFAULT_SORT_BY_TAB.fetch("friends"))
+    end
+
+    def paginate_sorted_friends(friends)
+      sorted_friends = sort_friends(friends)
+      Kaminari.paginate_array(sorted_friends).page(params[:page]).per(25)
+    end
+
+    def sort_friends(friends)
+      sort_context = build_friend_sort_context(friends)
+
+      friends.sort_by do |friend|
+        sort_value_for_friend(friend, sort_context)
+      end
+    end
+
+    def build_friend_sort_context(friends)
+      {
+        games_count_by_user_id: visible_games_count_by_user_id(friends),
+        last_active_at_by_user_id: latest_visible_last_active_by_user_id(friends),
+        game_library_visibility_by_user_id: component_visibility_by_user_id(friends, :game_library_privacy),
+        gaming_activity_visibility_by_user_id: component_visibility_by_user_id(friends, :gaming_activity_privacy),
+        relations_by_user_id: accepted_friend_relations_by_user_id(friends.map(&:user_id))
+      }
+    end
+
+    def sort_value_for_friend(friend, sort_context)
+      case current_sort
+      when "games_asc", "games_desc"
+        friend_games_sort_value(friend, sort_context)
+      when "last_active_asc", "last_active_desc"
+        friend_last_active_sort_value(friend, sort_context)
+      when "friends_since_asc", "friends_since_desc"
+        friend_since_sort_value(friend, sort_context)
+      when "name_desc"
+        descending_name_sort_value(friend.name, friend.user_id)
+      else
+        ascending_name_sort_value(friend.name, friend.user_id)
+      end
+    end
+
+    def sorted_records_for_tab(records, tab_name)
+      records.sort_by { |record| sort_value_for_record(record, tab_name) }
+    end
+
+    def sort_value_for_record(record, tab_name)
+      case tab_name
+      when "received"
+        received_record_sort_value(record)
+      when "sent"
+        sent_record_sort_value(record)
+      when "declined"
+        declined_record_sort_value(record)
+      when "blocked"
+        blocked_record_sort_value(record)
+      else
+        [record.id]
+      end
+    end
+
+    def friend_games_sort_value(friend, sort_context)
+      [
+        hidden_sort_bucket(sort_context[:game_library_visibility_by_user_id].fetch(friend.user_id, false)),
+        privacy_aware_numeric_sort_value(
+          sort_context[:games_count_by_user_id].fetch(friend.user_id, 0),
+          descending: current_sort == "games_desc"
+        ),
+        friend.name.to_s.downcase,
+        friend.user_id
+      ]
+    end
+
+    def friend_last_active_sort_value(friend, sort_context)
+      [
+        hidden_sort_bucket(sort_context[:gaming_activity_visibility_by_user_id].fetch(friend.user_id, false)),
+        privacy_aware_time_sort_value(
+          sort_context[:last_active_at_by_user_id][friend.user_id],
+          descending: current_sort == "last_active_desc"
+        ),
+        friend.name.to_s.downcase,
+        friend.user_id
+      ]
+    end
+
+    def friend_since_sort_value(friend, sort_context)
+      relation = sort_context[:relations_by_user_id][friend.user_id]
+      [
+        privacy_aware_time_sort_value(
+          relation&.updated_at,
+          descending: current_sort == "friends_since_desc"
+        ),
+        friend.name.to_s.downcase,
+        friend.user_id
+      ]
+    end
+
+    def received_record_sort_value(record)
+      invitation_name = safe_profile_name(record.inviter)
+      return dated_name_sort_value(record.created_at, invitation_name, record.id, descending: current_sort == "sent_desc") if %w[sent_asc sent_desc].include?(current_sort)
+      return descending_name_sort_value(invitation_name, record.id) if current_sort == "name_desc"
+
+      ascending_name_sort_value(invitation_name, record.id)
+    end
+
+    def sent_record_sort_value(record)
+      invitation_name = safe_profile_name(record.invitee)
+      return dated_name_sort_value(record.created_at, invitation_name, record.id, descending: current_sort == "sent_desc") if %w[sent_asc sent_desc].include?(current_sort)
+      return descending_name_sort_value(invitation_name, record.id) if current_sort == "name_desc"
+
+      ascending_name_sort_value(invitation_name, record.id)
+    end
+
+    def declined_record_sort_value(record)
+      other_user = record.inviter_id == @profile.user.id ? record.invitee : record.inviter
+      other_name = safe_profile_name(other_user)
+      status_label = record.invitee_id == @profile.user.id ? "You declined" : "Declined by them"
+
+      case current_sort
+      when "declined_asc", "declined_desc"
+        dated_name_sort_value(record.updated_at, other_name, record.id, descending: current_sort == "declined_desc")
+      when "status_asc"
+        [status_label.downcase, other_name.to_s.downcase, record.id]
+      when "status_desc"
+        [invert_string_for_desc(status_label.downcase), other_name.to_s.downcase, record.id]
+      when "name_desc"
+        descending_name_sort_value(other_name, record.id)
+      else
+        ascending_name_sort_value(other_name, record.id)
+      end
+    end
+
+    def blocked_record_sort_value(record)
+      blocked_name = safe_profile_name(record.invitee)
+      return dated_name_sort_value(record.created_at, blocked_name, record.id, descending: current_sort == "blocked_desc") if %w[blocked_asc blocked_desc].include?(current_sort)
+      return descending_name_sort_value(blocked_name, record.id) if current_sort == "name_desc"
+
+      ascending_name_sort_value(blocked_name, record.id)
+    end
+
+    def dated_name_sort_value(timestamp, name, record_id, descending:)
+      [
+        privacy_aware_time_sort_value(timestamp, descending:),
+        name.to_s.downcase,
+        record_id
+      ]
+    end
+
+    def ascending_name_sort_value(name, record_id)
+      [name.to_s.downcase, record_id]
+    end
+
+    def descending_name_sort_value(name, record_id)
+      [invert_string_for_desc(name.to_s.downcase), record_id]
+    end
+
+    def safe_profile_name(user)
+      user.profile&.name.presence || "Unknown user"
+    end
+
+    def hidden_sort_bucket(visible)
+      visible ? 0 : 1
+    end
+
+    def privacy_aware_numeric_sort_value(value, descending:)
+      descending ? -value.to_i : value.to_i
+    end
+
+    def privacy_aware_time_sort_value(value, descending:)
+      timestamp = value.to_i
+      descending ? -timestamp : timestamp
+    end
+
+    def invert_string_for_desc(value)
+      value.each_codepoint.map { |codepoint| 0x10FFFF - codepoint }.pack("U*")
+    end
+
+    def latest_visible_last_active_by_user_id(profiles, gaming_activity_visibility_by_user_id: nil, latest_game_activity_by_user_id: nil)
+      profiles = Array(profiles)
+      return {} if profiles.empty?
+
+      gaming_activity_visibility_by_user_id ||= component_visibility_by_user_id(profiles, :gaming_activity_privacy)
+      latest_game_activity_by_user_id ||= latest_visible_game_activity_by_user_id_for_profiles(
+        profiles,
+        gaming_activity_visibility_by_user_id:
+      )
+
+      profiles.each_with_object({}) do |profile, result|
+        next unless gaming_activity_visibility_by_user_id[profile.user_id]
+
+        latest_auth_activity_at = profile.user.last_sign_in_at || profile.user.current_sign_in_at
+        latest_game_activity_at = latest_game_activity_by_user_id[profile.user_id]
+        result[profile.user_id] = [latest_auth_activity_at, latest_game_activity_at].compact.max
+      end
+    end
+
+    def latest_visible_game_activity_by_user_id_for_profiles(profiles, gaming_activity_visibility_by_user_id: nil)
+      profiles = Array(profiles)
+      return {} if profiles.empty?
+
+      gaming_activity_visibility_by_user_id ||= component_visibility_by_user_id(profiles, :gaming_activity_privacy)
+      visible_user_ids = profiles.filter_map { |profile| profile.user_id if gaming_activity_visibility_by_user_id[profile.user_id] }
+
+      latest_visible_game_activity_by_user_id(visible_user_ids)
+    end
+
+    def latest_visible_game_activity_by_user_id(user_ids)
+      return {} if user_ids.empty?
+
+      scope = Game.where(user_id: user_ids).where.not(last_activity: nil)
+      scope = if current_user.present?
+                scope.where("games.private_override = FALSE OR games.user_id = ?", current_user.id)
+              else
+                scope.where(private_override: false)
+              end
+
+      scope.group(:user_id).maximum(:last_activity)
     end
 
     # rubocop:enable Metrics/AbcSize

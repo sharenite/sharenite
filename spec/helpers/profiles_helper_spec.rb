@@ -47,6 +47,35 @@ RSpec.describe ProfilesHelper do
     end
   end
 
+  describe "#profile_last_active_at" do
+    it "returns the newer value between sign-in and visible game activity" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      user.update_columns(last_sign_in_at: 3.days.ago, current_sign_in_at: 5.days.ago)
+      user.games.create!(name: "Balatro", last_activity: 1.day.ago, private_override: false)
+
+      expect(helper.profile_last_active_at(user.profile, nil)).to be_within(1.second).of(1.day.ago)
+    end
+
+    it "returns nil when gaming activity visibility is blocked" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :private)
+      user.update_columns(last_sign_in_at: 1.day.ago, current_sign_in_at: 2.days.ago)
+      user.games.create!(name: "Balatro", last_activity: Time.current, private_override: false)
+
+      expect(helper.profile_last_active_at(user.profile, nil)).to be_nil
+      expect(helper.profile_last_active_label(user.profile, nil)).to eq("Hidden")
+    end
+
+    it "returns Never when activity is visible but no activity timestamps exist" do
+      user = create(:user)
+      user.profile.update!(privacy: :public, gaming_activity_privacy: :public)
+      user.update_columns(last_sign_in_at: nil, current_sign_in_at: nil)
+
+      expect(helper.profile_last_active_label(user.profile, nil)).to eq("Never")
+    end
+  end
+
   describe "#profile_friendship_state_label" do
     it "returns a human-readable label for known states" do
       expect(helper.profile_friendship_state_label(:friends)).to eq("Friends")

@@ -106,6 +106,26 @@
   border-color: var(--bs-border-color);
 }
 
+.profiles-friend-mobile-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profiles-friend-mobile-card__meta {
+  min-width: 0;
+}
+
+.profiles-friend-mobile-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.profiles-friend-mobile-card__actions form {
+  display: inline-flex;
+}
+
 .profiles-action-pill {
   display: inline-flex;
   align-items: center;
@@ -361,6 +381,27 @@ a.profiles-info-pill.profiles-info-pill-muted:focus-visible {
   .profiles-show-header-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .profiles-friend-mobile-card__actions > * {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .profiles-friend-mobile-card__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profiles-friend-mobile-card__actions > * {
+    min-width: 0;
+  }
+
+  .profiles-friend-mobile-card__actions .profiles-action-pill,
+  .profiles-friend-mobile-card__actions form,
+  .profiles-friend-mobile-card__actions form .profiles-action-pill {
+    width: 100%;
   }
 }
 

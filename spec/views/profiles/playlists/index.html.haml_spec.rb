@@ -20,4 +20,21 @@ RSpec.describe "profiles/playlists/playlists/index" do
     expect(rendered).to include(new_profile_playlist_path(@profile))
     expect(rendered).to include("New playlist")
   end
+
+  it "shows the Private column for the owner" do
+    render
+
+    expect(rendered).to include("Private")
+    expect(rendered).not_to include("Private override")
+  end
+
+  it "hides the Private column for non-owners" do
+    allow(view).to receive(:current_user).and_return(create(:user))
+
+    render
+
+    expect(rendered).not_to include("Private</th>")
+    expect(rendered).not_to include("Private override")
+    expect(rendered).not_to include("New playlist")
+  end
 end

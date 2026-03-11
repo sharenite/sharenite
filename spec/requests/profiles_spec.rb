@@ -149,6 +149,33 @@ RSpec.describe "Profiles requests", type: :request do
       expect(response.body).not_to include("+1 more")
     end
 
+    it "shows the newer game activity in the profile header last active label" do
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Active Profile")
+      owner.update_columns(last_sign_in_at: 5.days.ago, current_sign_in_at: 6.days.ago)
+      owner.games.create!(name: "Recent Game", last_activity: 2.hours.ago, private_override: false)
+
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Last active:")
+      expect(response.body).to include("about 2 hours ago").or include("2 hours ago")
+    end
+
+    it "hides the profile header last active label when gaming activity privacy blocks the viewer" do
+      owner = create(:user)
+      owner.profile.update!(privacy: :public, gaming_activity_privacy: :private, name: "Private Activity")
+      owner.update_columns(last_sign_in_at: 1.day.ago, current_sign_in_at: 2.days.ago)
+      owner.games.create!(name: "Private Game", last_activity: 1.hour.ago, private_override: false)
+
+      get profile_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Last active:")
+      expect(response.body).to include("Hidden")
+      expect(response.body).not_to include("1 hour ago")
+    end
+
     it "rejects editing another user's profile" do
       owner = create(:user)
       viewer = create(:user)
@@ -202,6 +229,99 @@ RSpec.describe "Profiles requests", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Received")
+    end
+
+    it "shows friendship and invitation timestamps across tabs" do
+      owner = create(:user)
+      accepted_friend = create(:user)
+      inviter = create(:user)
+      sent_invitee = create(:user)
+      declined_user = create(:user)
+      blocked_user = create(:user)
+
+      accepted_relation = Friend.create!(inviter: owner, invitee: accepted_friend, status: :accepted)
+      accepted_relation.update_column(:updated_at, 3.days.ago)
+      received_relation = Friend.create!(inviter:, invitee: owner, status: :invited)
+      received_relation.update_column(:created_at, 2.days.ago)
+      sent_relation = Friend.create!(inviter: owner, invitee: sent_invitee, status: :invited)
+      sent_relation.update_column(:created_at, 4.days.ago)
+      declined_relation = Friend.create!(inviter: owner, invitee: declined_user, status: :declined)
+      declined_relation.update_column(:updated_at, 5.days.ago)
+      blocked_relation = Friend.create!(inviter: owner, invitee: blocked_user, status: :blocked)
+      blocked_relation.update_column(:created_at, 6.days.ago)
+
+      sign_in owner
+
+      get profile_friends_path(owner.profile, tab: "friends")
+      expect(response.body).to include("Friends since")
+
+      get profile_friends_path(owner.profile, tab: "received")
+      expect(response.body).to include("Sent")
+
+      get profile_friends_path(owner.profile, tab: "sent")
+      expect(response.body).to include("Sent")
+
+      get profile_friends_path(owner.profile, tab: "declined")
+      expect(response.body).to include("Declined")
+
+      get profile_friends_path(owner.profile, tab: "blocked")
+      expect(response.body).to include("Blocked since")
+    end
+
+    it "does not expose other users' emails when profile names are blank" do
+      owner = create(:user)
+      inviter = create(:user, email: "secret-inviter@example.test")
+      inviter.profile.update!(name: nil, privacy: :public)
+      Friend.create!(inviter:, invitee: owner, status: :invited)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, tab: "received")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Unknown user")
+      expect(response.body).not_to include("secret-inviter@example.test")
+    end
+
+    it "sorts received invitations by sent timestamp" do
+      owner = create(:user)
+      older_inviter = create(:user)
+      newer_inviter = create(:user)
+      older_inviter.profile.update!(name: "Older Inviter", privacy: :public)
+      newer_inviter.profile.update!(name: "Newer Inviter", privacy: :public)
+
+      older_relation = Friend.create!(inviter: older_inviter, invitee: owner, status: :invited)
+      older_relation.update_column(:created_at, 5.days.ago)
+      newer_relation = Friend.create!(inviter: newer_inviter, invitee: owner, status: :invited)
+      newer_relation.update_column(:created_at, 1.day.ago)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, tab: "received", sort: "sent_desc")
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      expect(listed_names.first(2)).to eq(["Newer Inviter", "Older Inviter"])
+    end
+
+    it "sorts blocked users by blocked timestamp" do
+      owner = create(:user)
+      older_blocked = create(:user)
+      newer_blocked = create(:user)
+      older_blocked.profile.update!(name: "Older Blocked", privacy: :public)
+      newer_blocked.profile.update!(name: "Newer Blocked", privacy: :public)
+
+      older_relation = Friend.create!(inviter: owner, invitee: older_blocked, status: :blocked)
+      older_relation.update_column(:created_at, 4.days.ago)
+      newer_relation = Friend.create!(inviter: owner, invitee: newer_blocked, status: :blocked)
+      newer_relation.update_column(:created_at, 1.day.ago)
+
+      sign_in owner
+      get profile_friends_path(owner.profile, tab: "blocked", sort: "blocked_desc")
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      expect(listed_names.first(2)).to eq(["Newer Blocked", "Older Blocked"])
     end
 
     it "does not render private accepted friends in the visible list" do
@@ -302,6 +422,82 @@ RSpec.describe "Profiles requests", type: :request do
       listed_names = document.css(".profiles-table tbody td.fw-semibold, .profiles-mobile-card .fw-semibold").map(&:text)
       expect(listed_names).to include("Zero Games Friend")
       expect(response.body).to include("Total friends listed: 1")
+    end
+
+    it "shows privacy-aware last active values in the friends list" do
+      owner = create(:user)
+      visible_friend = create(:user)
+      hidden_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      visible_friend.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Visible Activity Friend")
+      hidden_friend.profile.update!(privacy: :public, gaming_activity_privacy: :private, name: "Hidden Activity Friend")
+      visible_friend.update_columns(last_sign_in_at: 3.days.ago, current_sign_in_at: 4.days.ago)
+      hidden_friend.update_columns(last_sign_in_at: 2.days.ago, current_sign_in_at: 3.days.ago)
+      visible_friend.games.create!(name: "Recent Game", last_activity: 30.minutes.ago, private_override: false)
+      hidden_friend.games.create!(name: "Private Game", last_activity: 10.minutes.ago, private_override: false)
+      Friend.create!(inviter: owner, invitee: visible_friend, status: :accepted)
+      Friend.create!(inviter: owner, invitee: hidden_friend, status: :accepted)
+
+      get profile_friends_path(owner.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Visible Activity Friend")
+      expect(response.body).to include("Hidden Activity Friend")
+      expect(response.body).to include("Last active")
+      expect(response.body).to include("30 minutes ago").or include("about 1 hour ago")
+      expect(response.body).to include("Hidden")
+    end
+
+    it "sorts friends by privacy-aware last active descending by default" do
+      owner = create(:user)
+      older_friend = create(:user)
+      newer_friend = create(:user)
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      older_friend.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Older Friend")
+      newer_friend.profile.update!(privacy: :public, gaming_activity_privacy: :public, name: "Newer Friend")
+      older_friend.update_columns(last_sign_in_at: 10.days.ago, current_sign_in_at: 11.days.ago)
+      newer_friend.update_columns(last_sign_in_at: 10.days.ago, current_sign_in_at: 11.days.ago)
+      older_friend.games.create!(name: "Older Game", last_activity: 2.days.ago, private_override: false)
+      newer_friend.games.create!(name: "Newer Game", last_activity: 1.hour.ago, private_override: false)
+      Friend.create!(inviter: owner, invitee: older_friend, status: :accepted)
+      Friend.create!(inviter: owner, invitee: newer_friend, status: :accepted)
+
+      get profile_friends_path(owner.profile, sort: "last_active_desc")
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      expect(listed_names.first(2)).to eq(["Newer Friend", "Older Friend"])
+    end
+
+    it "keeps hidden games rows at the end when sorting by games" do
+      owner = create(:user)
+      visible_low = create(:user)
+      hidden_mid = create(:user)
+      visible_high = create(:user)
+
+      owner.profile.update!(privacy: :public, friends_privacy: :public, name: "Owner Profile")
+      visible_low.profile.update!(privacy: :public, game_library_privacy: :public, name: "Visible Low")
+      hidden_mid.profile.update!(privacy: :public, game_library_privacy: :friends, name: "Hidden Mid")
+      visible_high.profile.update!(privacy: :public, game_library_privacy: :public, name: "Visible High")
+
+      visible_low.games.create!(name: "Game 1")
+      hidden_mid.games.create!(name: "Game 1")
+      hidden_mid.games.create!(name: "Game 2")
+      visible_high.games.create!(name: "Game 1")
+      visible_high.games.create!(name: "Game 2")
+      visible_high.games.create!(name: "Game 3")
+
+      Friend.create!(inviter: owner, invitee: visible_low, status: :accepted)
+      Friend.create!(inviter: owner, invitee: hidden_mid, status: :accepted)
+      Friend.create!(inviter: owner, invitee: visible_high, status: :accepted)
+
+      get profile_friends_path(owner.profile, sort: "games_asc")
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      listed_names = document.css(".profiles-table tbody tr td.fw-semibold").map { |node| node.text.strip }
+      expect(listed_names.first(3)).to eq(["Visible Low", "Visible High", "Hidden Mid"])
     end
 
     it "redirects when friends list privacy blocks access" do

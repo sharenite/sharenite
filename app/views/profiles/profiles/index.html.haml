@@ -63,15 +63,15 @@
         .col-12
           .card.profiles-mobile-card
             .card-body.py-2.px-3
-              .d-flex.justify-content-between.align-items-start.gap-2
-                .min-w-0
+              .profiles-friend-mobile-card
+                .profiles-friend-mobile-card__meta.min-w-0
                   .fw-semibold.text-break= profile.name
                   .small.text-muted
                     - if can_view_games
                       = "Games: #{games_count}"
                     - else
                       %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted Hidden
-                .d-inline-flex.gap-1.flex-shrink-0
+                .profiles-friend-mobile-card__actions
                   - if can_view_games
                     = link_to 'Games', profile_games_path(profile), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }
                   = link_to 'Show', profile, class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }

@@ -32,7 +32,8 @@
           %tr
             %th Name
             %th Games
-            %th Private override
+            - if own_profile
+              %th Private
             %th.text-end Actions
         %tbody
           - if @playlists.any?
@@ -41,7 +42,8 @@
               %tr
                 %td.fw-semibold= playlist.name
                 %td= items_count
-                %td= playlist.private_override? ? "Yes" : "No"
+                - if own_profile
+                  %td= playlist.private_override? ? "Yes" : "No"
                 %td.text-end
                   .d-inline-flex.gap-2
                     = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary", data: { turbo_frame: "_top" }
@@ -50,7 +52,7 @@
                       = button_to "Delete", profile_playlist_path(@profile, playlist), method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "profiles-action-pill profiles-action-pill-danger", form_class: "d-inline", form: { data: { turbo_frame: "_top" } }
           - else
             %tr
-              %td.text-muted{colspan: 4} No playlists match current filters.
+              %td.text-muted{colspan: (own_profile ? 4 : 3)} No playlists match current filters.
 
   .profiles-list-mobile.d-md-none
     .row.g-2
@@ -60,13 +62,18 @@
           .col-12
             .card.profiles-mobile-card
               .card-body.py-2.px-3
-                .d-flex.justify-content-between.align-items-start.gap-2
-                  .min-w-0
+                .profiles-friend-mobile-card
+                  .profiles-friend-mobile-card__meta.min-w-0
                     .fw-semibold.text-break= playlist.name
-                    .small.text-muted
-                      = "Games: #{items_count}"
-                      = " | Private override: #{playlist.private_override? ? 'Yes' : 'No'}"
-                  .d-inline-flex.gap-1.flex-wrap.flex-shrink-0.justify-content-end
+                    .small.text-muted Games: #{items_count}
+                    - if own_profile
+                      .small.text-muted
+                        Private:
+                        - if playlist.private_override?
+                          %span.profiles-info-pill.profiles-info-pill-sm.profiles-info-pill-muted.ms-1 Yes
+                        - else
+                          %span.ms-1 No
+                  .profiles-friend-mobile-card__actions
                     = link_to "Show", profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-primary profiles-action-pill-sm", data: { turbo_frame: "_top" }
                     - if own_profile
                       = link_to "Edit", edit_profile_playlist_path(@profile, playlist), class: "profiles-action-pill profiles-action-pill-sm", data: { turbo_frame: "_top" }

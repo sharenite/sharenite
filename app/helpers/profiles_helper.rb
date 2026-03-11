@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 # Profiles helper
+# rubocop:disable Metrics/ModuleLength
 module ProfilesHelper
   PRIVACY_OPTIONS = [
     ["Public", "public"],
@@ -14,6 +15,44 @@ module ProfilesHelper
     { predicate: :is_installing?, label: "Installing", tone: :installing },
     { predicate: :is_uninstalling?, label: "Uninstalling", tone: :uninstalling }
   ].freeze
+  FRIENDS_SORT_OPTIONS = {
+    "friends" => [
+      ["Last active (Newest first)", "last_active_desc"],
+      ["Last active (Oldest first)", "last_active_asc"],
+      ["Friends since (Newest first)", "friends_since_desc"],
+      ["Friends since (Oldest first)", "friends_since_asc"],
+      ["Name (A-Z)", "name_asc"],
+      ["Name (Z-A)", "name_desc"],
+      ["Games (Highest first)", "games_desc"],
+      ["Games (Lowest first)", "games_asc"]
+    ],
+    "received" => [
+      ["Received (Newest first)", "sent_desc"],
+      ["Received (Oldest first)", "sent_asc"],
+      ["Name (A-Z)", "name_asc"],
+      ["Name (Z-A)", "name_desc"]
+    ],
+    "sent" => [
+      ["Sent (Newest first)", "sent_desc"],
+      ["Sent (Oldest first)", "sent_asc"],
+      ["Name (A-Z)", "name_asc"],
+      ["Name (Z-A)", "name_desc"]
+    ],
+    "declined" => [
+      ["Declined (Newest first)", "declined_desc"],
+      ["Declined (Oldest first)", "declined_asc"],
+      ["Name (A-Z)", "name_asc"],
+      ["Name (Z-A)", "name_desc"],
+      ["Status (A-Z)", "status_asc"],
+      ["Status (Z-A)", "status_desc"]
+    ],
+    "blocked" => [
+      ["Blocked (Newest first)", "blocked_desc"],
+      ["Blocked (Oldest first)", "blocked_asc"],
+      ["Name (A-Z)", "name_asc"],
+      ["Name (Z-A)", "name_desc"]
+    ]
+  }.freeze
 
   def profile_privacy_options
     PRIVACY_OPTIONS
@@ -44,6 +83,48 @@ module ProfilesHelper
     "games-activity-pill games-activity-pill--#{tone}"
   end
 
+  def profile_last_active_at(profile, viewer, can_view_gaming_activity: nil, latest_visible_game_activity_at: nil)
+    can_view_gaming_activity = profile.gaming_activity_visible_to?(viewer) if can_view_gaming_activity.nil?
+    return unless can_view_gaming_activity
+
+    latest_auth_activity_at = profile.user.last_sign_in_at || profile.user.current_sign_in_at
+    latest_visible_game_activity_at ||= profile_latest_visible_game_activity_at(profile, viewer)
+
+    [latest_auth_activity_at, latest_visible_game_activity_at].compact.max
+  end
+
+  def profile_last_active_label(profile, viewer, can_view_gaming_activity: nil, last_active_at: nil)
+    can_view_gaming_activity = profile.gaming_activity_visible_to?(viewer) if can_view_gaming_activity.nil?
+    return "Hidden" unless can_view_gaming_activity
+
+    last_active_at ||= profile_last_active_at(
+      profile,
+      viewer,
+      can_view_gaming_activity:
+    )
+
+    last_active_at ? "#{time_ago_in_words(last_active_at)} ago" : "Never"
+  end
+
+  def friends_sort_options(tab = "friends")
+    FRIENDS_SORT_OPTIONS.fetch(tab.to_s, FRIENDS_SORT_OPTIONS.fetch("friends"))
+  end
+
+  def friends_sort_link(profile, label, current_sort, sort_keys)
+    asc_key = sort_keys.fetch(:asc)
+    desc_key = sort_keys.fetch(:desc)
+    direction = friends_sort_direction(current_sort, asc_key, desc_key)
+    next_sort = direction == "asc" ? desc_key : asc_key
+    indicator = friends_sort_indicator(direction)
+
+    link_to(
+      "#{label}#{indicator}",
+      profile_friends_path(profile, request.query_parameters.merge(sort: next_sort, page: nil)),
+      class: "games-sort-link#{' active' if direction.present?}",
+      data: { turbo_frame: "friends_list", turbo_action: "replace" }
+    )
+  end
+
   def profile_running_game_summary(profile, viewer, can_view_gaming_activity: nil)
     can_view_gaming_activity = profile.gaming_activity_visible_to?(viewer) if can_view_gaming_activity.nil?
     return unless can_view_gaming_activity
@@ -56,6 +137,16 @@ module ProfilesHelper
     return "Now playing: #{first_name}" if total_count == 1
 
     "Now playing: #{first_name} +#{total_count - 1} more"
+  end
+
+  def profile_relation_time_label(timestamp)
+    return "Unknown" unless timestamp
+
+    "#{time_ago_in_words(timestamp)} ago"
+  end
+
+  def public_profile_name(user)
+    user.profile&.name.presence || "Unknown user"
   end
 
   def profile_friendship_state_label(state)
@@ -85,9 +176,27 @@ module ProfilesHelper
 
   private
 
+  def friends_sort_direction(current_sort, asc_key, desc_key)
+    return "asc" if current_sort == asc_key
+    return "desc" if current_sort == desc_key
+
+    nil
+  end
+
+  def friends_sort_indicator(direction)
+    { "asc" => " \u2191", "desc" => " \u2193", nil => "" }.fetch(direction)
+  end
+
+  def profile_latest_visible_game_activity_at(profile, viewer)
+    scope = profile.user.games.where.not(last_activity: nil)
+    scope = scope.where(private_override: false) unless viewer&.id == profile.user_id
+    scope.maximum(:last_activity)
+  end
+
   def profile_running_game_summaries(profile, viewer)
     scope = profile.user.games.where(is_running: true)
     scope = scope.where(private_override: false) unless viewer&.id == profile.user_id
     scope.order(Arel.sql("LOWER(name) ASC")).pluck(:name)
   end
 end
+# rubocop:enable Metrics/ModuleLength
