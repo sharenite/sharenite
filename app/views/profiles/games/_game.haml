@@ -1,12 +1,11 @@
 - owner_view = current_user == @profile.user
-- row_cache_key = ["games-row-v4", view_mode, @can_view_gaming_activity, owner_view, game.cache_key_with_version]
+- row_cache_key = ["games-row-v5", view_mode, @can_view_gaming_activity, owner_view, game.cache_key_with_version]
 
 - cache row_cache_key do
   - tag_names = game.tags.map(&:name).sort
   - category_names = game.categories.map(&:name).sort
   - platform_names = game.platforms.map(&:name).sort
-  - playtime_seconds = game.playtime.to_i
-  - playtime_label = playtime_seconds.positive? ? distance_of_time_in_words(0, playtime_seconds) : "0 min"
+  - playtime_label = format_playtime(game.playtime, zero_label: "0 min")
   - if view_mode == :desktop_responsive
     %tr{id: dom_id(game)}
       %td

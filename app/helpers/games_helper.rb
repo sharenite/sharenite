@@ -43,6 +43,24 @@ module GamesHelper
             data: { turbo_frame: "games", turbo_action: "replace" })
   end
 
+  def format_playtime(playtime_seconds, zero_label: "0 min")
+    seconds = playtime_seconds.to_i
+    return zero_label unless seconds.positive?
+
+    total_minutes = seconds / 60
+    return "1 minute" if total_minutes.zero?
+
+    hours = total_minutes / 60
+    minutes = total_minutes % 60
+
+    return pluralize(total_minutes, "minute") if hours.zero?
+
+    hours_label = pluralize(hours, "hour")
+    return hours_label if minutes.zero?
+
+    "#{hours_label} #{pluralize(minutes, 'minute')}"
+  end
+
   private
 
   def games_sort_direction(current_sort, asc_key, desc_key)

@@ -1,5 +1,4 @@
-- playtime_seconds = game.playtime.to_i
-- playtime_label = playtime_seconds.positive? ? distance_of_time_in_words(0, playtime_seconds) : "N/A"
+- playtime_label = format_playtime(game.playtime, zero_label: "N/A")
 - last_activity_label = game.last_activity ? "#{time_ago_in_words(game.last_activity)} ago" : "Never"
 - added_label = game.added ? "#{time_ago_in_words(game.added)} ago" : "Never"
 - modified_label = game.modified ? "#{time_ago_in_words(game.modified)} ago" : "Never"

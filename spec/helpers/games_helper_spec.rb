@@ -12,4 +12,18 @@ RSpec.describe GamesHelper do
       )
     end
   end
+
+  describe "#format_playtime" do
+    it "returns the provided zero label when there is no playtime" do
+      expect(helper.format_playtime(0, zero_label: "N/A")).to eq("N/A")
+    end
+
+    it "formats short playtime in minutes" do
+      expect(helper.format_playtime(45.minutes.to_i)).to eq("45 minutes")
+    end
+
+    it "keeps long playtime in total hours instead of converting to days" do
+      expect(helper.format_playtime(49.hours.to_i + 30.minutes.to_i)).to eq("49 hours 30 minutes")
+    end
+  end
 end

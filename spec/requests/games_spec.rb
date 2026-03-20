@@ -213,5 +213,20 @@ RSpec.describe "Games" do
       expect(response.body).not_to include("Play count")
       expect(response.body).not_to include(">42<")
     end
+
+    it "shows long playtime in hours instead of days" do
+      user.profile.update!(gaming_activity_privacy: :public)
+      game.update!(playtime: 49.hours.to_i + 30.minutes.to_i)
+
+      get profile_games_path(user.profile)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("49 hours 30 minutes")
+
+      get profile_game_path(user.profile, game)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("49 hours 30 minutes")
+    end
   end
 end
