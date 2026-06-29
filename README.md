@@ -32,6 +32,7 @@ export IGDB_CLIENT_ID='...'
 export IGDB_CLIENT_SECRET='...'
 export RECAPTCHA_SITE_KEY='...'
 export RECAPTCHA_SECRET_KEY='...'
+export UPTIME_MONITOR_TOKEN='...'
 EOF
 direnv allow
 ```
@@ -71,6 +72,7 @@ export IGDB_CLIENT_ID=...
 export IGDB_CLIENT_SECRET=...
 export RECAPTCHA_SITE_KEY=...
 export RECAPTCHA_SECRET_KEY=...
+export UPTIME_MONITOR_TOKEN=...
 export DOCKERHUB_USERNAME=...
 export DOCKERHUB_TOKEN=...
 ```
@@ -159,6 +161,16 @@ bin/kamal-production app logs -f
 bin/kamal-production accessory details kafka
 bin/kamal-production app exec --roles=worker -- bundle exec karafka-web migrate
 ```
+
+### AppSignal uptime monitor
+
+Set `UPTIME_MONITOR_TOKEN` in the production env and configure the uptime check for `https://www.sharenite.link/` to send:
+
+```text
+X-Uptime-Monitor-Token: <UPTIME_MONITOR_TOKEN>
+```
+
+Requests with that header are counted as the dedicated `monitor:uptime` actor on the authenticated global throttle rule. The token only applies to `GET`/`HEAD /` by default; set `UPTIME_MONITOR_PATHS` to a comma-separated list if another monitored path needs the same treatment.
 
 ## Production DB backup cron
 

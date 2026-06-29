@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module RequestThrottling
+  AUTHENTICATED_ACTOR_TYPES = %w[user monitor].freeze
+  UPTIME_MONITOR_HEADER = "X-Uptime-Monitor-Token"
+  DEFAULT_UPTIME_MONITOR_PATHS = ["/"].freeze
+
   Rule = Struct.new(
     :name,
     :limit,
@@ -16,7 +22,7 @@ module RequestThrottling
 
   Actor = Struct.new(:type, :key, :user, :ip_address, keyword_init: true) do
     def authenticated?
-      type == "user"
+      RequestThrottling::AUTHENTICATED_ACTOR_TYPES.include?(type)
     end
   end
 
@@ -64,9 +70,11 @@ module RequestThrottling
   def build_actor(request, env)
     user = env["warden"]&.user(:user)
     ip_address = request.remote_ip.to_s.presence || "unknown"
-    return Actor.new(type: "ip", key: "ip:#{ip_address}", ip_address: ip_address) if user.blank?
+    return Actor.new(type: "user", key: "user:#{user.id}", user:, ip_address:) if user.present?
 
-    Actor.new(type: "user", key: "user:#{user.id}", user: user, ip_address: ip_address)
+    return Actor.new(type: "monitor", key: "monitor:uptime", ip_address:) if uptime_monitor_authenticated?(request)
+
+    Actor.new(type: "ip", key: "ip:#{ip_address}", ip_address:)
   end
 
   def active_permanent_blocked?(ip_address)
@@ -298,6 +306,33 @@ module RequestThrottling
     Integer(ENV.fetch(name, fallback))
   rescue ArgumentError, TypeError
     fallback
+  end
+
+  def uptime_monitor_authenticated?(request)
+    token = ENV["UPTIME_MONITOR_TOKEN"].to_s
+    presented_token = request.headers[UPTIME_MONITOR_HEADER].to_s
+
+    return false unless uptime_monitor_path?(request)
+    return false if token.blank? || presented_token.blank?
+
+    ActiveSupport::SecurityUtils.secure_compare(token_digest(presented_token), token_digest(token))
+  end
+
+  def uptime_monitor_path?(request)
+    return false unless request.get? || request.head?
+
+    uptime_monitor_paths.include?(request.path)
+  end
+
+  def uptime_monitor_paths
+    ENV.fetch("UPTIME_MONITOR_PATHS", DEFAULT_UPTIME_MONITOR_PATHS.join(",")).split(",").filter_map do |path|
+      normalized_path = path.strip
+      normalized_path.presence
+    end
+  end
+
+  def token_digest(token)
+    Digest::SHA256.hexdigest(token)
   end
 
   def auth_path?(path)

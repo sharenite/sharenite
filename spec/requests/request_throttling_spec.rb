@@ -216,6 +216,41 @@ RSpec.describe "Request throttling", type: :request do
     end
   end
 
+  describe "uptime monitor authentication" do
+    before do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("UPTIME_MONITOR_TOKEN").and_return("monitor-secret")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GLOBAL_GUEST_LIMIT", anything).and_return("1")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GLOBAL_GUEST_PERIOD", anything).and_return("60")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GLOBAL_AUTH_LIMIT", anything).and_return("2")
+      allow(ENV).to receive(:fetch).with("REQUEST_THROTTLE_GLOBAL_AUTH_PERIOD", anything).and_return("60")
+      reset_request_throttling_rules!
+    end
+
+    after do
+      reset_request_throttling_rules!
+    end
+
+    it "uses the authenticated global rule for homepage checks with a valid token" do
+      2.times { get "/", headers: { "X-Uptime-Monitor-Token" => "monitor-secret" } }
+      expect(response).to have_http_status(:ok)
+
+      get "/", headers: { "X-Uptime-Monitor-Token" => "monitor-secret" }
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.headers["X-RateLimit-Rule"]).to eq("global_authenticated")
+      expect(RequestThrottleEvent.last.actor_type).to eq("monitor")
+    end
+
+    it "keeps homepage checks without a valid token on the unauthenticated global rule" do
+      get "/", headers: { "X-Uptime-Monitor-Token" => "wrong-secret" }
+      expect(response).to have_http_status(:ok)
+
+      get "/", headers: { "X-Uptime-Monitor-Token" => "wrong-secret" }
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.headers["X-RateLimit-Rule"]).to eq("global_unauthenticated")
+    end
+  end
+
   describe "admin visibility" do
     let(:admin_user) { create(:admin_user) }
 

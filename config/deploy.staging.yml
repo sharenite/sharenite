@@ -57,6 +57,7 @@ env:
     - IGDB_CLIENT_SECRET
     - RECAPTCHA_SITE_KEY
     - RECAPTCHA_SECRET_KEY
+    - UPTIME_MONITOR_TOKEN
 
 volumes:
   - "sharenite_storage:/rails/storage"

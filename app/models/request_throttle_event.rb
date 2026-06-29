@@ -2,7 +2,7 @@
 
 class RequestThrottleEvent < ApplicationRecord
   EVENT_TYPES = %w[throttle block].freeze
-  ACTOR_TYPES = %w[ip user].freeze
+  ACTOR_TYPES = %w[ip monitor user].freeze
   RANSACKABLE_ATTRIBUTES = %w[
     actor_key
     actor_type
@@ -57,6 +57,7 @@ class RequestThrottleEvent < ApplicationRecord
 
   def subject_label
     return user&.email.presence || actor_key if actor_type == "user"
+    return "Uptime monitor" if actor_type == "monitor"
 
     ip_address
   end
