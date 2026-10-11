@@ -3,7 +3,7 @@
 require "uri"
 
 # Profile model
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable-next Metrics/ClassLength
 class Profile < ApplicationRecord
   extend FriendlyId
   friendly_id :vanity_url, use: :slugged
@@ -13,16 +13,16 @@ class Profile < ApplicationRecord
   validates :user_id, uniqueness: true
   belongs_to :user
 
-  enum privacy: { private: "private", friends: "friends", members: "members", public: "public" }, _prefix: :privacy
+  enum :privacy, { private: "private", friends: "friends", members: "members", public: "public" }, prefix: :privacy
   attribute :privacy, :string, default: "friends"
   attribute :game_library_privacy, :string, default: "friends"
-  enum game_library_privacy: { private: "private", friends: "friends", members: "members", public: "public" }, _prefix: :game_library_privacy
+  enum :game_library_privacy, { private: "private", friends: "friends", members: "members", public: "public" }, prefix: :game_library_privacy
   attribute :gaming_activity_privacy, :string, default: "friends"
-  enum gaming_activity_privacy: { private: "private", friends: "friends", members: "members", public: "public" }, _prefix: :gaming_activity_privacy
+  enum :gaming_activity_privacy, { private: "private", friends: "friends", members: "members", public: "public" }, prefix: :gaming_activity_privacy
   attribute :playlists_privacy, :string, default: "friends"
-  enum playlists_privacy: { private: "private", friends: "friends", members: "members", public: "public" }, _prefix: :playlists_privacy
+  enum :playlists_privacy, { private: "private", friends: "friends", members: "members", public: "public" }, prefix: :playlists_privacy
   attribute :friends_privacy, :string, default: "friends"
-  enum friends_privacy: { private: "private", friends: "friends", members: "members", public: "public" }, _prefix: :friends_privacy
+  enum :friends_privacy, { private: "private", friends: "friends", members: "members", public: "public" }, prefix: :friends_privacy
 
   def self.ransackable_attributes(_auth_object = nil)
     ["created_at", "friends_privacy", "game_library_privacy", "gaming_activity_privacy", "id", "name", "playlists_privacy", "privacy", "slug", "updated_at", "user_id", "vanity_url"]
@@ -147,4 +147,3 @@ class Profile < ApplicationRecord
     nil
   end
 end
-# rubocop:enable Metrics/ClassLength

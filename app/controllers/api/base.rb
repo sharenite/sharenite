@@ -6,6 +6,7 @@ module API
   # Base API class
   class Base < Grape::API
     use Appsignal::Rack::GrapeMiddleware
+    helpers API::Authentication
     before { authenticate_user! }
     mount API::V1::Base
   end

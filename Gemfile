@@ -9,7 +9,7 @@ end
 ruby "3.3.10"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 7.2.4"
+gem "rails", "~> 8.1.4"
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
@@ -54,10 +54,10 @@ gem "bootsnap", require: false
 gem 'activeadmin'
 gem 'appsignal'
 gem 'bootstrap5-kaminari-views'
+gem "csv"
 gem 'friendly_id'
 gem 'grape'
 gem 'grape-active_model_serializers', github: 'iONi-io/grape-active_model_serializers', ref: '994ec1a77105197476c4d9fcc71baed0cedc9e1a'
-gem 'grape_devise', github: 'XenorPLxx/grape_devise', branch: 'master'
 gem 'haml'
 gem 'haml-rails'
 gem 'kaminari'
@@ -67,7 +67,6 @@ gem 'rake-progressbar'
 gem 'sass-rails'
 gem 'search_cop'
 gem 'securerandom'
-gem "csv"
 
 # Use Sass to process CSS
 # gem "sassc-rails"
@@ -79,13 +78,13 @@ group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   
   gem "debug"
-  gem 'reline', '0.5.10'
   gem 'factory_bot_rails'
   gem 'faker'
   gem 'foreman'
   gem 'letter_opener'
   gem 'letter_opener_web'
   gem 'prettier_print'
+  gem 'reline', '0.5.10'
   gem 'rspec-rails'
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
@@ -115,7 +114,7 @@ group :test do
   gem 'simplecov', require: false
 end
 
-gem 'devise'
+gem 'devise', '~> 5.0'
 gem "kamal", require: false
 gem "karafka"
 gem "karafka-web"

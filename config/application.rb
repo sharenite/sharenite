@@ -11,7 +11,8 @@ Bundler.require(*Rails.groups)
 module Sharenite
   # Application config
   class Application < Rails::Application
-    # Initialize configuration defaults for originally generated Rails version.
+    # Keep existing cookie/serialization behavior during the Rails 8 upgrade.
+    # Adopt newer framework defaults separately, after reviewing compatibility.
     config.load_defaults 7.0
 
     # Configuration for the application, engines, and railties goes here.

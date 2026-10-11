@@ -17,7 +17,7 @@ AllCops:
     - 'bin/**/*'
     - 'node_modules/**/*'
   TargetRubyVersion: 3.3
-  TargetRailsVersion: 7.2
+  TargetRailsVersion: 8.1
 
 # Metrics Cops
 

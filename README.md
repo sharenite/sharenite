@@ -18,7 +18,11 @@ bin/dev
 ### Dependency compatibility
 
 Use Ruby 3.3.10 and Node 20.11.0, as pinned in `.ruby-version` and `.node-version`.
-Rails stays on 7.2 because `grape_devise` requires Rails below 8 and Devise below 5.
+Rails 8.1 uses Devise 5 for browser and admin authentication. The mounted Grape API
+shares the existing user session through `API::Authentication`, so Playnite keeps
+using the same login URL and cookies without the `grape_devise` dependency.
+Framework defaults remain at 7.0 while newer defaults are reviewed separately;
+Devise also retains its previous signing-key precedence to preserve account tokens.
 Sass stays on 1.99 and lint-staged on 15 to support the pinned Node version.
 
 ## Local secrets (direnv)

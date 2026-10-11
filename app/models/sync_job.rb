@@ -21,7 +21,7 @@ class SyncJob < ApplicationRecord
     "waiting_time"
   ].freeze
 
-  enum status: { queued: "queued", running: "running", finished: "finished", failed: "failed", dead: "dead" }, _prefix: :status
+  enum :status, { queued: "queued", running: "running", finished: "finished", failed: "failed", dead: "dead" }, prefix: :status
 
   scope :active, -> { where(status: %i[queued running failed]) }
   scope :recent_failures, -> { where(status: %i[failed dead]).order(created_at: :desc) }
