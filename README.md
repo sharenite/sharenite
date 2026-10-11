@@ -211,43 +211,46 @@ Requests with that header are counted as the dedicated `monitor:uptime` actor on
 
 ## Infrastructure maintenance (2026-10-11)
 
-Staging and local Compose pin these releases:
+Production, staging, and local Compose pin these releases:
 
-| Service | Staging | Local Compose | Production baseline (unchanged) |
+| Service | Staging | Local Compose | Production |
 | --- | --- | --- | --- |
-| PostgreSQL | `15.19-bookworm` | `15.19-alpine` | 15.17, Debian 13 |
-| Redis | `7.4.11-alpine` | `7.4.11-alpine` | 7.4.8 |
-| Kafka | `4.3.1` | `4.3.1` | 3.7.0 |
+| PostgreSQL | `15.19-bookworm` | `15.19-alpine` | `15.19-trixie` |
+| Redis | `7.4.11-alpine` | `7.4.11-alpine` | `7.4.11-alpine` |
+| Kafka | `4.3.1` | `4.3.1` | `4.3.1` |
 | Kafka UI | Not deployed | `ghcr.io/kafbat/kafka-ui:v1.5.0` | Not deployed |
 
 PostgreSQL 15 is supported until November 2027. Staging retains Debian 12 to avoid
-combining the patch with a libc/collation change. Production's future patch target
-is `postgres:15.19-trixie`. See the
+combining the patch with a libc/collation change. Production retains Debian 13
+with `postgres:15.19-trixie`. See the
 [PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/) and
 [Redis 7.4 release notes](https://raw.githubusercontent.com/redis/redis/7.4/00-RELEASENOTES).
-Production accessory configuration is deliberately unchanged until its own data
-migration and maintenance window.
-
-Staging Kafka uses `/home/xenor/sharenite-kafka/data` mounted at its existing
-`/tmp/kraft-combined-logs` path. It is reachable only on the Docker `kamal` network;
-there is no published host port. Compose mounts a named volume at the same path
-and binds development service ports to `127.0.0.1`.
+Kafka uses `/home/xenor/sharenite-kafka/data` on staging and
+`/home/ubuntu/sharenite-kafka/data` on production, mounted at the existing
+`/tmp/kraft-combined-logs` path. Both brokers are reachable only on their Docker
+`kamal` networks, with no published host port. Compose mounts a named volume at
+the same path and binds development service ports to `127.0.0.1`.
 
 ### Preserve existing Kafka data before recreating its container
 
 Kafka's "logs" contain queued messages, consumer offsets, and cluster metadata.
 The old 3.7.0 configuration wrote these to the container's writable layer; its
 anonymous volume at `/var/lib/kafka/data` did not protect the active directory.
-Production still has this configuration. Never reboot/recreate an old broker
+Both deployed environments have been migrated. Never reboot/recreate an old broker
 until its stopped data directory has been backed up and restored to the new mount.
 
 The 3.7.0 image also had [KAFKA-16473](https://issues.apache.org/jira/browse/KAFKA-16473):
-it stored `Some(...)` around the configured cluster ID. Staging preserves that
-actual ID in its configuration; do not rewrite `meta.properties` to remove it.
+it stored `Some(...)` around the configured cluster ID. The deployments preserve that
+actual ID in their configuration; do not rewrite `meta.properties` to remove it.
 For an existing local broker, read `cluster.id` from
 `docker exec sharenite-kafka cat /tmp/kraft-combined-logs/meta.properties` and set
 `KAFKA_CLUSTER_ID` to that exact value in your local `.env` before migrating.
 New local clusters can use the Compose default.
+
+When rehearsing or restoring with the old 3.7.0 image, pass its original unwrapped
+`CLUSTER_ID`: that image adds `Some(...)` itself. The fixed 4.3.1 image must receive
+the exact stored ID, including `Some(...)`. Passing the wrapped ID to 3.7.0 causes
+it to expect a nested wrapper and reject the existing data.
 
 For an existing local Compose broker, stop `bin/dev` and any other Kafka writers,
 then migrate the stopped broker's entire directory (including hidden files and
@@ -329,9 +332,37 @@ static KRaft quorum setting, were retained. Direct metadata downgrade is no
 longer supported; restoring an earlier snapshot requires accounting for all
 subsequent writes.
 
-Production has daily compressed SQL backups, but a production restore has not yet
-been rehearsed. Its Kafka persistence and published plaintext port 9092 still need
-the same migration in a separately authorized production rollout.
+### Production accessory rollout
+
+The October 11 production rollout verified a fresh online PostgreSQL physical
+backup with streamed WAL and its backup manifest, then restored it into an
+isolated PostgreSQL 15.19 container. The restored database included approximately
+4.24 million games and 3.68 million sync jobs; collation versions matched.
+
+During maintenance, the web and worker containers were stopped before final
+PostgreSQL, Redis, and Kafka snapshots were taken. Kafka's copied data was
+rehearsed on 3.7.0 and then 4.3.1 in an isolated network. Topic identities,
+partition offsets, and consumer commits matched, and a producer/consumer round
+trip passed. Kamal then rebooted each accessory with the pinned configuration.
+All 39 application table counts matched the stopped database snapshot, Redis
+retained its sync payload keys, and Kafka retained its identity and offsets on
+the persistent mount. Port 9092 is no longer published.
+
+The existing application release `251fe11` was restarted. Public HTTPS, login
+pages, CSS/JavaScript assets, API authentication rejection, protected admin pages,
+and the production health script passed. Real production syncs resumed and the
+Kafka backlog reached zero before metadata was finalized to 4.3-IV0. Other Kafka
+feature levels, including the static quorum setting, were retained. Direct
+metadata downgrade is no longer supported. After finalization, 27 new production
+sync jobs finished with no failures, all 50 sync partitions were assigned, and
+consumer lag was zero. The application and accessories had no container restarts.
+
+Recovery archives, SHA-256 checksums, original image/container configuration, and
+verification records are retained in
+`/home/ubuntu/sharenite-infra-backups/20261011T131717Z/`. The directory contains both
+the online PostgreSQL base backup and the final stopped PostgreSQL data archive,
+plus Redis and Kafka snapshots. Account for subsequent writes before restoring
+any snapshot. The existing daily compressed SQL backup schedule remains in place.
 
 ## Production DB backup cron
 
