@@ -307,10 +307,27 @@ The October 11 staging rollout verified a complete PostgreSQL restore, unchanged
 application table row counts and Redis keyspace, identical Kafka topic IDs,
 partition offsets and consumer commits, and a Karafka/WaterDrop producer plus
 librdkafka consumer round trip. Recreating the upgraded Kafka container also
-preserved its data. Kafka metadata remains at 3.7-IV4 for the initial observation
-period; no metadata finalization was performed. Staging snapshots and their SHA-256
-checksums are retained in
+preserved its data. Kafka metadata was held at 3.7-IV4 during observation, then
+finalized to 4.3-IV0 on October 11 after the authenticated sync test below passed.
+Staging snapshots and their SHA-256 checksums are retained in
 `/home/xenor/sharenite-infra-backups/20261011T112757Z/`.
+
+Staging TLS/ingress verification was completed on October 11: the Cloudflare
+Origin CA certificate is installed, origin HTTPS health and login checks pass,
+and browser access through Cloudflare was confirmed.
+
+The authenticated partial-sync smoke test on October 11 completed successfully:
+job `86699e82-225c-4968-bd63-168b200b3410` finished, the test game was persisted,
+the Redis payload was removed, and the Kafka consumer caught up with no backlog.
+No new failed/dead sync jobs were recorded after the TLS deployment.
+
+Kafka metadata finalization used `kafka-features.sh --bootstrap-server
+localhost:9092 upgrade --feature metadata.version=30` inside the staging Kafka
+container after a successful dry run. Kafka reports finalized metadata 4.3-IV0,
+and the metadata quorum remains healthy. Other feature levels, including the
+static KRaft quorum setting, were retained. Direct metadata downgrade is no
+longer supported; restoring an earlier snapshot requires accounting for all
+subsequent writes.
 
 Production has daily compressed SQL backups, but a production restore has not yet
 been rehearsed. Its Kafka persistence and published plaintext port 9092 still need
