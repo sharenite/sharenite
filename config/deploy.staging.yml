@@ -91,7 +91,8 @@ accessories:
       clear:
         KAFKA_NODE_ID: 1
         KAFKA_PROCESS_ROLES: broker,controller
-        CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+        # Preserve the actual ID written by apache/kafka:3.7.0 (KAFKA-16473).
+        CLUSTER_ID: "Some(MkU3OEVBNTcwNTJENDM2Qk)"
         KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
         KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://sharenite-kafka:9092
         KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT

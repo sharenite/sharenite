@@ -225,6 +225,14 @@ anonymous volume at `/var/lib/kafka/data` did not protect the active directory.
 Production still has this configuration. Never reboot/recreate an old broker
 until its stopped data directory has been backed up and restored to the new mount.
 
+The 3.7.0 image also had [KAFKA-16473](https://issues.apache.org/jira/browse/KAFKA-16473):
+it stored `Some(...)` around the configured cluster ID. Staging preserves that
+actual ID in its configuration; do not rewrite `meta.properties` to remove it.
+For an existing local broker, read `cluster.id` from
+`docker exec sharenite-kafka cat /tmp/kraft-combined-logs/meta.properties` and set
+`KAFKA_CLUSTER_ID` to that exact value in your local `.env` before migrating.
+New local clusters can use the Compose default.
+
 For an existing local Compose broker, stop `bin/dev` and any other Kafka writers,
 then migrate the stopped broker's entire directory (including hidden files and
 `meta.properties`):
