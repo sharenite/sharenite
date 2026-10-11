@@ -87,7 +87,6 @@ accessories:
     image: apache/kafka:3.7.0
     roles:
       - worker
-    port: "9092:9092"
     env:
       clear:
         KAFKA_NODE_ID: 1
