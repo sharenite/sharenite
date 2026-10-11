@@ -3,7 +3,7 @@ inherit_from:
 
 # Plugins
 
-require:
+plugins:
   - rubocop-performance
   - rubocop-rails
   - rubocop-rspec
@@ -16,8 +16,8 @@ AllCops:
     - 'db/**/*'
     - 'bin/**/*'
     - 'node_modules/**/*'
-  TargetRubyVersion: 3.1
-  TargetRailsVersion: 7.0
+  TargetRubyVersion: 3.3
+  TargetRailsVersion: 7.2
 
 # Metrics Cops
 

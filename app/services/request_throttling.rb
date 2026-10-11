@@ -629,17 +629,17 @@ module RequestThrottling
                  rule: decision.rule.name
                }.to_json
              else
-               [html_error_page(status)]
+               html_error_page(status)
              end
 
       headers = {
-        "Retry-After" => decision.retry_after.to_s,
-        "X-RateLimit-Limit" => decision.limit.to_s,
-        "X-RateLimit-Rule" => decision.rule.name
+        "retry-after" => decision.retry_after.to_s,
+        "x-ratelimit-limit" => decision.limit.to_s,
+        "x-ratelimit-rule" => decision.rule.name
       }
-      headers["Content-Type"] = request.path.start_with?("/api/") ? "application/json" : "text/html; charset=utf-8"
+      headers["content-type"] = request.path.start_with?("/api/") ? "application/json" : "text/html; charset=utf-8"
 
-      [status, headers, body]
+      [status, headers, [body]]
     end
 
     def html_error_page(status)

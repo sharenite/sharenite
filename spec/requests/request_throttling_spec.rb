@@ -92,6 +92,9 @@ RSpec.describe "Request throttling", type: :request do
       get "/api/v1/games"
 
       expect(response).to have_http_status(:too_many_requests)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body).to include("error" => "Rate limit exceeded", "limit" => 2, "retry_after" => 60)
+      expect(response.headers["Retry-After"]).to eq("60")
       expect(RequestThrottleEvent.throttle_events.count).to eq(1)
       expect(RequestThrottleEvent.current.count).to eq(1)
 

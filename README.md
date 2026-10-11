@@ -15,6 +15,12 @@ bin/dev
 `docker compose up` starts only infra (`db`, `redis`, `kafka`, `kafka-ui`).
 `bin/dev` starts Rails + JS/CSS watchers.
 
+### Dependency compatibility
+
+Use Ruby 3.3.10 and Node 20.11.0, as pinned in `.ruby-version` and `.node-version`.
+Rails stays on 7.2 because `grape_devise` requires Rails below 8 and Devise below 5.
+Sass stays on 1.99 and lint-staged on 15 to support the pinned Node version.
+
 ## Local secrets (direnv)
 
 Use `direnv` so deploy/install secrets are loaded automatically and never committed.
