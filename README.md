@@ -77,7 +77,7 @@ On macOS, `karafka-rdkafka` may fail to compile due to local OpenSSL linker issu
 ## Kamal staging deploy
 
 Staging config is in `config/deploy.staging.yml` and targets:
-- Host: `sharenite.testing.xenor.ovh`
+- Host: `staging.sharenite.link` (Cloudflare Access protected)
 - Server: `192.168.2.73`
 
 Required environment variables before running Kamal:
@@ -101,6 +101,21 @@ export DOCKERHUB_TOKEN=...
 `POSTGRES_PASSWORD` is derived from `SHARENITE_DATABASE_PASSWORD` via `.kamal/secrets.staging`.
 `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are optional, but recommended for authenticated Docker Hub pulls.
 
+Staging uses a Cloudflare Origin CA certificate for the HTTPS connection from
+Cloudflare to Kamal. Automatic Let's Encrypt issuance failed behind the proxied
+hostname and was paused after repeated validation failures. Keep Cloudflare's
+proxy and Access protection enabled; Origin CA certificates are trusted by
+Cloudflare, not directly by browsers.
+
+Store the PEM certificate at `.kamal/certificates/staging/certificate.pem` and its
+matching key at `.kamal/certificates/staging/private-key.pem`, or set the two
+`STAGING_TLS_*_PATH` variables in `.envrc.staging`. The directory is ignored by git
+and excluded from Docker builds. These secrets are used only by the proxy.
+Create certificates for `staging.sharenite.link` in Cloudflare's **SSL/TLS → Origin
+Server** screen; choose **Use my private key and CSR** when using a locally
+generated request. Record the expiry and replace the certificate before it expires.
+See [Cloudflare's Origin CA instructions](https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/).
+
 Deploy flow:
 
 ```bash
@@ -120,7 +135,8 @@ bin/deploy-staging-safe
 This wrapper runs:
 1. `kamal deploy`
 2. `rails db:migrate` on staging web role
-3. post-deploy checks (`db:abort_if_pending_migrations` and recent 500/schema error scan)
+3. post-deploy checks (pending migrations, origin HTTPS/certificate verification,
+   and recent 500/schema error scan)
 
 You can also run checks only:
 

@@ -14,7 +14,11 @@ servers:
       - 192.168.2.73
 
 proxy:
-  ssl: true
+  # Cloudflare proxies this hostname; use its Origin CA certificate instead of
+  # Kamal's automatic Let's Encrypt challenge, which cannot reach this origin.
+  ssl:
+    certificate_pem: STAGING_TLS_CERTIFICATE
+    private_key_pem: STAGING_TLS_PRIVATE_KEY
   host: staging.sharenite.link
   app_port: 3000
 

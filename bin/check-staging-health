@@ -9,6 +9,9 @@ SINCE="${1:-10m}"
 echo "==> Checking pending migrations on staging"
 bin/kamal-staging app exec --roles web "bundle exec rails db:abort_if_pending_migrations"
 
+echo "==> Checking staging origin HTTPS and certificate"
+bin/kamal-staging app exec --roles web --reuse "bundle exec rails runner scripts/check_staging_https.rb"
+
 echo "==> Checking recent staging error logs (${SINCE})"
 logs_output="$(bin/kamal-staging app logs --roles web --since "${SINCE}" \
   --grep-options=-E \

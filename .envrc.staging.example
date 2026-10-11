@@ -11,6 +11,10 @@ export RECAPTCHA_SITE_KEY=''
 export RECAPTCHA_SECRET_KEY=''
 export UPTIME_MONITOR_TOKEN=''
 
+# Cloudflare Origin CA certificate and its matching private key (PEM files).
+export STAGING_TLS_CERTIFICATE_PATH='.kamal/certificates/staging/certificate.pem'
+export STAGING_TLS_PRIVATE_KEY_PATH='.kamal/certificates/staging/private-key.pem'
+
 # Docker Hub auth (recommended to avoid pull-rate limits)
 export DOCKERHUB_USERNAME=''
 export DOCKERHUB_TOKEN=''

@@ -14,6 +14,8 @@ fi
   # shellcheck disable=SC1090
   source "${STAGING_ENV_FILE}"
   set +a
+  export STAGING_TLS_CERTIFICATE_PATH="${STAGING_TLS_CERTIFICATE_PATH:-.kamal/certificates/staging/certificate.pem}"
+  export STAGING_TLS_PRIVATE_KEY_PATH="${STAGING_TLS_PRIVATE_KEY_PATH:-.kamal/certificates/staging/private-key.pem}"
   cd "${ROOT_DIR}"
 
   args=("$@")

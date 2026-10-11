@@ -37,6 +37,7 @@
 .docker
 
 # Keys
+/.kamal/certificates/
 /config/credentials/production.key
 /config/credentials/staging.key
 /config/credentials/development.key
