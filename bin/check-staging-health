@@ -11,7 +11,8 @@ bin/kamal-staging app exec --roles web "bundle exec rails db:abort_if_pending_mi
 
 echo "==> Checking recent staging error logs (${SINCE})"
 logs_output="$(bin/kamal-staging app logs --roles web --since "${SINCE}" \
-  --grep "(Completed 500|NoMethodError|StatementInvalid|PG::UndefinedColumn|PG::UndefinedTable|PG::UndefinedFunction)" || true)"
+  --grep-options=-E \
+  --grep "(Completed 500|NoMethodError|StatementInvalid|PG::UndefinedColumn|PG::UndefinedTable|PG::UndefinedFunction)")"
 echo "${logs_output}"
 
 if [[ "${logs_output}" == *"Nothing found"* ]]; then

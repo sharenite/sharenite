@@ -12,6 +12,9 @@ bin/rails db:prepare
 bin/dev
 ```
 
+For an existing Kafka container created before the persistent-volume change, follow
+the Kafka migration below **before** running `docker compose up`.
+
 `docker compose up` starts only infra (`db`, `redis`, `kafka`, `kafka-ui`).
 `bin/dev` starts Rails + JS/CSS watchers.
 
@@ -190,59 +193,94 @@ X-Uptime-Monitor-Token: <UPTIME_MONITOR_TOKEN>
 
 Requests with that header are counted as the dedicated `monitor:uptime` actor on the authenticated global throttle rule. The token only applies to `GET`/`HEAD /` by default; set `UPTIME_MONITOR_PATHS` to a comma-separated list if another monitored path needs the same treatment.
 
-## Infrastructure review (2026-10-11)
+## Infrastructure maintenance (2026-10-11)
 
-Read-only checks of the running staging and production containers found:
+Staging and local Compose pin these releases:
 
-| Service | Staging | Production | Recommended next change |
+| Service | Staging | Local Compose | Production baseline (unchanged) |
 | --- | --- | --- | --- |
-| PostgreSQL | 15.12, Debian 12 | 15.17, Debian 13 | Patch to 15.19, retaining the existing Debian family and data directory. |
-| Redis | 7.4.8 | 7.4.8 | Patch to 7.4.11; this includes security fixes. |
-| Kafka | 3.7.0, KRaft metadata 3.7-IV4 | 3.7.0, KRaft metadata 3.7-IV4 | Preserve the broker data first, then rehearse upgrading to 4.3.1 in staging. |
-| Local Kafka UI | `provectuslabs/kafka-ui:latest` in Compose | Not deployed by Kamal | Replace with the maintained `ghcr.io/kafbat/kafka-ui:v1.5.0` image in a separate infrastructure change. |
+| PostgreSQL | `15.19-bookworm` | `15.19-alpine` | 15.17, Debian 13 |
+| Redis | `7.4.11-alpine` | `7.4.11-alpine` | 7.4.8 |
+| Kafka | `4.3.1` | `4.3.1` | 3.7.0 |
+| Kafka UI | Not deployed | `ghcr.io/kafbat/kafka-ui:v1.5.0` | Not deployed |
 
-PostgreSQL 15 remains supported until November 2027, so a major upgrade can be
-planned separately. The verified patch tags are `postgres:15.19-bookworm` for
-staging and `postgres:15.19-trixie` for production. Keeping the distribution fixed
-avoids combining a database patch with a libc/collation change. See the
-[PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/).
-Redis's patch target is `redis:7.4.11-alpine`; see the
-[7.4 release notes](https://raw.githubusercontent.com/redis/redis/7.4/00-RELEASENOTES).
+PostgreSQL 15 is supported until November 2027. Staging retains Debian 12 to avoid
+combining the patch with a libc/collation change. Production's future patch target
+is `postgres:15.19-trixie`. See the
+[PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/) and
+[Redis 7.4 release notes](https://raw.githubusercontent.com/redis/redis/7.4/00-RELEASENOTES).
+Production accessory configuration is deliberately unchanged until its own data
+migration and maintenance window.
 
-**Kafka persistence must be fixed before replacing its container.** Both running
-brokers write to `/tmp/kraft-combined-logs`, which is outside every mounted volume.
-The anonymous volume at `/var/lib/kafka/data` does not protect that configured
-directory. Recreating the container can therefore lose topic data, offsets, and
-cluster metadata. Both brokers use a single node and replication factor 1.
-Both also publish plaintext port 9092 on all host interfaces; firewall reachability
-was not assessed. Review whether the host port is needed by any external client.
+Staging Kafka uses `/home/xenor/sharenite-kafka/data` mounted at its existing
+`/tmp/kraft-combined-logs` path. It is reachable only on the Docker `kamal` network;
+there is no published host port. Compose mounts a named volume at the same path
+and binds development service ports to `127.0.0.1`.
 
-Suggested maintenance sequence, staging first:
+### Preserve existing Kafka data before recreating its container
 
-1. Verify a database restore in an isolated environment, and record current image
-   digests and volume paths. Production has daily compressed SQL dumps, including
-   one from October 11 (about 5.16 GB); a restore was not exercised in this review.
-2. Patch PostgreSQL and Redis independently, preserving their existing bind mounts.
-   Pause writers and snapshot Redis after the final writes before replacing it.
-   Redis has successful RDB snapshots but AOF is disabled, and it stores sync job
-   payloads as well as cache/throttle state. It must not be treated as disposable.
-3. Pause sync producers and consumers, stop Kafka cleanly, and back up the stopped
-   container's full log directory, including `meta.properties` and metadata logs.
-   Copy it with ownership preserved to a dedicated persistent host directory and
-   mount it at the existing log path. Restart **the same 3.7.0 image** first, with
-   the same cluster/node IDs; verify topics, offsets, and consumer lag.
-4. Rehearse the 4.3.1 broker upgrade using a separate copy of the preserved data.
-   Verify the Karafka producer/consumer flow before finalizing the metadata version.
+Kafka's "logs" contain queued messages, consumer offsets, and cluster metadata.
+The old 3.7.0 configuration wrote these to the container's writable layer; its
+anonymous volume at `/var/lib/kafka/data` did not protect the active directory.
+Production still has this configuration. Never reboot/recreate an old broker
+until its stopped data directory has been backed up and restored to the new mount.
+
+For an existing local Compose broker, stop `bin/dev` and any other Kafka writers,
+then migrate the stopped broker's entire directory (including hidden files and
+`meta.properties`):
+
+```bash
+docker compose stop -t 120 kafka
+mkdir -p tmp/infra-backups
+# Choose a fresh filename; never overwrite your only backup.
+docker cp sharenite-kafka:/tmp/kraft-combined-logs/. - > tmp/infra-backups/kafka-before-persistence.tar
+kafka_volume="$(docker compose config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["volumes"]["sharenite_kafka_data"]["name"])')"
+docker volume create "$kafka_volume"
+docker run --rm -i --user 0 --entrypoint /bin/sh \
+  --mount "type=volume,source=$kafka_volume,target=/restore" apache/kafka:4.3.1 \
+  -ec 'test -z "$(ls -A /restore)"; tar xpf - -C /restore; test -f /restore/meta.properties; chown -R 1000:1000 /restore' \
+  < tmp/infra-backups/kafka-before-persistence.tar
+docker compose up -d
+```
+
+Keep the backup until topics, offsets, and application sync have been verified.
+Do not use `docker compose down -v`; it removes persistent data volumes.
+
+### Staging accessory rollout
+
+Application deploys do not refresh existing accessories. Use a maintenance window
+for this single-broker setup, then deploy with `bin/deploy-staging-safe`:
+
+1. Pull the pinned images first. Record current image IDs and mounts in a private,
+   timestamped `/home/xenor/sharenite-infra-backups/` directory. Dump PostgreSQL in
+   custom format and verify a full restore in an isolated PostgreSQL 15.19 container.
+2. Stop staging web and worker with `bin/kamal-staging app stop`. Take a final
+   database dump, force a Redis `SAVE`, and copy its RDB snapshot. Redis holds sync
+   payloads as well as cache state, so preserve its existing `/data` bind mount.
+3. Stop Kafka cleanly (allow 120 seconds), archive the entire stopped
+   `/tmp/kraft-combined-logs` directory, and verify its checksum. Restore one copy
+   with UID/GID 1000 to the new host directory and another to an isolated rehearsal
+   directory. Keep the archive untouched for rollback.
+4. In an isolated Docker network, start the copied data on 3.7.0, verify topics and
+   offsets, then restart that copy on 4.3.1. Verify producer/consumer behavior.
    The [Kafka upgrade guide](https://kafka.apache.org/43/getting-started/upgrade/)
-   supports this KRaft upgrade path, but metadata changes can prevent downgrade.
-   Retain the pre-upgrade data snapshot for rollback and plan single-broker downtime.
-5. Replace the local UI with the pinned
-   [Kafbat UI release](https://github.com/kafbat/kafka-ui/releases/tag/v1.5.0), and
-   bind development service ports to localhost where remote access is unnecessary.
+   supports this KRaft upgrade path. Retain metadata version 3.7-IV4 initially;
+   finalizing newer metadata is a separate operation that can prevent downgrade.
+5. Once the rehearsal passes, run `bin/kamal-staging accessory reboot db`, `redis`,
+   and `kafka` individually. Verify the new database/Redis versions and unchanged
+   application row counts, Kafka topic IDs, partition offsets, and consumer commits.
+6. Start the app with `bin/kamal-staging app start`, run a Karafka client round trip
+   on a temporary topic, then run `bin/deploy-staging-safe` and HTTP/asset checks.
 
-This review did not change accessory images, restart services, or modify their data.
-Application deploys do not refresh already-running PostgreSQL, Redis, or Kafka
-accessories; they need their own maintenance rollout.
+If a Kafka binary upgrade fails before accepting new writes, stop it and restore
+3.7.0 using the untouched pre-upgrade archive in a fresh directory. Do not restore
+an old snapshot after accepting writes without accounting for those newer messages.
+PostgreSQL and Redis retain their original bind mounts. Backups and image IDs must
+be kept until the staging rollout is accepted.
+
+Production has daily compressed SQL backups, but a production restore has not yet
+been rehearsed. Its Kafka persistence and published plaintext port 9092 still need
+the same migration in a separately authorized production rollout.
 
 ## Production DB backup cron
 

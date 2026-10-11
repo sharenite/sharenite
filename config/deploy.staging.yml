@@ -64,7 +64,7 @@ volumes:
 
 accessories:
   db:
-    image: postgres:15
+    image: postgres:15.19-bookworm
     roles:
       - web
       - worker
@@ -77,17 +77,16 @@ accessories:
     directories:
       - data:/var/lib/postgresql/data
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.11-alpine
     roles:
       - web
       - worker
     directories:
       - data:/data
   kafka:
-    image: apache/kafka:3.7.0
+    image: apache/kafka:4.3.1
     roles:
       - worker
-    port: "9092:9092"
     env:
       clear:
         KAFKA_NODE_ID: 1
@@ -105,6 +104,9 @@ accessories:
         KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
         KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
         KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+    # Existing brokers must be copied here while stopped before accessory reboot.
+    directories:
+      - data:/tmp/kraft-combined-logs
 
 aliases:
   console: app exec --reuse -i "bin/rails console"
