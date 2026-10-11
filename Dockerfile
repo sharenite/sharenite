@@ -1,6 +1,9 @@
 # syntax = docker/dockerfile:1
 
 ARG RUBY_VERSION=3.3.10
+ARG NODE_VERSION=24.21.0
+FROM docker.io/library/node:${NODE_VERSION}-bookworm-slim AS node
+
 FROM docker.io/library/ruby:${RUBY_VERSION}-slim AS base
 ARG RAILS_ENV=production
 
@@ -18,9 +21,17 @@ ENV RAILS_ENV="${RAILS_ENV}" \
 FROM base AS build
 
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev pkg-config nodejs npm && \
-    npm install -g yarn && \
+    apt-get install --no-install-recommends -y build-essential git libpq-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node /opt/yarn-v1.22.22 /opt/yarn
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx && \
+    ln -s /opt/yarn/bin/yarn /usr/local/bin/yarn && \
+    ln -s /opt/yarn/bin/yarnpkg /usr/local/bin/yarnpkg && \
+    node --version && yarn --version
 
 COPY Gemfile Gemfile.lock ./
 RUN --mount=type=secret,id=BUNDLE_GEMS__KARAFKA__IO \
@@ -29,8 +40,9 @@ RUN --mount=type=secret,id=BUNDLE_GEMS__KARAFKA__IO \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY .node-version package.json yarn.lock ./
+RUN test "$(node --version)" = "v$(cat .node-version)" && \
+    yarn install --frozen-lockfile
 
 COPY . .
 

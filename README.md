@@ -17,13 +17,16 @@ bin/dev
 
 ### Dependency compatibility
 
-Use Ruby 3.3.10 and Node 20.11.0, as pinned in `.ruby-version` and `.node-version`.
+Use Ruby 3.3.10 and Node 24.21.0 LTS, as pinned in `.ruby-version` and `.node-version`.
+Use Yarn Classic 1.22.22 (`npm install --global yarn@1.22.22`). Docker's build stage
+uses the same Node and Yarn versions and checks the Node pin before installing packages.
 Rails 8.1 uses Devise 5 for browser and admin authentication. The mounted Grape API
 shares the existing user session through `API::Authentication`, so Playnite keeps
 using the same login URL and cookies without the `grape_devise` dependency.
 Framework defaults remain at 7.0 while newer defaults are reviewed separately;
 Devise also retains its previous signing-key precedence to preserve account tokens.
-Sass stays on 1.99 and lint-staged on 15 to support the pinned Node version.
+Sass 1.105 and lint-staged 17 run on Node 24. Pre-commit checks hide unstaged changes
+while running tasks so lint-staged does not include unrelated edits in the commit.
 
 ## Local secrets (direnv)
 
