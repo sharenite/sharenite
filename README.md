@@ -277,14 +277,24 @@ for this single-broker setup, then deploy with `bin/deploy-staging-safe`:
 5. Once the rehearsal passes, run `bin/kamal-staging accessory reboot db`, `redis`,
    and `kafka` individually. Verify the new database/Redis versions and unchanged
    application row counts, Kafka topic IDs, partition offsets, and consumer commits.
-6. Start the app with `bin/kamal-staging app start`, run a Karafka client round trip
-   on a temporary topic, then run `bin/deploy-staging-safe` and HTTP/asset checks.
+6. Start the existing app with `bin/kamal-staging app start --version <deployed-commit>`
+   (the deployed commit may differ from local HEAD), run a Karafka client round
+   trip on a temporary topic, then run `bin/deploy-staging-safe` and HTTP/asset checks.
 
 If a Kafka binary upgrade fails before accepting new writes, stop it and restore
 3.7.0 using the untouched pre-upgrade archive in a fresh directory. Do not restore
 an old snapshot after accepting writes without accounting for those newer messages.
 PostgreSQL and Redis retain their original bind mounts. Backups and image IDs must
 be kept until the staging rollout is accepted.
+
+The October 11 staging rollout verified a complete PostgreSQL restore, unchanged
+application table row counts and Redis keyspace, identical Kafka topic IDs,
+partition offsets and consumer commits, and a Karafka/WaterDrop producer plus
+librdkafka consumer round trip. Recreating the upgraded Kafka container also
+preserved its data. Kafka metadata remains at 3.7-IV4 for the initial observation
+period; no metadata finalization was performed. Staging snapshots and their SHA-256
+checksums are retained in
+`/home/xenor/sharenite-infra-backups/20261011T112757Z/`.
 
 Production has daily compressed SQL backups, but a production restore has not yet
 been rehearsed. Its Kafka persistence and published plaintext port 9092 still need
