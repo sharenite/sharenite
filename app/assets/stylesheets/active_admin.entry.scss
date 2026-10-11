@@ -7,7 +7,7 @@
 // For example, to change the sidebar width:
 // $sidebar-width: 242px;
 
-// Active Admin's got SASS!
+// Compiled to builds/active_admin.css by bin/build-css using Dart Sass.
 @import "active_admin/mixins";
 @import "active_admin/base";
 
@@ -16,7 +16,7 @@
 //
 //   .status_tag { background: #6090DB; }
 
- .admin-health-value {
+.admin-health-value {
   border-radius: 999px;
   display: inline-block;
   font-size: 11px;

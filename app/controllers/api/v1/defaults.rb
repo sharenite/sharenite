@@ -11,7 +11,7 @@ module API
         version "v1", using: :path
         default_format :json
         format :json
-        formatter :json, Grape::Formatter::ActiveModelSerializers
+        formatter :json, API::JsonFormatter
 
         helpers do
           def permitted_params
@@ -24,11 +24,11 @@ module API
         end
 
         rescue_from ActiveRecord::RecordNotFound do |e|
-          error_response(message: e.message, status: 404)
+          error!(e.message, 404)
         end
 
         rescue_from ActiveRecord::RecordInvalid do |e|
-          error_response(message: e.message, status: 422)
+          error!(e.message, 422)
         end
       end
     end

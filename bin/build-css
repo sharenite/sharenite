@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+
+Dir.chdir(File.expand_path("..", __dir__)) do
+  admin_stylesheets = File.join(Gem.loaded_specs.fetch("activeadmin").full_gem_path, "app/assets/stylesheets")
+
+  exec "./node_modules/.bin/sass",
+       "./app/assets/stylesheets/application.bootstrap.scss:./app/assets/builds/application.css",
+       "./app/assets/stylesheets/active_admin.entry.scss:./app/assets/builds/active_admin.css",
+       "--no-source-map",
+       "--load-path=node_modules",
+       "--load-path=#{admin_stylesheets}",
+       *ARGV
+end

@@ -6,7 +6,7 @@ source "https://gems.karafka.io" do
   gem "karafka-license"
 end
 
-ruby "3.3.10"
+ruby "3.3.12"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.4"
@@ -52,24 +52,20 @@ gem "bootsnap", require: false
 
 # Custom
 gem 'activeadmin'
+gem 'active_model_serializers'
 gem 'appsignal'
 gem 'bootstrap5-kaminari-views'
 gem "csv"
 gem 'friendly_id'
-gem 'grape'
-gem 'grape-active_model_serializers', github: 'iONi-io/grape-active_model_serializers', ref: '994ec1a77105197476c4d9fcc71baed0cedc9e1a'
+gem 'grape', '~> 4.0'
 gem 'haml'
 gem 'haml-rails'
 gem 'kaminari'
 gem "lograge"
 gem 'rack-cors'
 gem 'rake-progressbar'
-gem 'sass-rails'
 gem 'search_cop'
 gem 'securerandom'
-
-# Use Sass to process CSS
-# gem "sassc-rails"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
@@ -84,7 +80,7 @@ group :development, :test do
   gem 'letter_opener'
   gem 'letter_opener_web'
   gem 'prettier_print'
-  gem 'reline', '0.5.10'
+  gem 'reline'
   gem 'rspec-rails'
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false

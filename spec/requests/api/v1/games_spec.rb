@@ -33,7 +33,8 @@ RSpec.describe "Games API", type: :request do
       get "/api/v1/games"
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.pluck("id")).to eq([game.id])
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body).to eq([{ "id" => game.id, "name" => "My game" }])
     end
 
     it "queues uploaded games for the authenticated user" do
@@ -49,6 +50,26 @@ RSpec.describe "Games API", type: :request do
       expect(Karafka.producer).to have_received(:produce_sync).with(
         hash_including(topic: "library.sync", key: user.id, partition_key: user.id)
       )
+    end
+
+    it "returns a JSON error for an upload without game IDs" do
+      expect do
+        post "/api/v1/games", params: { games: [{ name: "Missing ID" }] }, as: :json
+      end.not_to change(SyncJob, :count)
+
+      expect(response).to have_http_status(:internal_server_error)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body).to eq("error" => "Incorrect parameters, check for plugin updates")
+    end
+
+    it "rejects malformed JSON without creating sync jobs" do
+      expect do
+        post "/api/v1/games", params: '{"games":', headers: { "CONTENT_TYPE" => "application/json" }
+      end.not_to change(SyncJob, :count)
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body).to have_key("error")
     end
   end
 end
