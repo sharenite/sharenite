@@ -65,6 +65,9 @@ volumes:
 accessories:
   db:
     image: postgres:15.19-trixie
+    options:
+      # Parallel PostgreSQL queries can exceed Docker's default 64 MB /dev/shm.
+      shm-size: 1g
     roles:
       - web
       - worker

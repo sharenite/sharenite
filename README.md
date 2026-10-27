@@ -357,12 +357,26 @@ metadata downgrade is no longer supported. After finalization, 27 new production
 sync jobs finished with no failures, all 50 sync partitions were assigned, and
 consumer lag was zero. The application and accessories had no container restarts.
 
-Recovery archives, SHA-256 checksums, original image/container configuration, and
-verification records are retained in
-`/home/ubuntu/sharenite-infra-backups/20261011T131717Z/`. The directory contains both
-the online PostgreSQL base backup and the final stopped PostgreSQL data archive,
-plus Redis and Kafka snapshots. Account for subsequent writes before restoring
-any snapshot. The existing daily compressed SQL backup schedule remains in place.
+The October 11 production recovery archives and verification records in
+`/home/ubuntu/sharenite-infra-backups/20261011T131717Z/` were deleted on October 27,
+2026, after the rollout had remained stable and the latest daily SQL backup passed
+gzip integrity and dump-completion checks. This freed approximately 48 GiB. The
+existing daily compressed SQL backups and their schedule remain in place.
+
+### Production PostgreSQL shared memory (2026-10-27)
+
+Parallel queries exhausted the database container's default 64 MiB `/dev/shm`,
+causing `could not resize shared memory segment` errors despite ample host disk
+space. The base and production Kamal configurations now set the DB accessory's
+`options.shm-size` to `1g`. Production was recreated with this limit using the
+same PostgreSQL image and persistent data directory, then the existing web and
+worker containers were restarted. The affected profile page, database schema
+check, and post-restart error-log checks passed.
+
+The rollout used the cached image because registry login returned `unauthorized`.
+Refresh production registry credentials before the next operation requiring
+registry authentication. Changing `shm-size` requires recreating the DB accessory;
+a normal application deploy does not update an existing accessory.
 
 ## Production DB backup cron
 
