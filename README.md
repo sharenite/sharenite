@@ -374,9 +374,11 @@ worker containers were restarted. The affected profile page, database schema
 check, and post-restart error-log checks passed.
 
 The rollout used the cached image because registry login returned `unauthorized`.
-Refresh production registry credentials before the next operation requiring
-registry authentication. Changing `shm-size` requires recreating the DB accessory;
-a normal application deploy does not update an existing accessory.
+Gitea credentials were refreshed later on October 27 for Sharenite and Songbook,
+including the local, staging, and production Docker logins. Registry image access
+for both applications was verified on both deployment hosts. Changing `shm-size`
+requires recreating the DB accessory; a normal application deploy does not update
+an existing accessory.
 
 ## Production DB backup cron
 
