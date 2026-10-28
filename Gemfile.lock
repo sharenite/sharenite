@@ -97,7 +97,7 @@ GEM
       uri (>= 0.13.1)
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
-    appsignal (5.0.4)
+    appsignal (5.0.7)
       logger
       rack (>= 2.0.0)
     arbre (1.7.0)
