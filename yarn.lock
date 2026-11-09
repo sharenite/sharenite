@@ -244,9 +244,9 @@
   integrity sha512-lCpvfS/dQU5WrwN3AQ5vR8qrvj2h5gE41X08NNzAAXvHdM4zwwGRcP2sHSxfu6n6No+ljWCVx95NvJPFTTjCTg==
 
 "@rails/actioncable@>=7.0":
-  version "8.1.400"
-  resolved "https://registry.yarnpkg.com/@rails/actioncable/-/actioncable-8.1.400.tgz#af41a431614e4abb007e65429197d1c5dbf43741"
-  integrity sha512-Qffc3/I9xcpeaal12hmi9EPRV3hz9FvakUHBR7kL0jpZviWwO9dyaG8F1ltcjkHIdFxQ5QqzRyequAWHMq17xQ==
+  version "8.1.401"
+  resolved "https://registry.yarnpkg.com/@rails/actioncable/-/actioncable-8.1.401.tgz#59b5e7c6c3f39a97bd78f7e5ffc132057231af28"
+  integrity sha512-eZdEy9UmnsaeDHr5G5nFhdgsaMo9EZVq2JMAjqtNmVDqnKWHwvTMt0Ah1CWBf7g7BDLR3WCDgHS2aOhbpjqkWw==
 
 bootstrap-icons@^1.9.1:
   version "1.13.2"
@@ -320,9 +320,9 @@ husky@^9:
   integrity sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==
 
 immutable@^5.1.5:
-  version "5.1.9"
-  resolved "https://registry.yarnpkg.com/immutable/-/immutable-5.1.9.tgz#ac23c3a01992ab665e14ac9ffff298f28cd74a0c"
-  integrity sha512-m8nVez3rwrgmWxtLMt1ZYXB2Lv7OKYn/disyxAlSDYAlKSlFoPPfIAmAM/M5xqL4m4C/wAPw7S2/CNaUii1Hxg==
+  version "5.1.10"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-5.1.10.tgz#0b7eb66f4abb8073449dad6ead9f98167256c007"
+  integrity sha512-Uu72qZXUtm+n98uML3Xr6pVFHl4xnmeCuAsrm0VqFlQim/Ib6NrPSJLpx6CrZ/G6DnoGaCUgtx8gY+o+ovxnCw==
 
 is-extglob@^2.1.1:
   version "2.1.1"
@@ -367,10 +367,10 @@ readdirp@^5.0.0:
   resolved "https://registry.yarnpkg.com/readdirp/-/readdirp-5.1.1.tgz#520bca06f9d1ae1b96cc0800dbe84b983d19422c"
   integrity sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==
 
-sass@^1.105.1:
-  version "1.105.1"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.105.1.tgz#9ef19b947f65007ccfe0ed385cc570b858ae42e0"
-  integrity sha512-1CnAWPyrrnVQzXGB/DUep1vYCKCm1CIBr+YxjjiW6wk9qtzemnGP4qicH56T2F9S4Hjtv/Ne3jDz8JqfdDU4oA==
+sass@^1.108.1:
+  version "1.108.1"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.108.1.tgz#169e456df9ad50bac4593435a207106a59b645a1"
+  integrity sha512-sIYgSvOPeD9wABwDS/ofNjHASSck+7h3jLkk7wG1NPFL3XeS6vOQjBlAFSmRV09kZr1yt/Tuayt6kKtBbLjHNQ==
   dependencies:
     chokidar "^5.0.0"
     immutable "^5.1.5"

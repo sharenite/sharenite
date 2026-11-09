@@ -23,14 +23,15 @@ the Kafka migration below **before** running `docker compose up`.
 Use Ruby 3.3.12 and Node 24.21.0 LTS, as pinned in `.ruby-version` and `.node-version`.
 Use Yarn Classic 1.22.22 (`npm install --global yarn@1.22.22`). Docker's build stage
 uses the same Node and Yarn versions and checks the Node pin before installing packages.
-Rails 8.1 uses Devise 5 for browser and admin authentication. The mounted Grape 4 API
+Rails 8.1.4.1 or newer in the 8.1 series is required for the November 2026 security
+fixes. Rails 8.1 uses Devise 5 for browser and admin authentication. The mounted Grape 4 API
 shares the existing user session through `API::Authentication`, so Playnite keeps
 using the same login URL and cookies without the `grape_devise` dependency.
 API JSON uses ActiveModelSerializers directly through `API::JsonFormatter`; the
 forked `grape-active_model_serializers` adapter is no longer needed.
 Framework defaults remain at 7.0 while newer defaults are reviewed separately;
 Devise also retains its previous signing-key precedence to preserve account tokens.
-Sass 1.105 and lint-staged 17 run on Node 24. Pre-commit checks hide unstaged changes
+Sass 1.108 and lint-staged 17 run on Node 24. Pre-commit checks hide unstaged changes
 while running tasks so lint-staged does not include unrelated edits in the commit.
 `yarn build:css` compiles both the main site and ActiveAdmin with Dart Sass, using
 the installed ActiveAdmin gem's stylesheets. `bin/dev` watches both entrypoints.
