@@ -18,3 +18,7 @@ export STAGING_TLS_PRIVATE_KEY_PATH='.kamal/certificates/staging/private-key.pem
 # Docker Hub auth (recommended to avoid pull-rate limits)
 export DOCKERHUB_USERNAME=''
 export DOCKERHUB_TOKEN=''
+
+# Images build on the deploy host over SSH. Set another ssh://user@host to use a
+# separate build server, or set it empty to build on this machine.
+# export KAMAL_BUILDER_REMOTE=

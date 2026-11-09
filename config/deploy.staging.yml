@@ -30,6 +30,11 @@ registry:
 
 builder:
   arch: amd64
+<% builder_remote = ENV.fetch("KAMAL_BUILDER_REMOTE", "ssh://xenor@192.168.2.73").strip %>
+<% unless builder_remote.empty? %>
+  remote: <%= builder_remote.inspect %>
+  local: false
+<% end %>
   dockerfile: Dockerfile
   args:
     RUBY_VERSION: "3.3.12"
